@@ -49,8 +49,10 @@ func generate_mesh():
 			var world_x = chunk_position.x * chunk_size + x
 			var world_z = chunk_position.y * chunk_size + z
 			
-			# Get height from noise
+			# Get height from noise - offset by half the multiplier so terrain goes up and down
 			var height = noise.get_noise_2d(world_x, world_z) * height_multiplier
+			# Add offset so terrain is always positive (above y=0)
+			height = height + (height_multiplier * 0.5)
 			height = max(0.0, height)  # Ensure height is not negative
 			
 			var vertex = Vector3(x, height, z)
@@ -96,16 +98,28 @@ func add_triangle(surface_tool: SurfaceTool, v1: Vector3, v2: Vector3, v3: Vecto
 	surface_tool.add_vertex(v3)
 
 func create_collision():
-	# Create collision shape directly on this StaticBody3D
+	# Create collision using HeightMapShape3D instead of trimesh
+	# This is much smoother and less prone to getting stuck
+	
 	var collision_shape = CollisionShape3D.new()
 	add_child(collision_shape)
 	
-	# Create collision shape from the mesh
-	if mesh_instance and mesh_instance.mesh:
-		var shape = mesh_instance.mesh.create_trimesh_shape()
-		if shape:
-			collision_shape.shape = shape
-		else:
-			push_error("Failed to create collision shape for chunk at " + str(chunk_position))
-	else:
-		push_error("No mesh available for collision at " + str(chunk_position))
+	# Create heightmap data - must match the mesh generation exactly
+	var height_data = []
+	for z in range(chunk_size + 1):
+		for x in range(chunk_size + 1):
+			var world_x = chunk_position.x * chunk_size + x
+			var world_z = chunk_position.y * chunk_size + z
+			var height = noise.get_noise_2d(world_x, world_z) * height_multiplier
+			# Add same offset as mesh generation
+			height = height + (height_multiplier * 0.5)
+			height = max(0.0, height)
+			height_data.append(height)
+	
+	# Create HeightMapShape3D
+	var heightmap_shape = HeightMapShape3D.new()
+	heightmap_shape.map_width = chunk_size + 1
+	heightmap_shape.map_depth = chunk_size + 1
+	heightmap_shape.map_data = height_data
+	
+	collision_shape.shape = heightmap_shape
