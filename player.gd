@@ -5,6 +5,9 @@ extends CharacterBody3D
 @export var sprint_speed: float = 10.0
 @export var jump_velocity: float = 4.5
 @export var mouse_sensitivity: float = 0.002
+@export var fly_speed: float = 15.0  # Speed when flying
+
+var is_flying: bool = false  # Fly/noclip mode toggle
 
 # Camera
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
@@ -37,8 +40,38 @@ func _input(event):
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+	# Toggle fly mode with F key
+	if event.is_action_pressed("ui_focus_next"):  # F key
+		is_flying = !is_flying
+		print("Fly mode: ", "ON" if is_flying else "OFF")
 
 func _physics_process(delta):
+	# Fly mode - noclip movement
+	if is_flying:
+		# No gravity or collision in fly mode
+		velocity = Vector3.ZERO
+		
+		# Get input direction (including up/down)
+		var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+		var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+		
+		# Up/down movement
+		if Input.is_action_pressed("ui_accept"):  # Space - fly up
+			direction.y += 1.0
+		if Input.is_action_pressed("ui_shift"):  # Shift - fly down
+			direction.y -= 1.0
+		
+		direction = direction.normalized()
+		
+		if direction:
+			velocity = direction * fly_speed
+		
+		# Move without collision in fly mode
+		position += velocity * delta
+		return
+	
+	# Normal ground-based movement
 	# Add gravity
 	if not is_on_floor():
 		velocity.y -= gravity * delta
