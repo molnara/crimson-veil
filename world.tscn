@@ -34,8 +34,12 @@ near = 0.3
 [node name="DayNightCycle" type="Node3D" parent="."]
 script = ExtResource("4_aqk2v")
 day_length_minutes = 2.0
-start_time = 0.5
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="DayNightCycle"]
+[node name="SunLight" type="DirectionalLight3D" parent="DayNightCycle"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="DayNightCycle"]
+
+[node name="MoonLight" type="DirectionalLight3D" parent="DayNightCycle"]
+light_color = Color(0.7977378, 0.85430586, 0.95468724, 1)
+light_energy = 0.3
+shadow_enabled = true

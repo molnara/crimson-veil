@@ -6,7 +6,8 @@ class_name DayNightCycle
 @export var start_time: float = 0.25  # 0.0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset
 
 # References
-@onready var sun: DirectionalLight3D = $DirectionalLight3D
+@onready var sun: DirectionalLight3D = $SunLight
+@onready var moon: DirectionalLight3D = $MoonLight
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 
 # Internal variables
@@ -24,10 +25,12 @@ var night_light_color = Color(0.3, 0.3, 0.4)
 var day_light_color = Color(1.0, 0.95, 0.9)
 var sunrise_light_color = Color(1.0, 0.7, 0.5)
 var sunset_light_color = Color(1.0, 0.6, 0.4)
+var moon_light_color = Color(0.6, 0.7, 0.9)  # Soft blue moonlight
 
 func _ready():
 	time_of_day = start_time
 	setup_environment()
+	setup_moon()
 	update_lighting()
 
 func _process(delta):
@@ -59,11 +62,22 @@ func setup_environment():
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_energy = 0.5
 
+func setup_moon():
+	# Configure moon light properties
+	if moon:
+		moon.light_color = moon_light_color
+		moon.light_energy = 0.0  # Start invisible
+		moon.shadow_enabled = true
+
 func update_lighting():
 	# Calculate sun rotation (sun moves in a circle)
 	# 0.0 = midnight (sun below horizon), 0.5 = noon (sun overhead)
 	var sun_angle = time_of_day * 360.0  # 0-360 degrees
 	sun.rotation_degrees.x = sun_angle - 90.0  # Offset so noon is overhead
+	
+	# Moon is opposite the sun (180 degrees offset)
+	if moon:
+		moon.rotation_degrees.x = (sun_angle + 180.0) - 90.0
 	
 	# Get current sky material
 	var env = world_environment.environment
@@ -77,12 +91,20 @@ func update_lighting():
 		sky_material.sky_top_color = night_sky_color.lerp(sunrise_sky_color, t)
 		sky_material.sky_horizon_color = night_sky_color.lerp(sunrise_sky_color, t)
 		
+		# Moon is bright at night, fades at sunrise
+		if moon:
+			moon.light_energy = lerp(0.3, 0.0, t)
+		
 	elif time_of_day < 0.5:  # Sunrise to noon (6am to 12pm)
 		var t = (time_of_day - 0.25) / 0.25
 		sun.light_energy = lerp(0.5, 1.0, t)
 		sun.light_color = sunrise_light_color.lerp(day_light_color, t)
 		sky_material.sky_top_color = sunrise_sky_color.lerp(day_sky_color, t)
 		sky_material.sky_horizon_color = sunrise_sky_color.lerp(day_sky_color, t)
+		
+		# Moon is off during day
+		if moon:
+			moon.light_energy = 0.0
 		
 	elif time_of_day < 0.75:  # Noon to sunset (12pm to 6pm)
 		var t = (time_of_day - 0.5) / 0.25
@@ -91,12 +113,20 @@ func update_lighting():
 		sky_material.sky_top_color = day_sky_color.lerp(sunset_sky_color, t)
 		sky_material.sky_horizon_color = day_sky_color.lerp(sunset_sky_color, t)
 		
+		# Moon is off during day
+		if moon:
+			moon.light_energy = 0.0
+		
 	else:  # Sunset to night (6pm to midnight)
 		var t = (time_of_day - 0.75) / 0.25
 		sun.light_energy = lerp(0.5, 0.0, t)
 		sun.light_color = sunset_light_color.lerp(night_light_color, t)
 		sky_material.sky_top_color = sunset_sky_color.lerp(night_sky_color, t)
 		sky_material.sky_horizon_color = sunset_sky_color.lerp(night_sky_color, t)
+		
+		# Moon rises at sunset
+		if moon:
+			moon.light_energy = lerp(0.0, 0.3, t)
 	
 	# Ground color (darker at night)
 	sky_material.ground_bottom_color = Color(0.2, 0.15, 0.1) * (sun.light_energy + 0.2)
