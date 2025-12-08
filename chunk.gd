@@ -104,6 +104,10 @@ func create_collision():
 	var collision_shape = CollisionShape3D.new()
 	add_child(collision_shape)
 	
+	# Position the collision shape - HeightMapShape3D centers at its origin
+	# We need to offset it to match the mesh
+	collision_shape.position = Vector3(chunk_size / 2.0, 0, chunk_size / 2.0)
+	
 	# Create heightmap data - must match the mesh generation exactly
 	var height_data = []
 	for z in range(chunk_size + 1):
