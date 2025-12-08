@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://bc354ntptv04q"]
+[gd_scene load_steps=6 format=3 uid="uid://bc354ntptv04q"]
 
 [ext_resource type="Script" uid="uid://ckhk1lvasit4r" path="res://chunk_manager.gd" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
 [ext_resource type="Script" uid="uid://daqqh63op6cvn" path="res://player.gd" id="2_tlwt5"]
+[ext_resource type="Script" uid="uid://c2gqjpxjajo8c" path="res://day_night_cycle.gd" id="4_aqk2v"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aqk2v"]
 
@@ -30,5 +31,11 @@ margin = 0.2
 [node name="Camera3D" type="Camera3D" parent="Player/SpringArm3D"]
 near = 0.3
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
+[node name="DayNightCycle" type="Node3D" parent="."]
+script = ExtResource("4_aqk2v")
+day_length_minutes = 2.0
+start_time = 0.5
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="DayNightCycle"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="DayNightCycle"]
