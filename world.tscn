@@ -11,8 +11,6 @@ script = ExtResource("1_tlwt5")
 
 [node name="ChunkManager" type="Node3D" parent="."]
 script = ExtResource("1_fj7yv")
-noise_scale = 0.03
-height_multiplier = 12.0
 
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0)

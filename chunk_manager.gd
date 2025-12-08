@@ -10,17 +10,44 @@ class_name ChunkManager
 @export var noise_scale: float = 0.05  # Lower = smoother terrain
 @export var height_multiplier: float = 20.0  # Maximum terrain height
 
+# Biome settings
+@export var biome_scale: float = 0.02  # Lower = larger biomes
+@export var temperature_scale: float = 0.015  # Temperature variation
+@export var moisture_scale: float = 0.018  # Moisture variation
+
 # Internal variables
 var chunks: Dictionary = {}  # Dictionary to store loaded chunks
 var noise: FastNoiseLite
+var biome_noise: FastNoiseLite
+var temperature_noise: FastNoiseLite
+var moisture_noise: FastNoiseLite
 var player: Node3D
 
 func _ready():
-	# Initialize noise generator
+	# Initialize noise generator for terrain height
 	noise = FastNoiseLite.new()
-	noise.seed = randi()  # Random seed each time, or set a fixed seed for reproducibility
+	noise.seed = randi()
 	noise.frequency = noise_scale
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	
+	# Initialize biome noise for biome distribution
+	biome_noise = FastNoiseLite.new()
+	biome_noise.seed = noise.seed + 1
+	biome_noise.frequency = biome_scale
+	biome_noise.noise_type = FastNoiseLite.TYPE_CELLULAR
+	biome_noise.cellular_return_type = FastNoiseLite.RETURN_CELL_VALUE
+	
+	# Initialize temperature noise
+	temperature_noise = FastNoiseLite.new()
+	temperature_noise.seed = noise.seed + 2
+	temperature_noise.frequency = temperature_scale
+	temperature_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	
+	# Initialize moisture noise
+	moisture_noise = FastNoiseLite.new()
+	moisture_noise.seed = noise.seed + 3
+	moisture_noise.frequency = moisture_scale
+	moisture_noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	
 	print("ChunkManager initialized with seed: ", noise.seed)
 	
@@ -63,7 +90,8 @@ func world_to_chunk(world_pos: Vector3) -> Vector2i:
 	)
 
 func load_chunk(chunk_pos: Vector2i):
-	var chunk = Chunk.new(chunk_pos, chunk_size, chunk_height, noise, height_multiplier)
+	var chunk = Chunk.new(chunk_pos, chunk_size, chunk_height, noise, height_multiplier, 
+						   temperature_noise, moisture_noise)
 	add_child(chunk)
 	chunks[chunk_pos] = chunk
 
