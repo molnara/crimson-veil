@@ -1,0 +1,42 @@
+[gd_scene load_steps=7 format=3 uid="uid://bc354ntptv04q"]
+
+[ext_resource type="Script" uid="uid://ckhk1lvasit4r" path="res://chunk_manager.gd" id="1_fj7yv"]
+[ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
+[ext_resource type="Script" uid="uid://daqqh63op6cvn" path="res://player.gd" id="2_tlwt5"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aqk2v"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_tlwt5"]
+size = Vector3(100, 1, 100)
+
+[sub_resource type="BoxMesh" id="BoxMesh_aqk2v"]
+size = Vector3(100, 1, 100)
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_tlwt5")
+
+[node name="ChunkManager" type="Node3D" parent="."]
+script = ExtResource("1_fj7yv")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
+script = ExtResource("2_tlwt5")
+
+[node name="Camera3D" type="Camera3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_aqk2v")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
+
+[node name="TestFloor" type="StaticBody3D" parent="."]
+visible = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TestFloor"]
+shape = SubResource("BoxShape3D_tlwt5")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="TestFloor"]
+mesh = SubResource("BoxMesh_aqk2v")
