@@ -67,18 +67,37 @@ func generate_mesh():
 			var world_x = chunk_position.x * chunk_size + x
 			var world_z = chunk_position.y * chunk_size + z
 			
-			# Get height from noise - offset by half the multiplier so terrain goes up and down
-			var height = noise.get_noise_2d(world_x, world_z) * height_multiplier
-			# Add offset so terrain is always positive (above y=0)
-			height = height + (height_multiplier * 0.5)
-			height = max(0.0, height)  # Ensure height is not negative
+			# Get base height from noise (-1 to 1)
+			var base_height = noise.get_noise_2d(world_x, world_z)
+			
+			# Determine primary biome based on base noise value (not final height)
+			var biome = get_biome(world_x, world_z, base_height)
+			
+			# Apply biome-specific height modifier
+			var height_mod = get_biome_height_modifier(biome)
+			var roughness_mod = get_biome_roughness(biome)
+			
+			# Modify the noise based on biome characteristics
+			var modified_height = base_height * roughness_mod
+			
+			# Apply height multiplier with biome modifier
+			var height = modified_height * height_multiplier * height_mod
+			
+			# For ocean biomes, allow them to go below baseline
+			if biome == Biome.OCEAN:
+				height = height + (height_multiplier * 0.3)  # Ocean baseline lower
+			elif biome == Biome.BEACH:
+				height = height + (height_multiplier * 0.4)  # Beach baseline lower
+			else:
+				height = height + (height_multiplier * 0.5)  # Normal baseline
+			
+			height = max(0.0, height)
 			
 			var vertex = Vector3(x, height, z)
 			vertices.append(vertex)
 			
-			# Determine biome and color for this vertex
-			var biome = get_biome(world_x, world_z, height)
-			var color = get_biome_color(biome)
+			# Blend biome colors for smooth transitions
+			var color = get_blended_biome_color(world_x, world_z, base_height, biome)
 			vertex_colors.append(color)
 	
 	# Generate triangles with proper winding order and colors
@@ -149,10 +168,30 @@ func create_collision():
 		for x in range(chunk_size + 1):
 			var world_x = chunk_position.x * chunk_size + x
 			var world_z = chunk_position.y * chunk_size + z
-			var height = noise.get_noise_2d(world_x, world_z) * height_multiplier
-			# Add same offset as mesh generation
-			height = height + (height_multiplier * 0.5)
+			
+			# Get base height (-1 to 1)
+			var base_height = noise.get_noise_2d(world_x, world_z)
+			
+			# Determine biome based on base noise (same as mesh generation)
+			var biome = get_biome(world_x, world_z, base_height)
+			
+			# Apply biome modifiers (same as mesh generation)
+			var height_mod = get_biome_height_modifier(biome)
+			var roughness_mod = get_biome_roughness(biome)
+			
+			var modified_height = base_height * roughness_mod
+			var height = modified_height * height_multiplier * height_mod
+			
+			# Apply same baseline offset as mesh generation
+			if biome == Biome.OCEAN:
+				height = height + (height_multiplier * 0.3)
+			elif biome == Biome.BEACH:
+				height = height + (height_multiplier * 0.4)
+			else:
+				height = height + (height_multiplier * 0.5)
+			
 			height = max(0.0, height)
+			
 			height_data.append(height)
 	
 	# Create HeightMapShape3D
@@ -163,34 +202,79 @@ func create_collision():
 	
 	collision_shape.shape = heightmap_shape
 
-func get_biome(world_x: float, world_z: float, height: float) -> Biome:
+func get_biome(world_x: float, world_z: float, base_noise: float) -> Biome:
 	# Get temperature and moisture values (-1 to 1)
 	var temperature = temperature_noise.get_noise_2d(world_x, world_z)
 	var moisture = moisture_noise.get_noise_2d(world_x, world_z)
 	
-	# Normalize height (0 to 1)
-	var normalized_height = height / (height_multiplier * 1.5)
+	# Determine biome based on multiple factors
+	# Very low areas = ocean/beach (more generous threshold)
+	if base_noise < -0.2:  # Much easier to generate ocean
+		if base_noise < -0.35:
+			return Biome.OCEAN
+		else:
+			return Biome.BEACH
 	
-	# Determine biome based on height, temperature, and moisture
-	if normalized_height < 0.2:
-		return Biome.OCEAN
-	elif normalized_height < 0.3:
-		return Biome.BEACH
-	elif normalized_height > 0.7:
+	# High elevation = mountains/snow
+	elif base_noise > 0.4:
 		if temperature < -0.2:
 			return Biome.SNOW
 		else:
 			return Biome.MOUNTAIN
+	
+	# Mid-level biomes based on temperature and moisture
 	else:
-		# Mid-level biomes based on temperature and moisture
-		if temperature > 0.3:
+		# Hot and dry = desert
+		if temperature > 0.2 and moisture < 0.0:
 			return Biome.DESERT
-		elif moisture > 0.2:
+		# Wet = forest
+		elif moisture > 0.15:
 			return Biome.FOREST
+		# Default = grassland
 		else:
 			return Biome.GRASSLAND
 	
 	return Biome.GRASSLAND
+
+func get_biome_height_modifier(biome: Biome) -> float:
+	# Returns a multiplier for terrain height based on biome type
+	match biome:
+		Biome.OCEAN:
+			return 0.3  # Much lower - clear depressions
+		Biome.BEACH:
+			return 0.7  # Low - coastal transition
+		Biome.GRASSLAND:
+			return 1.0  # Normal height - rolling hills
+		Biome.FOREST:
+			return 1.05  # Very slightly elevated
+		Biome.DESERT:
+			return 0.9  # Flatter
+		Biome.MOUNTAIN:
+			return 1.3  # Moderately taller
+		Biome.SNOW:
+			return 1.4  # Tallest but not extreme
+	
+	return 1.0
+
+func get_biome_roughness(biome: Biome) -> float:
+	# Returns terrain roughness/sharpness multiplier
+	match biome:
+		Biome.OCEAN:
+			return 0.7  # Smooth
+		Biome.BEACH:
+			return 0.7  # Smooth - sandy
+		Biome.GRASSLAND:
+			return 0.85  # Gentle rolling
+		Biome.FOREST:
+			return 0.95  # Slight variation
+		Biome.DESERT:
+			return 0.8  # Smooth - gentle dunes
+		Biome.MOUNTAIN:
+			return 1.1  # Slightly rough
+		Biome.SNOW:
+			return 1.05  # Slightly rough
+	
+	return 1.0
 
 func get_biome_color(biome: Biome) -> Color:
 	match biome:
@@ -210,3 +294,33 @@ func get_biome_color(biome: Biome) -> Color:
 			return Color(0.95, 0.95, 0.98)  # White snow
 	
 	return Color(0.5, 0.5, 0.5)
+
+func get_blended_biome_color(world_x: float, world_z: float, base_height: float, primary_biome: Biome) -> Color:
+	# Sample nearby biomes for blending
+	var blend_radius = 3.0  # How far to sample for blending
+	var primary_color = get_biome_color(primary_biome)
+	
+	# Sample biomes in a small area around this point
+	var sample_points = [
+		Vector2(world_x + blend_radius, world_z),
+		Vector2(world_x - blend_radius, world_z),
+		Vector2(world_x, world_z + blend_radius),
+		Vector2(world_x, world_z - blend_radius)
+	]
+	
+	var blended_color = primary_color
+	var blend_count = 1.0
+	
+	for point in sample_points:
+		var sample_noise = noise.get_noise_2d(point.x, point.y)
+		var sample_biome = get_biome(point.x, point.y, sample_noise)
+		
+		# Only blend with different biomes
+		if sample_biome != primary_biome:
+			var sample_color = get_biome_color(sample_biome)
+			# Weight the blend based on distance
+			var blend_weight = 0.15  # How much neighboring biomes influence
+			blended_color = blended_color.lerp(sample_color, blend_weight / blend_count)
+			blend_count += 1.0
+	
+	return blended_color

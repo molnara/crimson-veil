@@ -7,13 +7,13 @@ class_name ChunkManager
 @export var view_distance: int = 3  # Number of chunks to load in each direction
 
 # Noise settings
-@export var noise_scale: float = 0.05  # Lower = smoother terrain
-@export var height_multiplier: float = 20.0  # Maximum terrain height
+@export var noise_scale: float = 0.03  # Lower = smoother, larger features
+@export var height_multiplier: float = 10.0  # Maximum terrain height (reduced for gentler terrain)
 
 # Biome settings
-@export var biome_scale: float = 0.02  # Lower = larger biomes
-@export var temperature_scale: float = 0.015  # Temperature variation
-@export var moisture_scale: float = 0.018  # Moisture variation
+@export var biome_scale: float = 0.01  # Lower = larger biomes (easier to find)
+@export var temperature_scale: float = 0.008  # Temperature variation (larger regions)
+@export var moisture_scale: float = 0.01  # Moisture variation (larger regions)
 
 # Internal variables
 var chunks: Dictionary = {}  # Dictionary to store loaded chunks
