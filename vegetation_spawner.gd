@@ -23,7 +23,10 @@ enum VegType {
 	BOULDER,
 	CACTUS,
 	GRASS_TUFT,
-	PALM_TREE
+	PALM_TREE,
+	MUSHROOM_RED,      # Red cap with white spots (toadstool)
+	MUSHROOM_BROWN,    # Brown cap (normal mushroom)
+	MUSHROOM_CLUSTER   # Small cluster of tiny mushrooms
 }
 
 func _ready():
@@ -171,14 +174,23 @@ func spawn_vegetation_for_biome(biome: Chunk.Biome, position: Vector3, world_x: 
 	# Determine vegetation type based on biome
 	match biome:
 		Chunk.Biome.FOREST:
-			# Dense forest with mix of trees and undergrowth
+			# Dense forest with mix of trees, undergrowth, and mushrooms
 			var rand = randf()
 			if rand > 0.65:
 				veg_type = VegType.TREE
 			elif rand > 0.35:
 				veg_type = VegType.PINE_TREE
+			elif rand > 0.25:
+				veg_type = VegType.GRASS_TUFT
 			elif rand > 0.15:
-				veg_type = VegType.GRASS_TUFT  # More undergrowth
+				# Mushrooms! More variety
+				var mushroom_rand = randf()
+				if mushroom_rand > 0.6:
+					veg_type = VegType.MUSHROOM_RED
+				elif mushroom_rand > 0.3:
+					veg_type = VegType.MUSHROOM_BROWN
+				else:
+					veg_type = VegType.MUSHROOM_CLUSTER
 			else:
 				veg_type = VegType.ROCK  # Rocks in forest
 		Chunk.Biome.GRASSLAND:
@@ -248,6 +260,10 @@ func create_vegetation_mesh(veg_type: VegType, position: Vector3, world_x: float
 			adjusted_position.y += 1.0  # Cacti need lift
 		VegType.TREE, VegType.PALM_TREE, VegType.PINE_TREE:
 			adjusted_position.y += 0.0  # Trees start at ground level
+		VegType.MUSHROOM_RED, VegType.MUSHROOM_BROWN:
+			adjusted_position.y += 0.0  # Mushrooms sit on ground
+		VegType.MUSHROOM_CLUSTER:
+			adjusted_position.y += 0.0  # Clusters sit on ground
 	
 	mesh_instance.global_position = adjusted_position
 	
@@ -270,6 +286,12 @@ func create_vegetation_mesh(veg_type: VegType, position: Vector3, world_x: float
 			create_cactus(mesh_instance)
 		VegType.GRASS_TUFT:
 			create_grass_tuft(mesh_instance)
+		VegType.MUSHROOM_RED:
+			create_mushroom(mesh_instance, true, false)
+		VegType.MUSHROOM_BROWN:
+			create_mushroom(mesh_instance, false, false)
+		VegType.MUSHROOM_CLUSTER:
+			create_mushroom(mesh_instance, false, true)
 
 func create_tree(mesh_instance: MeshInstance3D, is_palm: bool):
 	# Simple tree: cylinder trunk + cone/sphere canopy (MUCH LARGER)
@@ -471,3 +493,178 @@ func create_grass_tuft(mesh_instance: MeshInstance3D):
 		material.albedo_color = Color(0.4, 0.8, 0.2)  # Regular green
 	material.roughness = 0.5
 	mesh_instance.set_surface_override_material(0, material)
+
+func create_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bool):
+	if is_cluster:
+		# Create a cluster of small mushrooms
+		var cluster_count = 3 + randi() % 3  # 3-5 mushrooms
+		
+		for i in range(cluster_count):
+			var small_mushroom = MeshInstance3D.new()
+			mesh_instance.add_child(small_mushroom)
+			
+			# Random offset within small area
+			var offset_x = (randf() - 0.5) * 0.3
+			var offset_z = (randf() - 0.5) * 0.3
+			small_mushroom.position = Vector3(offset_x, 0, offset_z)
+			
+			# Create tiny mushroom
+			create_single_mushroom(small_mushroom, false, 0.15 + randf() * 0.1)
+	else:
+		# Create single mushroom
+		var size = 0.2 + randf() * 0.15
+		create_single_mushroom(mesh_instance, is_red, size)
+
+func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: float):
+	# Mushroom = stem (cylinder) + cap (hemisphere/cone)
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	# Stem dimensions
+	var stem_height = size * 1.5
+	var stem_radius = size * 0.15
+	
+	# Cap dimensions
+	var cap_radius = size * 0.8
+	var cap_height = size * 0.5
+	
+	# Colors
+	var stem_color = Color(0.9, 0.85, 0.75)  # Off-white/cream
+	var cap_color = Color(0.8, 0.15, 0.1) if is_red else Color(0.5, 0.35, 0.25)  # Red or brown
+	var spot_color = Color(0.95, 0.95, 0.9)  # White spots for red mushrooms
+	
+	var sides = 8
+	
+	# Create stem (cylinder)
+	for i in range(sides):
+		var angle1 = (i / float(sides)) * TAU
+		var angle2 = ((i + 1) / float(sides)) * TAU
+		
+		var x1 = cos(angle1) * stem_radius
+		var z1 = sin(angle1) * stem_radius
+		var x2 = cos(angle2) * stem_radius
+		var z2 = sin(angle2) * stem_radius
+		
+		# Stem side
+		surface_tool.set_color(stem_color)
+		surface_tool.add_vertex(Vector3(x1, 0, z1))
+		surface_tool.add_vertex(Vector3(x2, 0, z2))
+		surface_tool.add_vertex(Vector3(x1, stem_height, z1))
+		
+		surface_tool.add_vertex(Vector3(x2, 0, z2))
+		surface_tool.add_vertex(Vector3(x2, stem_height, z2))
+		surface_tool.add_vertex(Vector3(x1, stem_height, z1))
+	
+	# Create cap (rounded dome shape with proper top closure)
+	var cap_base_y = stem_height
+	var cap_segments = 5  # Vertical segments for roundness
+	
+	for segment in range(cap_segments):
+		var t1 = segment / float(cap_segments)
+		var t2 = (segment + 1) / float(cap_segments)
+		
+		# Use sine curve for dome shape
+		var radius1 = cap_radius * sin(t1 * PI * 0.5)
+		var radius2 = cap_radius * sin(t2 * PI * 0.5)
+		var height1 = cap_base_y + (1.0 - cos(t1 * PI * 0.5)) * cap_height
+		var height2 = cap_base_y + (1.0 - cos(t2 * PI * 0.5)) * cap_height
+		
+		# Last segment closes to a point at top
+		if segment == cap_segments - 1:
+			radius2 = 0.0
+			height2 = cap_base_y + cap_height
+			
+			# Make triangles that converge to center point
+			for i in range(sides):
+				var angle1 = (i / float(sides)) * TAU
+				var angle2 = ((i + 1) / float(sides)) * TAU
+				
+				var x1 = cos(angle1) * radius1
+				var z1 = sin(angle1) * radius1
+				var x2 = cos(angle2) * radius1
+				var z2 = sin(angle2) * radius1
+				
+				surface_tool.set_color(cap_color)
+				surface_tool.add_vertex(Vector3(x1, height1, z1))
+				surface_tool.add_vertex(Vector3(x2, height1, z2))
+				surface_tool.add_vertex(Vector3(0, height2, 0))  # Top center point
+		else:
+			# Normal dome segments
+			for i in range(sides):
+				var angle1 = (i / float(sides)) * TAU
+				var angle2 = ((i + 1) / float(sides)) * TAU
+				
+				var x1a = cos(angle1) * radius1
+				var z1a = sin(angle1) * radius1
+				var x2a = cos(angle2) * radius1
+				var z2a = sin(angle2) * radius1
+				
+				var x1b = cos(angle1) * radius2
+				var z1b = sin(angle1) * radius2
+				var x2b = cos(angle2) * radius2
+				var z2b = sin(angle2) * radius2
+				
+				# Cap segment (quad as two triangles)
+				surface_tool.set_color(cap_color)
+				surface_tool.add_vertex(Vector3(x1a, height1, z1a))
+				surface_tool.add_vertex(Vector3(x2a, height1, z2a))
+				surface_tool.add_vertex(Vector3(x1b, height2, z1b))
+				
+				surface_tool.add_vertex(Vector3(x2a, height1, z2a))
+				surface_tool.add_vertex(Vector3(x2b, height2, z2b))
+				surface_tool.add_vertex(Vector3(x1b, height2, z1b))
+	
+	# Add underside (gills) - flat disc under the cap
+	for i in range(sides):
+		var angle1 = (i / float(sides)) * TAU
+		var angle2 = ((i + 1) / float(sides)) * TAU
+		
+		var x1 = cos(angle1) * cap_radius
+		var z1 = sin(angle1) * cap_radius
+		var x2 = cos(angle2) * cap_radius
+		var z2 = sin(angle2) * cap_radius
+		
+		# Underside triangles (darker color for gills)
+		surface_tool.set_color(cap_color * 0.7)
+		surface_tool.add_vertex(Vector3(0, cap_base_y, 0))  # Center
+		surface_tool.add_vertex(Vector3(x2, cap_base_y, z2))  # Note: reversed winding
+		surface_tool.add_vertex(Vector3(x1, cap_base_y, z1))
+	
+	# Add white spots for red mushrooms (simple small circles on top)
+	if is_red:
+		var spot_count = 3 + randi() % 3  # 3-5 spots
+		for spot in range(spot_count):
+			var spot_angle = (spot / float(spot_count)) * TAU + randf() * 0.5
+			var spot_distance = cap_radius * (0.4 + randf() * 0.3)
+			var spot_x = cos(spot_angle) * spot_distance
+			var spot_z = sin(spot_angle) * spot_distance
+			var spot_y = cap_base_y + cap_height * 0.7  # Near top
+			var spot_size = size * 0.15
+			
+			# Simple spot (small quad)
+			for i in range(4):
+				var a = (i / 4.0) * TAU
+				var sx = spot_x + cos(a) * spot_size
+				var sz = spot_z + sin(a) * spot_size
+				
+				surface_tool.set_color(spot_color)
+				surface_tool.add_vertex(Vector3(spot_x, spot_y, spot_z))
+				surface_tool.add_vertex(Vector3(sx, spot_y, sz))
+				
+				var next_a = ((i + 1) / 4.0) * TAU
+				var next_sx = spot_x + cos(next_a) * spot_size
+				var next_sz = spot_z + sin(next_a) * spot_size
+				surface_tool.add_vertex(Vector3(next_sx, spot_y, next_sz))
+	
+	# Generate normals and commit
+	surface_tool.generate_normals()
+	var mushroom_mesh = surface_tool.commit()
+	
+	# Create material
+	var material = StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	material.roughness = 0.6
+	mushroom_mesh.surface_set_material(0, material)
+	
+	mesh_instance.mesh = mushroom_mesh
