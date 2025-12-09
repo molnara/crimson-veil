@@ -1,8 +1,9 @@
 extends Node3D
 class_name VegetationSpawner
 
-# Preload resource node class
+# Preload resource node classes
 const ResourceNodeClass = preload("res://resource_node.gd")
+const HarvestableTreeClass = preload("res://harvestable_tree.gd")
 
 # References
 var chunk_manager: ChunkManager
@@ -276,11 +277,11 @@ func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: flo
 	# Create appropriate mesh based on type
 	match veg_type:
 		VegType.TREE:
-			create_tree(mesh_instance, false)
+			create_harvestable_tree(mesh_instance, HarvestableTreeClass.TreeType.NORMAL)
 		VegType.PINE_TREE:
-			create_pine_tree(mesh_instance)
+			create_harvestable_tree(mesh_instance, HarvestableTreeClass.TreeType.PINE)
 		VegType.PALM_TREE:
-			create_tree(mesh_instance, true)
+			create_harvestable_tree(mesh_instance, HarvestableTreeClass.TreeType.PALM)
 		VegType.ROCK:
 			create_rock(mesh_instance, false)
 		VegType.BOULDER:
@@ -295,6 +296,59 @@ func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: flo
 			create_mushroom(mesh_instance, false, false)
 		VegType.MUSHROOM_CLUSTER:
 			create_mushroom(mesh_instance, false, true)
+
+func create_harvestable_tree(mesh_instance: MeshInstance3D, tree_type: HarvestableTreeClass.TreeType):
+	"""Convert a tree mesh instance into a HarvestableTree"""
+	# Store position before replacement
+	var tree_position = mesh_instance.global_position
+	var parent = mesh_instance.get_parent()
+	
+	# Create a HarvestableTree to replace the mesh instance
+	var harvestable_tree = HarvestableTreeClass.new()
+	harvestable_tree.tree_type = tree_type
+	
+	# Determine tree height based on type
+	var tree_height = 6.0
+	match tree_type:
+		HarvestableTreeClass.TreeType.NORMAL:
+			tree_height = 4.0 + randf() * 2.0
+		HarvestableTreeClass.TreeType.PINE:
+			tree_height = 5.0 + randf() * 2.0
+		HarvestableTreeClass.TreeType.PALM:
+			tree_height = 3.5 + randf() * 1.5
+	
+	harvestable_tree.tree_height = tree_height
+	
+	# Create the tree mesh as a child
+	var tree_mesh = MeshInstance3D.new()
+	harvestable_tree.add_child(tree_mesh)
+	
+	# Generate the appropriate tree mesh
+	match tree_type:
+		HarvestableTreeClass.TreeType.NORMAL:
+			create_tree(tree_mesh, false)
+		HarvestableTreeClass.TreeType.PINE:
+			create_pine_tree(tree_mesh)
+		HarvestableTreeClass.TreeType.PALM:
+			create_tree(tree_mesh, true)
+	
+	# Add collision to the tree (cylinder around trunk)
+	var collision = CollisionShape3D.new()
+	var shape = CylinderShape3D.new()
+	shape.radius = 0.5  # Slightly larger than visual trunk
+	shape.height = tree_height
+	collision.shape = shape
+	collision.position.y = tree_height / 2.0  # Center vertically
+	harvestable_tree.add_child(collision)
+	
+	# Replace mesh_instance with harvestable_tree in scene tree
+	parent.remove_child(mesh_instance)
+	parent.add_child(harvestable_tree)
+	
+	# Set position after adding to tree
+	harvestable_tree.global_position = tree_position
+	
+	mesh_instance.queue_free()
 
 func create_tree(mesh_instance: MeshInstance3D, is_palm: bool):
 	# Simple tree: cylinder trunk + cone/sphere canopy (MUCH LARGER)
