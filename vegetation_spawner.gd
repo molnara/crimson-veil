@@ -162,15 +162,16 @@ func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise
 	var modified_height = base_noise * roughness_mod
 	var height = modified_height * height_multiplier * height_mod
 	
-	# Apply baseline offset
+	# Apply baseline offset (MUST MATCH CHUNK.GD!)
 	if biome == Chunk.Biome.OCEAN:
-		height = height + (height_multiplier * 0.3)
+		height = height - (height_multiplier * 0.3)  # Ocean goes DOWN
 	elif biome == Chunk.Biome.BEACH:
-		height = height + (height_multiplier * 0.4)
+		height = height + (height_multiplier * 0.2)  # Beach at sea level
 	else:
-		height = height + (height_multiplier * 0.5)
+		height = height + (height_multiplier * 0.5)  # Normal baseline
 	
-	return max(0.0, height)
+	# Don't clamp - allow negative heights for ocean
+	return height
 
 func spawn_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float):
 	var veg_type: VegType
@@ -351,9 +352,9 @@ func create_harvestable_tree(mesh_instance: MeshInstance3D, tree_type: Harvestab
 	mesh_instance.queue_free()
 
 func create_tree(mesh_instance: MeshInstance3D, is_palm: bool):
-	# Simple tree: cylinder trunk + cone/sphere canopy (MUCH LARGER)
-	var trunk_height = 4.0 + randf() * 2.0  # Taller trees
-	var trunk_radius = 0.3  # Thicker trunk
+	# Simple tree: cylinder trunk + cone/sphere canopy (REALISTIC PROPORTIONS)
+	var trunk_height = 5.0 + randf() * 3.0  # 5-8m tall (realistic)
+	var trunk_radius = 0.15  # Thinner trunk (0.3m diameter)
 	
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -381,10 +382,10 @@ func create_tree(mesh_instance: MeshInstance3D, is_palm: bool):
 		surface_tool.add_vertex(Vector3(x2, trunk_height, z2))
 		surface_tool.add_vertex(Vector3(x1, trunk_height, z1))
 	
-	# Canopy (simple cone/sphere) - MUCH BIGGER
+	# Canopy (simple cone/sphere) - REALISTIC PROPORTIONS
 	var canopy_color = Color(0.2, 0.6, 0.2) if not is_palm else Color(0.3, 0.7, 0.3)
-	var canopy_radius = 2.5 if not is_palm else 2.0  # Much larger canopy
-	var canopy_height = 3.0 if not is_palm else 2.5  # Taller canopy
+	var canopy_radius = 1.5 if not is_palm else 1.2  # Narrower canopy (3m wide)
+	var canopy_height = 4.0 if not is_palm else 3.0  # Taller canopy
 	var canopy_base_y = trunk_height
 	
 	for i in range(sides):
@@ -420,9 +421,9 @@ func create_tree(mesh_instance: MeshInstance3D, is_palm: bool):
 	mesh_instance.mesh = tree_mesh
 
 func create_pine_tree(mesh_instance: MeshInstance3D):
-	# Taller, thinner cone for pine trees
-	var trunk_height = 3.0 + randf() * 1.5
-	var trunk_radius = 0.1
+	# Taller, thinner cone for pine trees (REALISTIC)
+	var trunk_height = 6.0 + randf() * 3.0  # 6-9m tall
+	var trunk_radius = 0.12  # Thin trunk
 	
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -446,10 +447,10 @@ func create_pine_tree(mesh_instance: MeshInstance3D):
 		surface_tool.add_vertex(Vector3(x2, 0, z2))
 		surface_tool.add_vertex(Vector3(0, trunk_height, 0))
 	
-	# Cone-shaped foliage
-	var cone_radius = 0.8
-	var cone_height = trunk_height * 0.8
-	var cone_start_y = trunk_height * 0.3
+	# Cone-shaped foliage (narrower for realistic pine)
+	var cone_radius = 1.0  # 2m wide
+	var cone_height = trunk_height * 0.75  # Most of the tree
+	var cone_start_y = trunk_height * 0.25  # Starts 1/4 up
 	
 	for i in range(sides):
 		var angle1 = (i / float(sides)) * TAU
@@ -560,11 +561,12 @@ func create_cactus(mesh_instance: MeshInstance3D):
 	mesh_instance.set_surface_override_material(0, material)
 
 func create_grass_tuft(mesh_instance: MeshInstance3D):
-	# Smaller grass tufts
-	var size = 0.3 + randf() * 0.2  # Smaller base size
+	# Realistic grass tuft size (0.3-0.6m tall)
+	var height = 0.3 + randf() * 0.3  # 0.3-0.6m tall
+	var width = 0.05 + randf() * 0.05  # 0.05-0.1m wide (thin blades)
 	
 	var box_mesh = BoxMesh.new()
-	box_mesh.size = Vector3(size * 0.4, size * 2.5, size * 0.4)  # Shorter and thinner
+	box_mesh.size = Vector3(width, height, width)
 	
 	mesh_instance.mesh = box_mesh
 	# Position is handled in create_vegetation_mesh

@@ -1,6 +1,9 @@
 extends StaticBody3D
 class_name Chunk
 
+# Preload pixel texture generator
+const PixelTextureGenerator = preload("res://pixel_texture_generator.gd")
+
 var chunk_position: Vector2i
 var chunk_size: int
 var chunk_height: int
@@ -58,9 +61,14 @@ func generate_mesh():
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	
-	# Generate vertices with biome colors
+	# Determine the chunk's primary biome (sample at center)
+	var center_x = chunk_position.x * chunk_size + chunk_size / 2
+	var center_z = chunk_position.y * chunk_size + chunk_size / 2
+	var center_noise = noise.get_noise_2d(center_x, center_z)
+	var chunk_biome = get_biome(center_x, center_z, center_noise)
+	
+	# Generate vertices
 	var vertices = []
-	var vertex_colors = []
 	
 	for z in range(chunk_size + 1):
 		for x in range(chunk_size + 1):
@@ -83,24 +91,20 @@ func generate_mesh():
 			# Apply height multiplier with biome modifier
 			var height = modified_height * height_multiplier * height_mod
 			
-			# For ocean biomes, allow them to go below baseline
+			# For ocean biomes, put them below sea level
 			if biome == Biome.OCEAN:
-				height = height + (height_multiplier * 0.3)  # Ocean baseline lower
+				height = height - (height_multiplier * 0.3)  # Ocean goes DOWN (negative offset)
 			elif biome == Biome.BEACH:
-				height = height + (height_multiplier * 0.4)  # Beach baseline lower
+				height = height + (height_multiplier * 0.2)  # Beach at sea level
 			else:
 				height = height + (height_multiplier * 0.5)  # Normal baseline
 			
-			height = max(0.0, height)
+			# Don't clamp to 0 - allow ocean to go negative (underwater)
 			
 			var vertex = Vector3(x, height, z)
 			vertices.append(vertex)
-			
-			# Blend biome colors for smooth transitions
-			var color = get_blended_biome_color(world_x, world_z, base_height, biome)
-			vertex_colors.append(color)
 	
-	# Generate triangles with proper winding order and colors
+	# Generate triangles with proper winding order
 	for z in range(chunk_size):
 		for x in range(chunk_size):
 			var i = z * (chunk_size + 1) + x
@@ -111,19 +115,11 @@ func generate_mesh():
 			var bottom_left = vertices[i + chunk_size + 1]
 			var bottom_right = vertices[i + chunk_size + 2]
 			
-			# Colors for each corner
-			var c_top_left = vertex_colors[i]
-			var c_top_right = vertex_colors[i + 1]
-			var c_bottom_left = vertex_colors[i + chunk_size + 1]
-			var c_bottom_right = vertex_colors[i + chunk_size + 2]
-			
 			# First triangle (top-left, bottom-left, top-right)
-			add_triangle_with_color(surface_tool, top_left, bottom_left, top_right,
-									c_top_left, c_bottom_left, c_top_right)
+			add_triangle(surface_tool, top_left, bottom_left, top_right)
 			
 			# Second triangle (top-right, bottom-left, bottom-right)
-			add_triangle_with_color(surface_tool, top_right, bottom_left, bottom_right,
-									c_top_right, c_bottom_left, c_bottom_right)
+			add_triangle(surface_tool, top_right, bottom_left, bottom_right)
 	
 	# Generate normals for lighting
 	surface_tool.generate_normals()
@@ -131,16 +127,21 @@ func generate_mesh():
 	# Commit the mesh
 	var final_mesh = surface_tool.commit()
 	
-	# Create a simple material that uses vertex colors
-	var material = StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true  # Use vertex colors
-	material.roughness = 0.8
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED  # Render both sides to fix artifacts
+	# Create pixel art material based on chunk's primary biome
+	var material = PixelTextureGenerator.get_biome_terrain_material(chunk_biome)
+	material.roughness = 0.9  # Slightly matte
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED  # Render both sides
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
 	final_mesh.surface_set_material(0, material)
 	
 	# Set the mesh on the mesh instance
 	mesh_instance.mesh = final_mesh
+
+func add_triangle(surface_tool: SurfaceTool, v1: Vector3, v2: Vector3, v3: Vector3):
+	"""Add a triangle to the surface tool (no vertex colors, uses texture instead)"""
+	surface_tool.add_vertex(v1)
+	surface_tool.add_vertex(v2)
+	surface_tool.add_vertex(v3)
 
 func add_triangle_with_color(surface_tool: SurfaceTool, v1: Vector3, v2: Vector3, v3: Vector3,
 							  c1: Color, c2: Color, c3: Color):
@@ -275,52 +276,3 @@ func get_biome_roughness(biome: Biome) -> float:
 			return 1.05  # Slightly rough
 	
 	return 1.0
-
-func get_biome_color(biome: Biome) -> Color:
-	match biome:
-		Biome.OCEAN:
-			return Color(0.1, 0.3, 0.6)  # Deep blue
-		Biome.BEACH:
-			return Color(0.9, 0.85, 0.6)  # Sandy
-		Biome.GRASSLAND:
-			return Color(0.3, 0.6, 0.3)  # Green
-		Biome.FOREST:
-			return Color(0.2, 0.5, 0.2)  # Dark green
-		Biome.DESERT:
-			return Color(0.85, 0.7, 0.4)  # Sandy brown
-		Biome.MOUNTAIN:
-			return Color(0.5, 0.5, 0.5)  # Gray rock
-		Biome.SNOW:
-			return Color(0.95, 0.95, 0.98)  # White snow
-	
-	return Color(0.5, 0.5, 0.5)
-
-func get_blended_biome_color(world_x: float, world_z: float, base_height: float, primary_biome: Biome) -> Color:
-	# Sample nearby biomes for blending
-	var blend_radius = 3.0  # How far to sample for blending
-	var primary_color = get_biome_color(primary_biome)
-	
-	# Sample biomes in a small area around this point
-	var sample_points = [
-		Vector2(world_x + blend_radius, world_z),
-		Vector2(world_x - blend_radius, world_z),
-		Vector2(world_x, world_z + blend_radius),
-		Vector2(world_x, world_z - blend_radius)
-	]
-	
-	var blended_color = primary_color
-	var blend_count = 1.0
-	
-	for point in sample_points:
-		var sample_noise = noise.get_noise_2d(point.x, point.y)
-		var sample_biome = get_biome(point.x, point.y, sample_noise)
-		
-		# Only blend with different biomes
-		if sample_biome != primary_biome:
-			var sample_color = get_biome_color(sample_biome)
-			# Weight the blend based on distance
-			var blend_weight = 0.15  # How much neighboring biomes influence
-			blended_color = blended_color.lerp(sample_color, blend_weight / blend_count)
-			blend_count += 1.0
-	
-	return blended_color

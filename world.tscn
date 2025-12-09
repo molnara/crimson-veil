@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://bc354ntptv04q"]
+[gd_scene load_steps=8 format=3 uid="uid://bc354ntptv04q"]
 
 [ext_resource type="Script" uid="uid://ckhk1lvasit4r" path="res://chunk_manager.gd" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
 [ext_resource type="Script" uid="uid://daqqh63op6cvn" path="res://player.gd" id="2_tlwt5"]
 [ext_resource type="Script" uid="uid://c2gqjpxjajo8c" path="res://day_night_cycle.gd" id="4_aqk2v"]
 [ext_resource type="Script" uid="uid://5k6aextniq48" path="res://vegetation_spawner.gd" id="5_036b0"]
+[ext_resource type="Script" uid="uid://c33xs1ujes8lw" path="res://water_plane.gd" id="6_dwbse"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aqk2v"]
 
@@ -17,7 +18,7 @@ script = ExtResource("1_fj7yv")
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0)
 floor_max_angle = 1.2217305
-floor_snap_length = 0.2
+floor_snap_length = 0.5
 script = ExtResource("2_tlwt5")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
@@ -25,7 +26,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("CapsuleShape3D_aqk2v")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
 spring_length = 0.0
 margin = 0.2
 
@@ -48,3 +49,6 @@ shadow_enabled = true
 [node name="VegetationSpawner" type="Node3D" parent="."]
 script = ExtResource("5_036b0")
 vegetation_density = 0.5
+
+[node name="WaterPlane" type="MeshInstance3D" parent="."]
+script = ExtResource("6_dwbse")

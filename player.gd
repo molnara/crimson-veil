@@ -23,15 +23,25 @@ var harvest_ui: Control
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 func _ready():
+	# Set camera to proper human eye height
+	# Human: 1.75m tall, eyes at ~1.65m (94% of height)
+	if spring_arm:
+		spring_arm.position.y = 1.65  # Realistic human eye height
+		print("SpringArm position set to: ", spring_arm.position)
+		print("SpringArm spring_length: ", spring_arm.spring_length)
+	
 	# Capture the mouse
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("Player ready at position: ", global_position)
 	print("Camera found: ", camera != null)
+	if camera:
+		print("Camera global position: ", camera.global_position)
 	
-	# Enable floor constant speed to help with slopes
+	# Enable floor snapping and sliding for smooth terrain following
 	floor_constant_speed = true
 	floor_block_on_wall = false
-	floor_snap_length = 0.3
+	floor_snap_length = 0.5  # Increased snap distance for varied terrain
+	floor_max_angle = deg_to_rad(46)  # Allow steeper slopes (46 degrees)
 	
 	# Initialize inventory
 	inventory = Inventory.new()
