@@ -96,6 +96,21 @@ func populate_chunk(chunk_pos: Vector2i):
 		# Get height at this position
 		var height = get_terrain_height_at_position(world_x, world_z, base_noise, biome)
 		
+		# Validate with raycast to ensure we're above actual terrain
+		# This prevents spawning underground when height calculation is off
+		var space_state = get_world_3d().direct_space_state
+		var ray_start = Vector3(world_x, height + 10.0, world_z)  # 10m above calculated height
+		var ray_end = Vector3(world_x, height - 2.0, world_z)  # 2m below calculated height
+		
+		var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+		query.collision_mask = 1  # Only terrain
+		
+		var result = space_state.intersect_ray(query)
+		if result:
+			# Found terrain! Use actual terrain height
+			height = result.position.y
+		# If no hit, use calculated height (terrain might not be generated yet)
+		
 		# Don't spawn in water
 		if biome == Chunk.Biome.OCEAN:
 			continue
@@ -129,7 +144,8 @@ func get_biome_at_position(world_x: float, world_z: float, base_noise: float) ->
 	return Chunk.Biome.GRASSLAND
 
 func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
-	# Approximate the terrain height calculation from chunk generation
+	# Simple single-point height calculation
+	# Matches chunk generation as closely as possible
 	var height_multiplier = chunk_manager.height_multiplier
 	
 	# Get modifiers matching chunk.gd exactly
@@ -170,7 +186,6 @@ func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise
 	else:
 		height = height + (height_multiplier * 0.5)  # Normal baseline
 	
-	# Don't clamp - allow negative heights for ocean
 	return height
 
 func spawn_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float):
@@ -253,26 +268,24 @@ func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: flo
 	add_child(mesh_instance)
 	
 	# Height offsets for all vegetation types
-	# Add small random downward jitter to prevent floating
-	var jitter = randf_range(0.0, 0.15)  # Random sink 0-0.15m
+	# Since we now use raycast for accurate placement, minimal offsets needed
 	var adjusted_position = spawn_pos
-	adjusted_position.y -= jitter  # Apply jitter to all vegetation
 	
 	match veg_type:
 		VegType.ROCK:
-			adjusted_position.y -= 0.15  # Sink rocks into ground
+			adjusted_position.y += 0.0  # No offset, raycast is accurate
 		VegType.BOULDER:
-			adjusted_position.y -= 0.15  # Sink boulders into ground
+			adjusted_position.y += 0.0  # No offset, raycast is accurate
 		VegType.GRASS_TUFT:
-			adjusted_position.y -= 0.1  # Sink grass slightly
+			adjusted_position.y -= 0.05  # Slight sink to look planted
 		VegType.CACTUS:
-			adjusted_position.y += 0.2  # Cacti lift (after jitter)
+			adjusted_position.y += 0.2  # Cacti lift slightly
 		VegType.TREE, VegType.PALM_TREE, VegType.PINE_TREE:
-			adjusted_position.y += 0.0  # Trees at ground level
+			adjusted_position.y += 0.0  # Trees at exact surface
 		VegType.MUSHROOM_RED, VegType.MUSHROOM_BROWN:
-			adjusted_position.y -= 0.1  # Sink mushrooms
+			adjusted_position.y += 0.0  # Mushrooms at exact surface
 		VegType.MUSHROOM_CLUSTER:
-			adjusted_position.y -= 0.1  # Sink clusters
+			adjusted_position.y += 0.0  # Clusters at exact surface
 	
 	mesh_instance.global_position = adjusted_position
 	
