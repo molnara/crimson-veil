@@ -1,0 +1,25 @@
+extends HarvestableResource
+class_name HarvestableStrawberry
+
+# Strawberry bush properties
+
+func _ready():
+	# Set strawberry bush properties
+	resource_name = "Strawberry Bush"
+	resource_type = "foliage"
+	max_health = 15.0
+	harvest_time = 0.8
+	drop_item = "strawberry"
+	drop_amount_min = 2
+	drop_amount_max = 5
+	mining_tool_required = "none"
+	
+	# Call parent _ready
+	super._ready()
+
+func apply_harvest_visual_feedback():
+	"""Override to add subtle wobble when harvesting"""
+	# Gentle wobble effect
+	var wobble = sin(harvest_progress * PI * 10.0) * 0.1
+	rotation.z = original_rotation.z + wobble
+	rotation.x = original_rotation.x + wobble * 0.5

@@ -48,7 +48,6 @@ shadow_enabled = true
 
 [node name="VegetationSpawner" type="Node3D" parent="."]
 script = ExtResource("5_036b0")
-vegetation_density = 0.5
 
 [node name="WaterPlane" type="MeshInstance3D" parent="."]
 script = ExtResource("6_dwbse")

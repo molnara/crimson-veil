@@ -283,6 +283,62 @@ static func create_snow_texture() -> ImageTexture:
 	
 	return create_texture_from_image(image)
 
+static func create_strawberry_leaf_texture() -> ImageTexture:
+	"""Create a pixelated dark green strawberry leaf texture"""
+	var image = Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGB8)
+	
+	# Much darker leaf colors (almost black-green)
+	var leaf_colors = [
+		Color(0.08, 0.25, 0.08),   # Very dark green
+		Color(0.1, 0.28, 0.1),     # Dark green
+		Color(0.06, 0.22, 0.06),   # Super dark green
+		Color(0.12, 0.3, 0.12)     # Medium dark green
+	]
+	
+	# Fill with random leaf pixels
+	for x in range(TEXTURE_SIZE):
+		for y in range(TEXTURE_SIZE):
+			var color = leaf_colors[randi() % leaf_colors.size()]
+			# Add variation
+			color.r += (randf() - 0.5) * 0.05
+			color.g += (randf() - 0.5) * 0.05
+			color.b += (randf() - 0.5) * 0.05
+			image.set_pixel(x, y, color)
+	
+	return create_texture_from_image(image)
+
+static func create_strawberry_berry_texture() -> ImageTexture:
+	"""Create a pixelated red strawberry texture with seeds"""
+	var image = Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGB8)
+	
+	# Strawberry red colors
+	var berry_colors = [
+		Color(0.85, 0.15, 0.1),   # Deep red
+		Color(0.9, 0.2, 0.15),    # Bright red
+		Color(0.8, 0.12, 0.08),   # Dark red
+		Color(0.95, 0.25, 0.2)    # Light red
+	]
+	
+	# Fill base with red
+	for x in range(TEXTURE_SIZE):
+		for y in range(TEXTURE_SIZE):
+			var color = berry_colors[randi() % berry_colors.size()]
+			# Add variation
+			color.r += (randf() - 0.5) * 0.05
+			color.g += (randf() - 0.5) * 0.05
+			color.b += (randf() - 0.5) * 0.05
+			image.set_pixel(x, y, color)
+	
+	# Add small yellow "seeds" scattered around
+	var seed_count = 15 + randi() % 10
+	for i in range(seed_count):
+		var seed_x = randi() % TEXTURE_SIZE
+		var seed_y = randi() % TEXTURE_SIZE
+		var seed_color = Color(0.9, 0.85, 0.3)  # Yellow seed
+		image.set_pixel(seed_x, seed_y, seed_color)
+	
+	return create_texture_from_image(image)
+
 static func create_texture_from_image(image: Image) -> ImageTexture:
 	"""Convert an Image to an ImageTexture with nearest-neighbor filtering"""
 	var texture = ImageTexture.create_from_image(image)

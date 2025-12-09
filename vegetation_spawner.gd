@@ -5,6 +5,7 @@ class_name VegetationSpawner
 const ResourceNodeClass = preload("res://resource_node.gd")
 const HarvestableTreeClass = preload("res://harvestable_tree.gd")
 const HarvestableMushroomClass = preload("res://harvestable_mushroom.gd")
+const HarvestableStrawberryClass = preload("res://harvestable_strawberry.gd")
 # Note: PixelTextureGenerator is a global class, no need to preload
 
 # References
@@ -14,9 +15,14 @@ var vegetation_noise: FastNoiseLite
 var cluster_noise: FastNoiseLite  # For grass clustering
 var player: Node3D
 
-# Vegetation settings
-@export_range(0.0, 1.0) var vegetation_density: float = 0.4  ## Density of trees and rocks (0.0 = none, 1.0 = maximum)
-@export_range(0.0, 1.0) var grass_density: float = 0.8  ## Density of grass and ground cover (higher than vegetation for fuller look)
+# Vegetation density settings - individual control for each type
+@export_group("Vegetation Density")
+@export_range(0.0, 1.0) var tree_density: float = 0.35  ## Density of trees (0.0 = none, 1.0 = maximum)
+@export_range(0.0, 1.0) var rock_density: float = 0.25  ## Density of rocks and boulders (0.0 = none, 1.0 = maximum)
+@export_range(0.0, 1.0) var mushroom_density: float = 0.15  ## Density of mushrooms (0.0 = none, 1.0 = maximum)
+@export_range(0.0, 1.0) var strawberry_density: float = 0.20  ## Density of strawberry bushes (0.0 = none, 1.0 = maximum)
+@export_range(0.0, 1.0) var grass_density: float = 0.8  ## Density of grass and ground cover (higher for fuller look)
+@export_range(0.0, 1.0) var flower_density: float = 0.15  ## Density of wildflowers (0.0 = none, 1.0 = maximum)
 @export_range(1, 5) var spawn_radius: int = 2  ## How many chunks around player to populate with vegetation
 
 @export_group("Tree Size Variation")
@@ -64,7 +70,8 @@ enum VegType {
 	MUSHROOM_CLUSTER,
 	WILDFLOWER_YELLOW,
 	WILDFLOWER_PURPLE,
-	WILDFLOWER_WHITE
+	WILDFLOWER_WHITE,
+	STRAWBERRY_BUSH
 }
 
 func _ready():
@@ -189,15 +196,18 @@ func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise:
 func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float):
 	"""Spawn trees, rocks, and other large vegetation"""
 	var veg_type: VegType
+	var rand = randf()
 	
 	match biome:
 		Chunk.Biome.FOREST:
-			var rand = randf()
-			if rand > 0.65:
-				veg_type = VegType.TREE
-			elif rand > 0.35:
-				veg_type = VegType.PINE_TREE
-			elif rand > 0.15:
+			# Trees
+			if rand > (1.0 - tree_density * 0.65):
+				if randf() > 0.5:
+					veg_type = VegType.TREE
+				else:
+					veg_type = VegType.PINE_TREE
+			# Mushrooms
+			elif rand > (1.0 - mushroom_density * 0.35):
 				var mushroom_rand = randf()
 				if mushroom_rand > 0.6:
 					veg_type = VegType.MUSHROOM_RED
@@ -205,48 +215,64 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 					veg_type = VegType.MUSHROOM_BROWN
 				else:
 					veg_type = VegType.MUSHROOM_CLUSTER
-			else:
+			# Strawberries
+			elif rand > (1.0 - strawberry_density * 0.25):
+				veg_type = VegType.STRAWBERRY_BUSH
+			# Rocks
+			elif rand > (1.0 - rock_density * 0.15):
 				veg_type = VegType.ROCK
+			else:
+				return
 		
 		Chunk.Biome.GRASSLAND:
-			var rand = randf()
-			if rand > 0.85:
+			# Trees
+			if rand > (1.0 - tree_density * 0.20):
 				veg_type = VegType.TREE
-			elif rand > 0.7:
+			# Strawberries
+			elif rand > (1.0 - strawberry_density * 0.40):
+				veg_type = VegType.STRAWBERRY_BUSH
+			# Rocks
+			elif rand > (1.0 - rock_density * 0.25):
 				veg_type = VegType.ROCK
 			else:
-				return  # Ground cover handled separately
+				return
 		
 		Chunk.Biome.DESERT:
-			var rand = randf()
-			if rand > 0.8:
+			# Cactus (uses tree density)
+			if rand > (1.0 - tree_density * 0.30):
 				veg_type = VegType.CACTUS
-			elif rand > 0.5:
+			# Rocks
+			elif rand > (1.0 - rock_density * 0.35):
 				veg_type = VegType.ROCK
 			else:
 				return
 		
 		Chunk.Biome.MOUNTAIN:
-			var rand = randf()
-			if rand > 0.5:
-				veg_type = VegType.BOULDER
+			# Boulders and rocks
+			if rand > (1.0 - rock_density * 0.60):
+				if randf() > 0.5:
+					veg_type = VegType.BOULDER
+				else:
+					veg_type = VegType.ROCK
 			else:
-				veg_type = VegType.ROCK
+				return
 		
 		Chunk.Biome.SNOW:
-			var rand = randf()
-			if rand > 0.7:
+			# Pine trees
+			if rand > (1.0 - tree_density * 0.35):
 				veg_type = VegType.PINE_TREE
-			elif rand > 0.4:
+			# Rocks
+			elif rand > (1.0 - rock_density * 0.25):
 				veg_type = VegType.ROCK
 			else:
 				return
 		
 		Chunk.Biome.BEACH:
-			var rand = randf()
-			if rand > 0.7:
+			# Palm trees
+			if rand > (1.0 - tree_density * 0.25):
 				veg_type = VegType.PALM_TREE
-			elif rand > 0.5:
+			# Rocks
+			elif rand > (1.0 - rock_density * 0.20):
 				veg_type = VegType.ROCK
 			else:
 				return
@@ -259,12 +285,12 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float, cluster_value: float):
 	"""Spawn grass, flowers, and ground cover - dense and varied"""
 	var veg_type: VegType
+	var rand = randf()
 	
 	match biome:
 		Chunk.Biome.GRASSLAND:
-			var rand = randf()
-			if rand > 0.9:
-				# Occasional flowers
+			# Flowers
+			if rand > (1.0 - flower_density):
 				var flower_rand = randf()
 				if flower_rand > 0.66:
 					veg_type = VegType.WILDFLOWER_YELLOW
@@ -272,31 +298,38 @@ func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world
 					veg_type = VegType.WILDFLOWER_PURPLE
 				else:
 					veg_type = VegType.WILDFLOWER_WHITE
-			elif cluster_value > 0.3:
-				# Dense grass in good cluster areas
-				veg_type = VegType.GRASS_PATCH
+			# Grass (check density)
+			elif rand < grass_density:
+				if cluster_value > 0.3:
+					# Dense grass in good cluster areas
+					veg_type = VegType.GRASS_PATCH
+				else:
+					# Regular grass
+					veg_type = VegType.GRASS_TUFT
 			else:
-				# Regular grass
-				veg_type = VegType.GRASS_TUFT
+				return
 		
 		Chunk.Biome.FOREST:
-			var rand = randf()
-			if rand > 0.8:
-				# Mushrooms on forest floor
+			# Mushrooms on forest floor (use mushroom_density)
+			if rand > (1.0 - mushroom_density * 0.3):
 				var mushroom_rand = randf()
 				if mushroom_rand > 0.5:
 					veg_type = VegType.MUSHROOM_BROWN
 				else:
 					veg_type = VegType.MUSHROOM_CLUSTER
-			elif cluster_value > 0.2:
-				# Some grass patches in clearings
-				veg_type = VegType.GRASS_PATCH
+			# Grass (less dense in forest, check grass_density)
+			elif rand < grass_density * 0.5:
+				if cluster_value > 0.2:
+					# Some grass patches in clearings
+					veg_type = VegType.GRASS_PATCH
+				else:
+					veg_type = VegType.GRASS_TUFT
 			else:
-				veg_type = VegType.GRASS_TUFT
+				return
 		
 		Chunk.Biome.BEACH:
-			# Sparse beach grass
-			if randf() > 0.6:
+			# Sparse beach grass (check grass_density)
+			if rand < grass_density * 0.4:
 				veg_type = VegType.GRASS_TUFT
 			else:
 				return
@@ -405,6 +438,8 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 			create_wildflower(mesh_instance, Color(0.7, 0.3, 0.8))
 		VegType.WILDFLOWER_WHITE:
 			create_wildflower(mesh_instance, Color(0.95, 0.95, 1.0))
+		VegType.STRAWBERRY_BUSH:
+			create_harvestable_strawberry(mesh_instance)
 
 func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
 	"""Improved grass with crossed planes for 3D effect"""
@@ -431,7 +466,7 @@ func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
 	
 	# Create two crossed planes for 3D grass effect
 	for i in range(2):
-		var angle = (i / 2.0) * PI / 2.0  # 0Ã‚Â° and 45Ã‚Â°
+		var angle = (i / 2.0) * PI / 2.0  # 0Ãƒâ€šÃ‚Â° and 45Ãƒâ€šÃ‚Â°
 		var cos_a = cos(angle)
 		var sin_a = sin(angle)
 		
@@ -1263,3 +1298,169 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 	mushroom_mesh.surface_set_material(0, material)
 	
 	mesh_instance.mesh = mushroom_mesh
+
+func create_harvestable_strawberry(mesh_instance: MeshInstance3D):
+	"""Create a harvestable strawberry bush"""
+	var parent = mesh_instance.get_parent()
+	var strawberry_position = mesh_instance.global_position
+	
+	# Create the harvestable strawberry node
+	var strawberry = HarvestableStrawberryClass.new()
+	
+	# Set collision for harvesting
+	strawberry.collision_layer = 2
+	strawberry.collision_mask = 0
+	
+	# Create the visual mesh - small leafy bush with red berries
+	var bush_mesh = MeshInstance3D.new()
+	strawberry.add_child(bush_mesh)
+	
+	create_strawberry_bush_visual(bush_mesh)
+	
+	# Add collision shape for the strawberry bush (bigger to match new size)
+	var collision = CollisionShape3D.new()
+	var shape = SphereShape3D.new()
+	shape.radius = 0.5  # Increased from 0.4
+	collision.shape = shape
+	collision.position.y = 0.4  # Raised from 0.3
+	strawberry.add_child(collision)
+	
+	# Replace mesh_instance with strawberry in scene
+	parent.remove_child(mesh_instance)
+	parent.add_child(strawberry)
+	strawberry.global_position = strawberry_position
+	mesh_instance.queue_free()
+
+func create_strawberry_bush_visual(mesh_instance: MeshInstance3D):
+	"""Create the visual appearance of a strawberry bush with pixelated textures"""
+	var bush_height = 0.6 + randf() * 0.3  # 0.6-0.9m tall (taller)
+	var bush_radius = 0.4 + randf() * 0.15  # Base radius (wider)
+	
+	# Create bush body (leaves)
+	var bush_body = MeshInstance3D.new()
+	mesh_instance.add_child(bush_body)
+	create_bush_body_mesh(bush_body, bush_height, bush_radius)
+	
+	# Apply pixelated dark green leaf texture
+	var leaf_texture = PixelTextureGenerator.create_strawberry_leaf_texture()
+	var leaf_material = PixelTextureGenerator.create_pixel_material(leaf_texture, Color(1.0, 1.0, 1.0))
+	bush_body.set_surface_override_material(0, leaf_material)
+	
+	# Add strawberry berries with solid color (too small for texture)
+	var berry_count = 12 + randi() % 8  # 12-19 berries
+	
+	# Create solid berry material (no texture)
+	var berry_material = StandardMaterial3D.new()
+	berry_material.albedo_color = Color(0.85, 0.15, 0.12)  # Bright red
+	berry_material.roughness = 0.7
+	berry_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	
+	for i in range(berry_count):
+		var berry = MeshInstance3D.new()
+		mesh_instance.add_child(berry)
+		
+		# Position berry around the bush
+		var berry_angle = randf() * TAU
+		var berry_height_t = 0.15 + randf() * 0.7  # More vertical spread
+		var berry_height = berry_height_t * bush_height
+		
+		var radius_mult = sin(berry_height_t * PI)
+		var berry_radius = bush_radius * (0.3 + radius_mult * 0.7)
+		var berry_offset = berry_radius * 1.05  # Slightly closer to bush
+		
+		var berry_x = cos(berry_angle) * berry_offset
+		var berry_z = sin(berry_angle) * berry_offset
+		berry.position = Vector3(berry_x, berry_height, berry_z)
+		
+		# Create smaller berry sphere mesh
+		var sphere = SphereMesh.new()
+		sphere.radius = 0.04 + randf() * 0.02  # 0.04-0.06 (smaller)
+		sphere.height = sphere.radius * 2
+		sphere.radial_segments = 6
+		sphere.rings = 4
+		berry.mesh = sphere
+		
+		# Apply solid color material
+		berry.set_surface_override_material(0, berry_material)
+	
+	mesh_instance.rotation.y = randf() * TAU
+
+func create_bush_body_mesh(mesh_instance: MeshInstance3D, bush_height: float, bush_radius: float):
+	"""Create the main body mesh of the strawberry bush"""
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	# Create fuller, bushier shape with more layers
+	var layers = 7  # More layers for bushier appearance
+	for layer in range(layers):
+		var layer_height = (layer / float(layers - 1)) * bush_height
+		var layer_t = layer / float(layers - 1)
+		
+		# Create fuller rounded shape - wider overall
+		var radius_mult = sin(layer_t * PI)
+		var layer_radius = bush_radius * (0.5 + radius_mult * 0.5)  # Starts at 50% instead of 30%
+		
+		var segments = 10  # More segments for rounder shape
+		for seg in range(segments):
+			var angle1 = (seg / float(segments)) * TAU
+			var angle2 = ((seg + 1) / float(segments)) * TAU
+			
+			var x1 = cos(angle1) * layer_radius
+			var z1 = sin(angle1) * layer_radius
+			var x2 = cos(angle2) * layer_radius
+			var z2 = sin(angle2) * layer_radius
+			
+			# Add UV coordinates for texture mapping
+			var uv1 = Vector2(seg / float(segments), layer_t)
+			var uv2 = Vector2((seg + 1) / float(segments), layer_t)
+			
+			# Top cap
+			if layer == layers - 1:
+				surface_tool.set_uv(uv1)
+				surface_tool.add_vertex(Vector3(x1, layer_height, z1))
+				surface_tool.set_uv(uv2)
+				surface_tool.add_vertex(Vector3(x2, layer_height, z2))
+				surface_tool.set_uv(Vector2(0.5, 1.0))
+				surface_tool.add_vertex(Vector3(0, layer_height, 0))
+			# Side faces
+			elif layer < layers - 1:
+				var next_height = ((layer + 1) / float(layers - 1)) * bush_height
+				var next_t = (layer + 1) / float(layers - 1)
+				var next_radius_mult = sin(next_t * PI)
+				var next_radius = bush_radius * (0.5 + next_radius_mult * 0.5)
+				
+				var x1_next = cos(angle1) * next_radius
+				var z1_next = sin(angle1) * next_radius
+				var x2_next = cos(angle2) * next_radius
+				var z2_next = sin(angle2) * next_radius
+				
+				var uv1_next = Vector2(seg / float(segments), next_t)
+				var uv2_next = Vector2((seg + 1) / float(segments), next_t)
+				
+				# Triangle 1
+				surface_tool.set_uv(uv1)
+				surface_tool.add_vertex(Vector3(x1, layer_height, z1))
+				surface_tool.set_uv(uv2)
+				surface_tool.add_vertex(Vector3(x2, layer_height, z2))
+				surface_tool.set_uv(uv1_next)
+				surface_tool.add_vertex(Vector3(x1_next, next_height, z1_next))
+				
+				# Triangle 2
+				surface_tool.set_uv(uv2)
+				surface_tool.add_vertex(Vector3(x2, layer_height, z2))
+				surface_tool.set_uv(uv2_next)
+				surface_tool.add_vertex(Vector3(x2_next, next_height, z2_next))
+				surface_tool.set_uv(uv1_next)
+				surface_tool.add_vertex(Vector3(x1_next, next_height, z1_next))
+			
+			# Bottom cap
+			if layer == 0:
+				surface_tool.set_uv(Vector2(0.5, 0.0))
+				surface_tool.add_vertex(Vector3(0, 0, 0))
+				surface_tool.set_uv(uv1)
+				surface_tool.add_vertex(Vector3(x1, layer_height, z1))
+				surface_tool.set_uv(uv2)
+				surface_tool.add_vertex(Vector3(x2, layer_height, z2))
+	
+	surface_tool.generate_normals()
+	mesh_instance.mesh = surface_tool.commit()
