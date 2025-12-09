@@ -30,6 +30,11 @@ func _ready():
 		print("SpringArm position set to: ", spring_arm.position)
 		print("SpringArm spring_length: ", spring_arm.spring_length)
 	
+	# Adjust camera near clip to prevent clipping into nearby objects
+	if camera:
+		camera.near = 0.05  # Reduced from default 0.1 to see objects closer
+		print("Camera near clip set to: ", camera.near)
+	
 	# Capture the mouse
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	print("Player ready at position: ", global_position)

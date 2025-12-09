@@ -9,10 +9,12 @@ const HarvestableTreeClass = preload("res://harvestable_tree.gd")
 var chunk_manager: ChunkManager
 var noise: FastNoiseLite
 var vegetation_noise: FastNoiseLite
+var cluster_noise: FastNoiseLite  # For grass clustering
 var player: Node3D
 
 # Vegetation settings
-@export var vegetation_density: float = 0.4  # 0.0 to 1.0, how much vegetation to spawn (increased)
+@export var vegetation_density: float = 0.4  # 0.0 to 1.0, for trees/rocks
+@export var grass_density: float = 0.8  # Higher density for grass specifically
 @export var spawn_radius: int = 2  # How many chunks around player to populate
 
 # Track which chunks have vegetation
@@ -27,10 +29,14 @@ enum VegType {
 	BOULDER,
 	CACTUS,
 	GRASS_TUFT,
+	GRASS_PATCH,      # Dense cluster of grass
 	PALM_TREE,
-	MUSHROOM_RED,      # Red cap with white spots (toadstool)
-	MUSHROOM_BROWN,    # Brown cap (normal mushroom)
-	MUSHROOM_CLUSTER   # Small cluster of tiny mushrooms
+	MUSHROOM_RED,
+	MUSHROOM_BROWN,
+	MUSHROOM_CLUSTER,
+	WILDFLOWER_YELLOW,
+	WILDFLOWER_PURPLE,
+	WILDFLOWER_WHITE
 }
 
 func _ready():
@@ -39,6 +45,13 @@ func _ready():
 	vegetation_noise.seed = randi()
 	vegetation_noise.frequency = 0.5  # High frequency for scattered placement
 	vegetation_noise.noise_type = FastNoiseLite.TYPE_CELLULAR
+	
+	# Initialize cluster noise for grass patches
+	cluster_noise = FastNoiseLite.new()
+	cluster_noise.seed = vegetation_noise.seed + 1000
+	cluster_noise.frequency = 0.15  # Lower frequency = larger patches
+	cluster_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	
 	print("VegetationSpawner ready, waiting for initialization...")
 
 func initialize(chunk_mgr: ChunkManager):
@@ -62,7 +75,6 @@ func _process(_delta):
 			var chunk_pos = Vector2i(x, z)
 			if not populated_chunks.has(chunk_pos) and chunk_manager.chunks.has(chunk_pos):
 				populate_chunk(chunk_pos)
-				print("Populating chunk: ", chunk_pos)
 
 func populate_chunk(chunk_pos: Vector2i):
 	if populated_chunks.has(chunk_pos):
@@ -73,53 +85,200 @@ func populate_chunk(chunk_pos: Vector2i):
 	var chunk_size = chunk_manager.chunk_size
 	var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
 	
-	# Sample points across the chunk
-	var samples_per_chunk = 25  # Moderate number of spawn attempts
+	# First pass: Trees, rocks, and large vegetation
+	var samples_per_chunk = 25
 	
 	for i in range(samples_per_chunk):
-		# Random position within chunk
 		var local_x = randf() * chunk_size
 		var local_z = randf() * chunk_size
 		var world_x = world_offset.x + local_x
 		var world_z = world_offset.y + local_z
 		
-		# Use vegetation noise to determine if we spawn here
 		var veg_noise = vegetation_noise.get_noise_2d(world_x, world_z)
-		# Use absolute value and check if above threshold (cellular noise ranges differently)
 		if abs(veg_noise) < 0.3:
-			continue  # Skip spots with low noise
+			continue
 		
-		# Get terrain info at this position
 		var base_noise = noise.get_noise_2d(world_x, world_z)
 		var biome = get_biome_at_position(world_x, world_z, base_noise)
 		
-		# Get height at this position
-		var height = get_terrain_height_at_position(world_x, world_z, base_noise, biome)
-		
-		# Validate with raycast to ensure we're above actual terrain
-		# This prevents spawning underground when height calculation is off
-		var space_state = get_world_3d().direct_space_state
-		var ray_start = Vector3(world_x, height + 10.0, world_z)  # 10m above calculated height
-		var ray_end = Vector3(world_x, height - 2.0, world_z)  # 2m below calculated height
-		
-		var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
-		query.collision_mask = 1  # Only terrain
-		
-		var result = space_state.intersect_ray(query)
-		if result:
-			# Found terrain! Use actual terrain height
-			height = result.position.y
-		# If no hit, use calculated height (terrain might not be generated yet)
-		
-		# Don't spawn in water
 		if biome == Chunk.Biome.OCEAN:
 			continue
 		
-		# Spawn appropriate vegetation for this biome
-		spawn_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
+		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
+		if height == -999.0:  # Raycast failed
+			continue
+		
+		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
+	
+	# Second pass: Dense ground cover (grass, flowers)
+	# Much higher sample count for ground cover
+	var ground_cover_samples = 100  # More samples for denser coverage
+	
+	for i in range(ground_cover_samples):
+		var local_x = randf() * chunk_size
+		var local_z = randf() * chunk_size
+		var world_x = world_offset.x + local_x
+		var world_z = world_offset.y + local_z
+		
+		var base_noise = noise.get_noise_2d(world_x, world_z)
+		var biome = get_biome_at_position(world_x, world_z, base_noise)
+		
+		# Only spawn ground cover in certain biomes
+		if biome == Chunk.Biome.OCEAN:
+			continue
+		
+		# Use cluster noise to create patches
+		var cluster_value = cluster_noise.get_noise_2d(world_x, world_z)
+		
+		# Only spawn in high cluster areas (creates natural patches)
+		if cluster_value < 0.0:
+			continue
+		
+		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
+		if height == -999.0:
+			continue
+		
+		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
+
+func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
+	"""Get terrain height with raycast validation"""
+	var calculated_height = get_terrain_height_at_position(world_x, world_z, base_noise, biome)
+	
+	# Raycast to find actual terrain
+	var space_state = get_world_3d().direct_space_state
+	var ray_start = Vector3(world_x, calculated_height + 10.0, world_z)
+	var ray_end = Vector3(world_x, calculated_height - 2.0, world_z)
+	
+	var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+	query.collision_mask = 1
+	
+	var result = space_state.intersect_ray(query)
+	if result:
+		return result.position.y
+	
+	return -999.0  # Signal that raycast failed
+
+func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float):
+	"""Spawn trees, rocks, and other large vegetation"""
+	var veg_type: VegType
+	
+	match biome:
+		Chunk.Biome.FOREST:
+			var rand = randf()
+			if rand > 0.65:
+				veg_type = VegType.TREE
+			elif rand > 0.35:
+				veg_type = VegType.PINE_TREE
+			elif rand > 0.15:
+				var mushroom_rand = randf()
+				if mushroom_rand > 0.6:
+					veg_type = VegType.MUSHROOM_RED
+				elif mushroom_rand > 0.3:
+					veg_type = VegType.MUSHROOM_BROWN
+				else:
+					veg_type = VegType.MUSHROOM_CLUSTER
+			else:
+				veg_type = VegType.ROCK
+		
+		Chunk.Biome.GRASSLAND:
+			var rand = randf()
+			if rand > 0.85:
+				veg_type = VegType.TREE
+			elif rand > 0.7:
+				veg_type = VegType.ROCK
+			else:
+				return  # Ground cover handled separately
+		
+		Chunk.Biome.DESERT:
+			var rand = randf()
+			if rand > 0.6:
+				veg_type = VegType.CACTUS
+			elif rand > 0.2:
+				veg_type = VegType.ROCK
+			else:
+				return
+		
+		Chunk.Biome.MOUNTAIN:
+			var rand = randf()
+			if rand > 0.5:
+				veg_type = VegType.BOULDER
+			else:
+				veg_type = VegType.ROCK
+		
+		Chunk.Biome.SNOW:
+			var rand = randf()
+			if rand > 0.7:
+				veg_type = VegType.PINE_TREE
+			elif rand > 0.4:
+				veg_type = VegType.ROCK
+			else:
+				return
+		
+		Chunk.Biome.BEACH:
+			var rand = randf()
+			if rand > 0.7:
+				veg_type = VegType.PALM_TREE
+			elif rand > 0.5:
+				veg_type = VegType.ROCK
+			else:
+				return
+		
+		_:
+			return
+	
+	create_vegetation_mesh(veg_type, spawn_pos)
+
+func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float, cluster_value: float):
+	"""Spawn grass, flowers, and ground cover - dense and varied"""
+	var veg_type: VegType
+	
+	match biome:
+		Chunk.Biome.GRASSLAND:
+			var rand = randf()
+			if rand > 0.9:
+				# Occasional flowers
+				var flower_rand = randf()
+				if flower_rand > 0.66:
+					veg_type = VegType.WILDFLOWER_YELLOW
+				elif flower_rand > 0.33:
+					veg_type = VegType.WILDFLOWER_PURPLE
+				else:
+					veg_type = VegType.WILDFLOWER_WHITE
+			elif cluster_value > 0.3:
+				# Dense grass in good cluster areas
+				veg_type = VegType.GRASS_PATCH
+			else:
+				# Regular grass
+				veg_type = VegType.GRASS_TUFT
+		
+		Chunk.Biome.FOREST:
+			var rand = randf()
+			if rand > 0.8:
+				# Mushrooms on forest floor
+				var mushroom_rand = randf()
+				if mushroom_rand > 0.5:
+					veg_type = VegType.MUSHROOM_BROWN
+				else:
+					veg_type = VegType.MUSHROOM_CLUSTER
+			elif cluster_value > 0.2:
+				# Some grass patches in clearings
+				veg_type = VegType.GRASS_PATCH
+			else:
+				veg_type = VegType.GRASS_TUFT
+		
+		Chunk.Biome.BEACH:
+			# Sparse beach grass
+			if randf() > 0.6:
+				veg_type = VegType.GRASS_TUFT
+			else:
+				return
+		
+		_:
+			return
+	
+	create_vegetation_mesh(veg_type, spawn_pos)
 
 func get_biome_at_position(world_x: float, world_z: float, base_noise: float) -> Chunk.Biome:
-	# Same logic as chunk biome determination
 	var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
 	var moisture = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z)
 	
@@ -144,11 +303,8 @@ func get_biome_at_position(world_x: float, world_z: float, base_noise: float) ->
 	return Chunk.Biome.GRASSLAND
 
 func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
-	# Simple single-point height calculation
-	# Matches chunk generation as closely as possible
 	var height_multiplier = chunk_manager.height_multiplier
 	
-	# Get modifiers matching chunk.gd exactly
 	var height_mod = 1.0
 	var roughness_mod = 1.0
 	
@@ -178,128 +334,27 @@ func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise
 	var modified_height = base_noise * roughness_mod
 	var height = modified_height * height_multiplier * height_mod
 	
-	# Apply baseline offset (MUST MATCH CHUNK.GD!)
 	if biome == Chunk.Biome.OCEAN:
-		height = height - (height_multiplier * 0.3)  # Ocean goes DOWN
+		height = height - (height_multiplier * 0.3)
 	elif biome == Chunk.Biome.BEACH:
-		height = height + (height_multiplier * 0.2)  # Beach at sea level
+		height = height + (height_multiplier * 0.2)
 	else:
-		height = height + (height_multiplier * 0.5)  # Normal baseline
+		height = height + (height_multiplier * 0.5)
 	
 	return height
 
-func spawn_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float):
-	var veg_type: VegType
-	
-	# Determine vegetation type based on biome
-	match biome:
-		Chunk.Biome.FOREST:
-			# Dense forest with mix of trees, undergrowth, and mushrooms
-			var rand = randf()
-			if rand > 0.65:
-				veg_type = VegType.TREE
-			elif rand > 0.35:
-				veg_type = VegType.PINE_TREE
-			elif rand > 0.25:
-				veg_type = VegType.GRASS_TUFT
-			elif rand > 0.15:
-				# Mushrooms! More variety
-				var mushroom_rand = randf()
-				if mushroom_rand > 0.6:
-					veg_type = VegType.MUSHROOM_RED
-				elif mushroom_rand > 0.3:
-					veg_type = VegType.MUSHROOM_BROWN
-				else:
-					veg_type = VegType.MUSHROOM_CLUSTER
-			else:
-				veg_type = VegType.ROCK  # Rocks in forest
-		Chunk.Biome.GRASSLAND:
-			# Lots of grass, some trees and rocks
-			var rand = randf()
-			if rand > 0.85:
-				veg_type = VegType.TREE  # Rare trees
-			elif rand > 0.7:
-				veg_type = VegType.ROCK  # More rocks
-			else:
-				veg_type = VegType.GRASS_TUFT  # Mostly grass
-		Chunk.Biome.DESERT:
-			# Cacti and rocks
-			var rand = randf()
-			if rand > 0.6:
-				veg_type = VegType.CACTUS
-			elif rand > 0.2:
-				veg_type = VegType.ROCK
-			else:
-				return  # Some empty desert
-		Chunk.Biome.MOUNTAIN:
-			# Very rocky
-			var rand = randf()
-			if rand > 0.5:
-				veg_type = VegType.BOULDER
-			else:
-				veg_type = VegType.ROCK
-		Chunk.Biome.SNOW:
-			# Sparse pine trees and rocks
-			var rand = randf()
-			if rand > 0.7:
-				veg_type = VegType.PINE_TREE
-			elif rand > 0.3:
-				veg_type = VegType.ROCK
-			else:
-				return  # Some empty snowy areas
-		Chunk.Biome.BEACH:
-			# Sparse vegetation
-			var rand = randf()
-			if rand > 0.85:
-				veg_type = VegType.PALM_TREE
-			elif rand > 0.7:
-				veg_type = VegType.GRASS_TUFT
-			else:
-				return  # Mostly empty beach
-		_:
-			return
-	
-	# Create the vegetation mesh
-	print("Spawning ", VegType.keys()[veg_type], " in biome ", Chunk.Biome.keys()[biome])
-	create_vegetation_mesh(veg_type, spawn_pos, world_x, world_z)
-
-func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: float, _world_z: float):
+func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 	var mesh_instance = MeshInstance3D.new()
 	add_child(mesh_instance)
+	mesh_instance.global_position = spawn_position
 	
-	# Height offsets for all vegetation types
-	# Since we now use raycast for accurate placement, minimal offsets needed
-	var adjusted_position = spawn_pos
-	
-	match veg_type:
-		VegType.ROCK:
-			adjusted_position.y += 0.0  # No offset, raycast is accurate
-		VegType.BOULDER:
-			adjusted_position.y += 0.0  # No offset, raycast is accurate
-		VegType.GRASS_TUFT:
-			adjusted_position.y -= 0.05  # Slight sink to look planted
-		VegType.CACTUS:
-			adjusted_position.y += 0.2  # Cacti lift slightly
-		VegType.TREE, VegType.PALM_TREE, VegType.PINE_TREE:
-			adjusted_position.y += 0.0  # Trees at exact surface
-		VegType.MUSHROOM_RED, VegType.MUSHROOM_BROWN:
-			adjusted_position.y += 0.0  # Mushrooms at exact surface
-		VegType.MUSHROOM_CLUSTER:
-			adjusted_position.y += 0.0  # Clusters at exact surface
-	
-	mesh_instance.global_position = adjusted_position
-	
-	# Add slight random rotation
-	mesh_instance.rotation.y = randf() * TAU
-	
-	# Create appropriate mesh based on type
 	match veg_type:
 		VegType.TREE:
-			create_harvestable_tree(mesh_instance, HarvestableTreeClass.TreeType.NORMAL)
+			create_tree(mesh_instance)
 		VegType.PINE_TREE:
-			create_harvestable_tree(mesh_instance, HarvestableTreeClass.TreeType.PINE)
+			create_pine_tree(mesh_instance)
 		VegType.PALM_TREE:
-			create_harvestable_tree(mesh_instance, HarvestableTreeClass.TreeType.PALM)
+			create_palm_tree(mesh_instance)
 		VegType.ROCK:
 			create_rock(mesh_instance, false)
 		VegType.BOULDER:
@@ -307,260 +362,544 @@ func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: flo
 		VegType.CACTUS:
 			create_cactus(mesh_instance)
 		VegType.GRASS_TUFT:
-			create_grass_tuft(mesh_instance)
+			create_grass_tuft_improved(mesh_instance)
+		VegType.GRASS_PATCH:
+			create_grass_patch(mesh_instance)
 		VegType.MUSHROOM_RED:
 			create_mushroom(mesh_instance, true, false)
 		VegType.MUSHROOM_BROWN:
 			create_mushroom(mesh_instance, false, false)
 		VegType.MUSHROOM_CLUSTER:
 			create_mushroom(mesh_instance, false, true)
+		VegType.WILDFLOWER_YELLOW:
+			create_wildflower(mesh_instance, Color(1.0, 0.9, 0.2))
+		VegType.WILDFLOWER_PURPLE:
+			create_wildflower(mesh_instance, Color(0.7, 0.3, 0.8))
+		VegType.WILDFLOWER_WHITE:
+			create_wildflower(mesh_instance, Color(0.95, 0.95, 1.0))
 
-func create_harvestable_tree(mesh_instance: MeshInstance3D, tree_type: HarvestableTreeClass.TreeType):
-	"""Convert a tree mesh instance into a HarvestableTree"""
-	# Store position before replacement
-	var tree_position = mesh_instance.global_position
+func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
+	"""Improved grass with crossed planes for 3D effect"""
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	# Varied grass dimensions
+	var height = 0.3 + randf() * 0.4  # 0.3-0.7m tall
+	var width = 0.15 + randf() * 0.1  # 0.15-0.25m wide
+	
+	# Random green color variation
+	var green_variation = randf()
+	var grass_color: Color
+	if green_variation > 0.7:
+		grass_color = Color(0.6, 0.85, 0.3)  # Yellow-green
+	elif green_variation > 0.4:
+		grass_color = Color(0.3, 0.75, 0.25)  # Bright green
+	else:
+		grass_color = Color(0.35, 0.65, 0.2)  # Dark green
+	
+	# Darker at base, lighter at top
+	var base_color = grass_color * 0.6
+	var tip_color = grass_color * 1.2
+	
+	# Create two crossed planes for 3D grass effect
+	for i in range(2):
+		var angle = (i / 2.0) * PI / 2.0  # 0° and 45°
+		var cos_a = cos(angle)
+		var sin_a = sin(angle)
+		
+		# Four corners of the grass blade
+		var p1 = Vector3(-width/2 * cos_a, 0, -width/2 * sin_a)
+		var p2 = Vector3(width/2 * cos_a, 0, width/2 * sin_a)
+		var p3 = Vector3(-width/2 * cos_a, height, -width/2 * sin_a)
+		var p4 = Vector3(width/2 * cos_a, height, width/2 * sin_a)
+		
+		# Slight curve/taper at top
+		p3.y = height * 0.95
+		p4.y = height * 0.95
+		p3.x *= 0.7
+		p3.z *= 0.7
+		p4.x *= 0.7
+		p4.z *= 0.7
+		
+		# Front face
+		surface_tool.set_color(base_color)
+		surface_tool.add_vertex(p1)
+		surface_tool.add_vertex(p2)
+		surface_tool.set_color(tip_color)
+		surface_tool.add_vertex(p3)
+		
+		surface_tool.set_color(base_color)
+		surface_tool.add_vertex(p2)
+		surface_tool.set_color(tip_color)
+		surface_tool.add_vertex(p4)
+		surface_tool.add_vertex(p3)
+		
+		# Back face (for visibility from both sides)
+		surface_tool.set_color(base_color)
+		surface_tool.add_vertex(p2)
+		surface_tool.add_vertex(p1)
+		surface_tool.set_color(tip_color)
+		surface_tool.add_vertex(p3)
+		
+		surface_tool.set_color(tip_color)
+		surface_tool.add_vertex(p4)
+		surface_tool.set_color(base_color)
+		surface_tool.add_vertex(p2)
+		surface_tool.set_color(tip_color)
+		surface_tool.add_vertex(p3)
+	
+	surface_tool.generate_normals()
+	var grass_mesh = surface_tool.commit()
+	
+	var material = StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.roughness = 0.7
+	grass_mesh.surface_set_material(0, material)
+	
+	mesh_instance.mesh = grass_mesh
+	
+	# Random rotation for variety
+	mesh_instance.rotation.y = randf() * TAU
+
+func create_grass_patch(mesh_instance: MeshInstance3D):
+	"""Create a small cluster of grass blades"""
+	# Create multiple grass blades in a small area
+	var blade_count = 5 + randi() % 5  # 5-9 blades
+	
+	for i in range(blade_count):
+		var blade = MeshInstance3D.new()
+		mesh_instance.add_child(blade)
+		
+		# Random offset within patch (0.3m radius)
+		var offset_angle = randf() * TAU
+		var offset_dist = randf() * 0.3
+		var offset_x = cos(offset_angle) * offset_dist
+		var offset_z = sin(offset_angle) * offset_dist
+		
+		blade.position = Vector3(offset_x, 0, offset_z)
+		blade.rotation.y = randf() * TAU
+		
+		# Create individual grass blade
+		create_grass_blade_simple(blade)
+
+func create_grass_blade_simple(mesh_instance: MeshInstance3D):
+	"""Simple single grass blade for use in patches"""
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var height = 0.25 + randf() * 0.35
+	var width = 0.1 + randf() * 0.08
+	
+	# Color variation
+	var green_var = randf()
+	var grass_color: Color
+	if green_var > 0.6:
+		grass_color = Color(0.5, 0.8, 0.3)
+	else:
+		grass_color = Color(0.3, 0.7, 0.25)
+	
+	var base_color = grass_color * 0.6
+	var tip_color = grass_color * 1.3
+	
+	# Single plane
+	var p1 = Vector3(-width/2, 0, 0)
+	var p2 = Vector3(width/2, 0, 0)
+	var p3 = Vector3(-width/3, height, 0)
+	var p4 = Vector3(width/3, height, 0)
+	
+	# Front
+	surface_tool.set_color(base_color)
+	surface_tool.add_vertex(p1)
+	surface_tool.add_vertex(p2)
+	surface_tool.set_color(tip_color)
+	surface_tool.add_vertex(p3)
+	
+	surface_tool.set_color(base_color)
+	surface_tool.add_vertex(p2)
+	surface_tool.set_color(tip_color)
+	surface_tool.add_vertex(p4)
+	surface_tool.add_vertex(p3)
+	
+	# Back
+	surface_tool.set_color(base_color)
+	surface_tool.add_vertex(p2)
+	surface_tool.add_vertex(p1)
+	surface_tool.set_color(tip_color)
+	surface_tool.add_vertex(p3)
+	
+	surface_tool.set_color(tip_color)
+	surface_tool.add_vertex(p4)
+	surface_tool.set_color(base_color)
+	surface_tool.add_vertex(p2)
+	surface_tool.set_color(tip_color)
+	surface_tool.add_vertex(p3)
+	
+	surface_tool.generate_normals()
+	var mesh = surface_tool.commit()
+	
+	var material = StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.roughness = 0.7
+	mesh.surface_set_material(0, material)
+	
+	mesh_instance.mesh = mesh
+
+func create_wildflower(mesh_instance: MeshInstance3D, color: Color):
+	"""Create a small wildflower"""
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	# Stem
+	var stem_height = 0.15 + randf() * 0.15
+	var stem_color = Color(0.3, 0.6, 0.2)
+	
+	var stem_width = 0.02
+	surface_tool.set_color(stem_color)
+	surface_tool.add_vertex(Vector3(-stem_width, 0, 0))
+	surface_tool.add_vertex(Vector3(stem_width, 0, 0))
+	surface_tool.add_vertex(Vector3(0, stem_height, 0))
+	
+	# Flower petals (simple star shape)
+	var petal_count = 5
+	var petal_size = 0.05 + randf() * 0.03
+	var flower_y = stem_height
+	
+	for i in range(petal_count):
+		var angle1 = (i / float(petal_count)) * TAU
+		var angle2 = ((i + 1) / float(petal_count)) * TAU
+		
+		var x1 = cos(angle1) * petal_size
+		var z1 = sin(angle1) * petal_size
+		var x2 = cos(angle2) * petal_size
+		var z2 = sin(angle2) * petal_size
+		
+		# Petal triangle
+		surface_tool.set_color(color)
+		surface_tool.add_vertex(Vector3(0, flower_y, 0))  # Center
+		surface_tool.add_vertex(Vector3(x1, flower_y, z1))
+		surface_tool.add_vertex(Vector3(x2, flower_y, z2))
+	
+	# Center of flower (darker)
+	var center_color = color * 0.5
+	var center_size = petal_size * 0.3
+	for i in range(6):
+		var angle1 = (i / 6.0) * TAU
+		var angle2 = ((i + 1) / 6.0) * TAU
+		
+		var x1 = cos(angle1) * center_size
+		var z1 = sin(angle1) * center_size
+		var x2 = cos(angle2) * center_size
+		var z2 = sin(angle2) * center_size
+		
+		surface_tool.set_color(center_color)
+		surface_tool.add_vertex(Vector3(0, flower_y + 0.01, 0))
+		surface_tool.add_vertex(Vector3(x1, flower_y + 0.01, z1))
+		surface_tool.add_vertex(Vector3(x2, flower_y + 0.01, z2))
+	
+	surface_tool.generate_normals()
+	var mesh = surface_tool.commit()
+	
+	var material = StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.roughness = 0.5
+	mesh.surface_set_material(0, material)
+	
+	mesh_instance.mesh = mesh
+	mesh_instance.rotation.y = randf() * TAU
+
+# [Rest of the original functions remain the same]
+# Keep all the tree, rock, cactus, mushroom functions from the original file
+
+func create_tree(mesh_instance: MeshInstance3D):
+	"""Create a harvestable tree"""
 	var parent = mesh_instance.get_parent()
+	var tree_position = mesh_instance.global_position
 	
-	# Create a HarvestableTree to replace the mesh instance
-	var harvestable_tree = HarvestableTreeClass.new()
-	harvestable_tree.tree_type = tree_type
+	# Create the harvestable tree node
+	var tree = HarvestableTreeClass.new()
+	tree.tree_type = HarvestableTreeClass.TreeType.NORMAL
 	
-	# Determine tree height based on type
-	var tree_height = 6.0
-	match tree_type:
-		HarvestableTreeClass.TreeType.NORMAL:
-			tree_height = 4.0 + randf() * 2.0
-		HarvestableTreeClass.TreeType.PINE:
-			tree_height = 5.0 + randf() * 2.0
-		HarvestableTreeClass.TreeType.PALM:
-			tree_height = 3.5 + randf() * 1.5
+	# Set collision for harvesting
+	tree.collision_layer = 2
+	tree.collision_mask = 0
 	
-	harvestable_tree.tree_height = tree_height
+	# Much more varied tree sizes - but with higher minimums
+	var size_variation = randf()
+	var trunk_height: float
+	var trunk_radius: float
+	var foliage_size_multiplier: float
 	
-	# Create the tree mesh as a child
-	var tree_mesh = MeshInstance3D.new()
-	harvestable_tree.add_child(tree_mesh)
+	if size_variation > 0.85:
+		# Very large trees (15%)
+		trunk_height = 5.5 + randf() * 2.0  # 5.5-7.5m tall
+		trunk_radius = 0.45 + randf() * 0.15  # Thicker trunk
+		foliage_size_multiplier = 1.4 + randf() * 0.3
+	elif size_variation > 0.5:
+		# Medium-large trees (35%)
+		trunk_height = 4.5 + randf() * 1.0  # 4.5-5.5m tall
+		trunk_radius = 0.35 + randf() * 0.1
+		foliage_size_multiplier = 1.2 + randf() * 0.3
+	elif size_variation > 0.2:
+		# Medium trees (30%)
+		trunk_height = 3.5 + randf() * 1.0  # 3.5-4.5m tall
+		trunk_radius = 0.3 + randf() * 0.05
+		foliage_size_multiplier = 1.0 + randf() * 0.2
+	else:
+		# Smaller trees (20%) - but still decent size
+		trunk_height = 2.8 + randf() * 0.7  # 2.8-3.5m tall (minimum increased)
+		trunk_radius = 0.25 + randf() * 0.05
+		foliage_size_multiplier = 0.9 + randf() * 0.2
 	
-	# Generate the appropriate tree mesh
-	match tree_type:
-		HarvestableTreeClass.TreeType.NORMAL:
-			create_tree(tree_mesh, false)
-		HarvestableTreeClass.TreeType.PINE:
-			create_pine_tree(tree_mesh)
-		HarvestableTreeClass.TreeType.PALM:
-			create_tree(tree_mesh, true)
+	# Create trunk
+	var trunk_mesh = MeshInstance3D.new()
+	tree.add_child(trunk_mesh)
 	
-	# Add collision to the tree (cylinder around trunk)
+	var cylinder_mesh = CylinderMesh.new()
+	cylinder_mesh.height = trunk_height
+	cylinder_mesh.top_radius = trunk_radius * 0.7  # Tapers toward top
+	cylinder_mesh.bottom_radius = trunk_radius
+	trunk_mesh.mesh = cylinder_mesh
+	trunk_mesh.position.y = trunk_height / 2
+	
+	# Slightly varied bark colors
+	var bark_variation = randf() * 0.1
+	var trunk_material = StandardMaterial3D.new()
+	trunk_material.albedo_color = Color(0.35 + bark_variation, 0.22 + bark_variation * 0.5, 0.13 + bark_variation * 0.3)
+	trunk_material.roughness = 0.9
+	trunk_mesh.set_surface_override_material(0, trunk_material)
+	
+	# Foliage - varied size and position based on tree size
+	var foliage = MeshInstance3D.new()
+	trunk_mesh.add_child(foliage)
+	
+	var foliage_mesh = SphereMesh.new()
+	var base_foliage_size = 1.8 + randf() * 0.7  # 1.8-2.5m radius
+	foliage_mesh.radius = base_foliage_size * foliage_size_multiplier
+	foliage_mesh.height = foliage_mesh.radius * 2.0
+	foliage.mesh = foliage_mesh
+	
+	# Position foliage higher on taller trees
+	var foliage_height_ratio = 0.55 + randf() * 0.15  # 55-70% up the trunk
+	foliage.position = Vector3(0, trunk_height * foliage_height_ratio, 0)
+	
+	# Varied foliage colors (different shades of green)
+	var green_variation = randf()
+	var foliage_material = StandardMaterial3D.new()
+	if green_variation > 0.7:
+		foliage_material.albedo_color = Color(0.25, 0.65, 0.25)  # Darker green
+	elif green_variation > 0.3:
+		foliage_material.albedo_color = Color(0.2, 0.6, 0.2)  # Standard green
+	else:
+		foliage_material.albedo_color = Color(0.15, 0.55, 0.15)  # Very dark green
+	foliage_material.roughness = 0.8
+	foliage.set_surface_override_material(0, foliage_material)
+	
+	# Add collision shape for the tree (scaled to trunk size)
 	var collision = CollisionShape3D.new()
 	var shape = CylinderShape3D.new()
-	shape.radius = 0.5  # Slightly larger than visual trunk
-	shape.height = tree_height
+	shape.radius = trunk_radius
+	shape.height = trunk_height
 	collision.shape = shape
-	collision.position.y = tree_height / 2.0  # Center vertically
-	harvestable_tree.add_child(collision)
+	collision.position.y = trunk_height / 2
+	tree.add_child(collision)
 	
-	# Replace mesh_instance with harvestable_tree in scene tree
+	# Replace mesh_instance with tree in scene
 	parent.remove_child(mesh_instance)
-	parent.add_child(harvestable_tree)
-	
-	# Set position after adding to tree
-	harvestable_tree.global_position = tree_position
-	
+	parent.add_child(tree)
+	tree.global_position = tree_position
 	mesh_instance.queue_free()
 
-func create_tree(mesh_instance: MeshInstance3D, is_palm: bool):
-	# Simple tree: cylinder trunk + cone/sphere canopy (REALISTIC PROPORTIONS)
-	var trunk_height = 5.0 + randf() * 3.0  # 5-8m tall (realistic)
-	var trunk_radius = 0.15  # Thinner trunk (0.3m diameter)
-	
-	var surface_tool = SurfaceTool.new()
-	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	# Trunk (simple cylinder approximation)
-	var trunk_color = Color(0.4, 0.25, 0.1) if not is_palm else Color(0.6, 0.4, 0.2)
-	var sides = 8  # More sides for smoother look
-	for i in range(sides):
-		var angle1 = (i / float(sides)) * TAU
-		var angle2 = ((i + 1) / float(sides)) * TAU
-		
-		var x1 = cos(angle1) * trunk_radius
-		var z1 = sin(angle1) * trunk_radius
-		var x2 = cos(angle2) * trunk_radius
-		var z2 = sin(angle2) * trunk_radius
-		
-		# Bottom triangle
-		surface_tool.set_color(trunk_color)
-		surface_tool.add_vertex(Vector3(x1, 0, z1))
-		surface_tool.add_vertex(Vector3(x2, 0, z2))
-		surface_tool.add_vertex(Vector3(x1, trunk_height, z1))
-		
-		# Top triangle
-		surface_tool.add_vertex(Vector3(x2, 0, z2))
-		surface_tool.add_vertex(Vector3(x2, trunk_height, z2))
-		surface_tool.add_vertex(Vector3(x1, trunk_height, z1))
-	
-	# Canopy (simple cone/sphere) - REALISTIC PROPORTIONS
-	var canopy_color = Color(0.2, 0.6, 0.2) if not is_palm else Color(0.3, 0.7, 0.3)
-	var canopy_radius = 1.5 if not is_palm else 1.2  # Narrower canopy (3m wide)
-	var canopy_height = 4.0 if not is_palm else 3.0  # Taller canopy
-	var canopy_base_y = trunk_height
-	
-	for i in range(sides):
-		var angle1 = (i / float(sides)) * TAU
-		var angle2 = ((i + 1) / float(sides)) * TAU
-		
-		var x1 = cos(angle1) * canopy_radius
-		var z1 = sin(angle1) * canopy_radius
-		var x2 = cos(angle2) * canopy_radius
-		var z2 = sin(angle2) * canopy_radius
-		
-		# Cone sides
-		surface_tool.set_color(canopy_color)
-		surface_tool.add_vertex(Vector3(x1, canopy_base_y, z1))
-		surface_tool.add_vertex(Vector3(x2, canopy_base_y, z2))
-		surface_tool.add_vertex(Vector3(0, canopy_base_y + canopy_height, 0))
-		
-		# Bottom disc (close the hole)
-		surface_tool.set_color(canopy_color * 0.8)  # Slightly darker
-		surface_tool.add_vertex(Vector3(0, canopy_base_y, 0))  # Center
-		surface_tool.add_vertex(Vector3(x2, canopy_base_y, z2))
-		surface_tool.add_vertex(Vector3(x1, canopy_base_y, z1))
-	
-	surface_tool.generate_normals()
-	var tree_mesh = surface_tool.commit()
-	
-	# Create material that uses vertex colors
-	var material = StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
-	tree_mesh.surface_set_material(0, material)
-	
-	mesh_instance.mesh = tree_mesh
-
 func create_pine_tree(mesh_instance: MeshInstance3D):
-	# Taller, thinner cone for pine trees (REALISTIC)
-	var trunk_height = 6.0 + randf() * 3.0  # 6-9m tall
-	var trunk_radius = 0.12  # Thin trunk
+	"""Create a harvestable pine tree"""
+	var parent = mesh_instance.get_parent()
+	var tree_position = mesh_instance.global_position
 	
-	var surface_tool = SurfaceTool.new()
-	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# Create the harvestable tree node
+	var tree = HarvestableTreeClass.new()
+	tree.tree_type = HarvestableTreeClass.TreeType.PINE
 	
-	var trunk_color = Color(0.3, 0.2, 0.1)
-	var foliage_color = Color(0.1, 0.4, 0.2)
+	# Set collision for harvesting
+	tree.collision_layer = 2
+	tree.collision_mask = 0
 	
-	# Simple trunk
-	var sides = 6
-	for i in range(sides):
-		var angle1 = (i / float(sides)) * TAU
-		var angle2 = ((i + 1) / float(sides)) * TAU
+	# Create tree visual
+	var trunk_height = 3.0 + randf() * 2.0
+	var trunk_radius = 0.25
+	
+	var trunk_mesh = MeshInstance3D.new()
+	tree.add_child(trunk_mesh)
+	
+	var cylinder_mesh = CylinderMesh.new()
+	cylinder_mesh.height = trunk_height
+	cylinder_mesh.top_radius = trunk_radius * 0.6
+	cylinder_mesh.bottom_radius = trunk_radius
+	trunk_mesh.mesh = cylinder_mesh
+	trunk_mesh.position.y = trunk_height / 2
+	
+	var trunk_material = StandardMaterial3D.new()
+	trunk_material.albedo_color = Color(0.35, 0.25, 0.2)
+	trunk_material.roughness = 0.9
+	trunk_mesh.set_surface_override_material(0, trunk_material)
+	
+	# Pine foliage (cone levels)
+	var cone_levels = 3
+	for i in range(cone_levels):
+		var cone = MeshInstance3D.new()
+		trunk_mesh.add_child(cone)
 		
-		var x1 = cos(angle1) * trunk_radius
-		var z1 = sin(angle1) * trunk_radius
-		var x2 = cos(angle2) * trunk_radius
-		var z2 = sin(angle2) * trunk_radius
+		var cone_mesh = CylinderMesh.new()
+		var level_height = trunk_height * (0.8 - i * 0.2)
+		var cone_size = 1.5 - i * 0.3
 		
-		surface_tool.set_color(trunk_color)
-		surface_tool.add_vertex(Vector3(x1, 0, z1))
-		surface_tool.add_vertex(Vector3(x2, 0, z2))
-		surface_tool.add_vertex(Vector3(0, trunk_height, 0))
-	
-	# Cone-shaped foliage (narrower for realistic pine)
-	var cone_radius = 1.0  # 2m wide
-	var cone_height = trunk_height * 0.75  # Most of the tree
-	var cone_start_y = trunk_height * 0.25  # Starts 1/4 up
-	
-	for i in range(sides):
-		var angle1 = (i / float(sides)) * TAU
-		var angle2 = ((i + 1) / float(sides)) * TAU
+		cone_mesh.height = cone_size
+		cone_mesh.top_radius = 0.0
+		cone_mesh.bottom_radius = cone_size * 0.7
+		cone.mesh = cone_mesh
+		cone.position = Vector3(0, level_height, 0)
 		
-		var x1 = cos(angle1) * cone_radius
-		var z1 = sin(angle1) * cone_radius
-		var x2 = cos(angle2) * cone_radius
-		var z2 = sin(angle2) * cone_radius
+		var cone_material = StandardMaterial3D.new()
+		cone_material.albedo_color = Color(0.15, 0.4, 0.2)
+		cone_material.roughness = 0.8
+		cone.set_surface_override_material(0, cone_material)
+	
+	# Add collision shape for the tree
+	var collision = CollisionShape3D.new()
+	var shape = CylinderShape3D.new()
+	shape.radius = trunk_radius
+	shape.height = trunk_height
+	collision.shape = shape
+	collision.position.y = trunk_height / 2
+	tree.add_child(collision)
+	
+	# Replace mesh_instance with tree in scene
+	parent.remove_child(mesh_instance)
+	parent.add_child(tree)
+	tree.global_position = tree_position
+	mesh_instance.queue_free()
+
+func create_palm_tree(mesh_instance: MeshInstance3D):
+	"""Create a harvestable palm tree"""
+	var parent = mesh_instance.get_parent()
+	var tree_position = mesh_instance.global_position
+	
+	# Create the harvestable tree node
+	var tree = HarvestableTreeClass.new()
+	tree.tree_type = HarvestableTreeClass.TreeType.PALM
+	
+	# Set collision for harvesting
+	tree.collision_layer = 2
+	tree.collision_mask = 0
+	
+	# Create tree visual
+	var trunk_height = 3.0 + randf() * 1.5
+	var trunk_radius = 0.25
+	
+	var trunk_mesh = MeshInstance3D.new()
+	tree.add_child(trunk_mesh)
+	
+	var cylinder_mesh = CylinderMesh.new()
+	cylinder_mesh.height = trunk_height
+	cylinder_mesh.top_radius = trunk_radius * 0.7
+	cylinder_mesh.bottom_radius = trunk_radius
+	trunk_mesh.mesh = cylinder_mesh
+	trunk_mesh.position.y = trunk_height / 2
+	
+	var trunk_material = StandardMaterial3D.new()
+	trunk_material.albedo_color = Color(0.6, 0.5, 0.3)
+	trunk_material.roughness = 0.8
+	trunk_mesh.set_surface_override_material(0, trunk_material)
+	
+	# Palm fronds
+	var palm_count = 6
+	for i in range(palm_count):
+		var frond = MeshInstance3D.new()
+		trunk_mesh.add_child(frond)
 		
-		# Cone sides
-		surface_tool.set_color(foliage_color)
-		surface_tool.add_vertex(Vector3(x1, cone_start_y, z1))
-		surface_tool.add_vertex(Vector3(x2, cone_start_y, z2))
-		surface_tool.add_vertex(Vector3(0, cone_start_y + cone_height, 0))
+		var box_mesh = BoxMesh.new()
+		box_mesh.size = Vector3(0.2, 0.1, 2.0)
+		frond.mesh = box_mesh
 		
-		# Bottom disc
-		surface_tool.set_color(foliage_color * 0.8)
-		surface_tool.add_vertex(Vector3(0, cone_start_y, 0))
-		surface_tool.add_vertex(Vector3(x2, cone_start_y, z2))
-		surface_tool.add_vertex(Vector3(x1, cone_start_y, z1))
+		var angle = (i / float(palm_count)) * TAU
+		frond.position = Vector3(0, trunk_height * 0.45, 0)
+		frond.rotation.y = angle
+		frond.rotation.x = -0.5
+		
+		var frond_material = StandardMaterial3D.new()
+		frond_material.albedo_color = Color(0.2, 0.7, 0.3)
+		frond_material.roughness = 0.7
+		frond.set_surface_override_material(0, frond_material)
 	
-	surface_tool.generate_normals()
-	var pine_mesh = surface_tool.commit()
+	# Add collision shape for the tree
+	var collision = CollisionShape3D.new()
+	var shape = CylinderShape3D.new()
+	shape.radius = trunk_radius
+	shape.height = trunk_height
+	collision.shape = shape
+	collision.position.y = trunk_height / 2
+	tree.add_child(collision)
 	
-	# Create material that uses vertex colors
-	var material = StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
-	pine_mesh.surface_set_material(0, material)
-	
-	mesh_instance.mesh = pine_mesh
+	# Replace mesh_instance with tree in scene
+	parent.remove_child(mesh_instance)
+	parent.add_child(tree)
+	tree.global_position = tree_position
+	mesh_instance.queue_free()
 
 func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
-	# Convert the mesh instance parent to a ResourceNode
-	var parent = mesh_instance.get_parent()
+	var size = 0.6 + randf() * 0.4 if not is_boulder else 1.2 + randf() * 0.8
 	
-	# Store the position before creating the new node
+	var parent = mesh_instance.get_parent()
 	var rock_position = mesh_instance.global_position
 	
-	# Create a ResourceNode to replace the mesh instance
 	var resource_node = ResourceNodeClass.new()
-	resource_node.node_type = ResourceNodeClass.NodeType.STONE_DEPOSIT if is_boulder else ResourceNodeClass.NodeType.ROCK
+	resource_node.resource_type = "stone"
+	resource_node.resource_name = "Boulder" if is_boulder else "Rock"
+	resource_node.harvest_time = 3.0 if is_boulder else 2.0
+	resource_node.drop_item = "stone"
+	resource_node.drop_amount_min = 6 if is_boulder else 2
+	resource_node.drop_amount_max = 10 if is_boulder else 4
 	
-	# Create the mesh as a child of the resource node
+	resource_node.collision_layer = 2
+	resource_node.collision_mask = 0
+	
 	var rock_mesh = MeshInstance3D.new()
 	resource_node.add_child(rock_mesh)
-	
-	# Use SphereMesh - simple and works perfectly
-	var size = 0.4 + randf() * 0.3 if not is_boulder else 0.7 + randf() * 0.4  # Smaller rocks
 	
 	var sphere_mesh = SphereMesh.new()
 	sphere_mesh.radius = size / 2
 	sphere_mesh.height = size
+	sphere_mesh.radial_segments = 8
+	sphere_mesh.rings = 6
 	
-	# Create material with natural rock colors
 	var material = StandardMaterial3D.new()
-	if is_boulder:
-		material.albedo_color = Color(0.35, 0.35, 0.35)  # Dark gray
-	else:
-		material.albedo_color = Color(0.55, 0.5, 0.45)  # Light gray-brown
+	material.albedo_color = Color(0.5 + randf() * 0.2, 0.5 + randf() * 0.2, 0.5 + randf() * 0.2)
 	material.roughness = 0.95
+	material.metallic = 0.1
 	
 	sphere_mesh.material = material
-	
 	rock_mesh.mesh = sphere_mesh
-	# Position is already adjusted in create_vegetation_mesh
 	
-	# Random slight tilt
 	rock_mesh.rotation.x = (randf() - 0.5) * 0.3
 	rock_mesh.rotation.z = (randf() - 0.5) * 0.3
+	rock_mesh.scale = Vector3(1.0, 0.6, 0.9)
 	
-	# Flatten it to make it look more rock-like
-	rock_mesh.scale = Vector3(1.0, 0.6, 0.9)  # Flatter
-	
-	# Add collision shape for the resource
 	var collision = CollisionShape3D.new()
 	var shape = SphereShape3D.new()
 	shape.radius = size / 2
 	collision.shape = shape
 	resource_node.add_child(collision)
 	
-	# Replace mesh_instance with resource_node in the scene tree
 	parent.remove_child(mesh_instance)
 	parent.add_child(resource_node)
-	
-	# Now set the position (after it's in the tree)
 	resource_node.global_position = rock_position
-	
 	mesh_instance.queue_free()
 
 func create_cactus(mesh_instance: MeshInstance3D):
-	# Simple cactus: tall cylinder
 	var height = 1.5 + randf() * 1.0
 	var radius = 0.2
 	
@@ -570,78 +909,43 @@ func create_cactus(mesh_instance: MeshInstance3D):
 	cylinder_mesh.bottom_radius = radius
 	
 	mesh_instance.mesh = cylinder_mesh
-	# Position is handled in create_vegetation_mesh
 	
 	var material = StandardMaterial3D.new()
 	material.albedo_color = Color(0.3, 0.6, 0.3)
 	material.roughness = 0.7
 	mesh_instance.set_surface_override_material(0, material)
 
-func create_grass_tuft(mesh_instance: MeshInstance3D):
-	# Realistic grass tuft size (0.3-0.6m tall)
-	var height = 0.3 + randf() * 0.3  # 0.3-0.6m tall
-	var width = 0.05 + randf() * 0.05  # 0.05-0.1m wide (thin blades)
-	
-	var box_mesh = BoxMesh.new()
-	box_mesh.size = Vector3(width, height, width)
-	
-	mesh_instance.mesh = box_mesh
-	# Position is handled in create_vegetation_mesh
-	
-	var material = StandardMaterial3D.new()
-	# Bright, varied greens so they're very visible
-	var green_variation = randf()
-	if green_variation > 0.7:
-		material.albedo_color = Color(0.8, 1.0, 0.3)  # Yellow-green
-	elif green_variation > 0.4:
-		material.albedo_color = Color(0.3, 0.9, 0.3)  # Bright green
-	else:
-		material.albedo_color = Color(0.4, 0.8, 0.2)  # Regular green
-	material.roughness = 0.5
-	mesh_instance.set_surface_override_material(0, material)
-
 func create_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bool):
 	if is_cluster:
-		# Create a cluster of small mushrooms
-		var cluster_count = 3 + randi() % 3  # 3-5 mushrooms
-		
+		var cluster_count = 3 + randi() % 3
 		for i in range(cluster_count):
 			var small_mushroom = MeshInstance3D.new()
 			mesh_instance.add_child(small_mushroom)
 			
-			# Random offset within small area
 			var offset_x = (randf() - 0.5) * 0.3
 			var offset_z = (randf() - 0.5) * 0.3
 			small_mushroom.position = Vector3(offset_x, 0, offset_z)
 			
-			# Create tiny mushroom
 			create_single_mushroom(small_mushroom, false, 0.15 + randf() * 0.1)
 	else:
-		# Create single mushroom
 		var size = 0.2 + randf() * 0.15
 		create_single_mushroom(mesh_instance, is_red, size)
 
 func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: float):
-	# Mushroom = stem (cylinder) + cap (hemisphere/cone)
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	
-	# Stem dimensions
 	var stem_height = size * 1.5
 	var stem_radius = size * 0.15
-	
-	# Cap dimensions
 	var cap_radius = size * 0.8
 	var cap_height = size * 0.5
 	
-	# Colors
-	var stem_color = Color(0.9, 0.85, 0.75)  # Off-white/cream
-	var cap_color = Color(0.8, 0.15, 0.1) if is_red else Color(0.5, 0.35, 0.25)  # Red or brown
-	var spot_color = Color(0.95, 0.95, 0.9)  # White spots for red mushrooms
+	var stem_color = Color(0.9, 0.85, 0.75)
+	var cap_color = Color(0.8, 0.15, 0.1) if is_red else Color(0.5, 0.35, 0.25)
 	
 	var sides = 8
 	
-	# Create stem (cylinder)
+	# Stem
 	for i in range(sides):
 		var angle1 = (i / float(sides)) * TAU
 		var angle2 = ((i + 1) / float(sides)) * TAU
@@ -651,7 +955,6 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 		var x2 = cos(angle2) * stem_radius
 		var z2 = sin(angle2) * stem_radius
 		
-		# Stem side
 		surface_tool.set_color(stem_color)
 		surface_tool.add_vertex(Vector3(x1, 0, z1))
 		surface_tool.add_vertex(Vector3(x2, 0, z2))
@@ -661,26 +964,23 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 		surface_tool.add_vertex(Vector3(x2, stem_height, z2))
 		surface_tool.add_vertex(Vector3(x1, stem_height, z1))
 	
-	# Create cap (rounded dome shape with proper top closure)
+	# Cap
 	var cap_base_y = stem_height
-	var cap_segments = 5  # Vertical segments for roundness
+	var cap_segments = 5
 	
 	for segment in range(cap_segments):
 		var t1 = segment / float(cap_segments)
 		var t2 = (segment + 1) / float(cap_segments)
 		
-		# Use sine curve for dome shape
 		var radius1 = cap_radius * sin(t1 * PI * 0.5)
 		var radius2 = cap_radius * sin(t2 * PI * 0.5)
 		var height1 = cap_base_y + (1.0 - cos(t1 * PI * 0.5)) * cap_height
 		var height2 = cap_base_y + (1.0 - cos(t2 * PI * 0.5)) * cap_height
 		
-		# Last segment closes to a point at top
 		if segment == cap_segments - 1:
 			radius2 = 0.0
 			height2 = cap_base_y + cap_height
 			
-			# Make triangles that converge to center point
 			for i in range(sides):
 				var angle1 = (i / float(sides)) * TAU
 				var angle2 = ((i + 1) / float(sides)) * TAU
@@ -693,9 +993,8 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 				surface_tool.set_color(cap_color)
 				surface_tool.add_vertex(Vector3(x1, height1, z1))
 				surface_tool.add_vertex(Vector3(x2, height1, z2))
-				surface_tool.add_vertex(Vector3(0, height2, 0))  # Top center point
+				surface_tool.add_vertex(Vector3(0, height2, 0))
 		else:
-			# Normal dome segments
 			for i in range(sides):
 				var angle1 = (i / float(sides)) * TAU
 				var angle2 = ((i + 1) / float(sides)) * TAU
@@ -710,7 +1009,6 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 				var x2b = cos(angle2) * radius2
 				var z2b = sin(angle2) * radius2
 				
-				# Cap segment (quad as two triangles)
 				surface_tool.set_color(cap_color)
 				surface_tool.add_vertex(Vector3(x1a, height1, z1a))
 				surface_tool.add_vertex(Vector3(x2a, height1, z2a))
@@ -720,53 +1018,9 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 				surface_tool.add_vertex(Vector3(x2b, height2, z2b))
 				surface_tool.add_vertex(Vector3(x1b, height2, z1b))
 	
-	# Add underside (gills) - flat disc under the cap
-	for i in range(sides):
-		var angle1 = (i / float(sides)) * TAU
-		var angle2 = ((i + 1) / float(sides)) * TAU
-		
-		var x1 = cos(angle1) * cap_radius
-		var z1 = sin(angle1) * cap_radius
-		var x2 = cos(angle2) * cap_radius
-		var z2 = sin(angle2) * cap_radius
-		
-		# Underside triangles (darker color for gills)
-		surface_tool.set_color(cap_color * 0.7)
-		surface_tool.add_vertex(Vector3(0, cap_base_y, 0))  # Center
-		surface_tool.add_vertex(Vector3(x2, cap_base_y, z2))  # Note: reversed winding
-		surface_tool.add_vertex(Vector3(x1, cap_base_y, z1))
-	
-	# Add white spots for red mushrooms (simple small circles on top)
-	if is_red:
-		var spot_count = 3 + randi() % 3  # 3-5 spots
-		for spot in range(spot_count):
-			var spot_angle = (spot / float(spot_count)) * TAU + randf() * 0.5
-			var spot_distance = cap_radius * (0.4 + randf() * 0.3)
-			var spot_x = cos(spot_angle) * spot_distance
-			var spot_z = sin(spot_angle) * spot_distance
-			var spot_y = cap_base_y + cap_height * 0.7  # Near top
-			var spot_size = size * 0.15
-			
-			# Simple spot (small quad)
-			for i in range(4):
-				var a = (i / 4.0) * TAU
-				var sx = spot_x + cos(a) * spot_size
-				var sz = spot_z + sin(a) * spot_size
-				
-				surface_tool.set_color(spot_color)
-				surface_tool.add_vertex(Vector3(spot_x, spot_y, spot_z))
-				surface_tool.add_vertex(Vector3(sx, spot_y, sz))
-				
-				var next_a = ((i + 1) / 4.0) * TAU
-				var next_sx = spot_x + cos(next_a) * spot_size
-				var next_sz = spot_z + sin(next_a) * spot_size
-				surface_tool.add_vertex(Vector3(next_sx, spot_y, next_sz))
-	
-	# Generate normals and commit
 	surface_tool.generate_normals()
 	var mushroom_mesh = surface_tool.commit()
 	
-	# Create material
 	var material = StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
