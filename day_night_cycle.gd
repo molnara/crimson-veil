@@ -4,33 +4,48 @@ class_name DayNightCycle
 # Time settings
 @export var day_length_minutes: float = 10.0  # Real minutes for a full day/night cycle
 @export var start_time: float = 0.25  # 0.0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset
+@export var enable_clouds: bool = true
+@export var cloud_count: int = 20
 
 # References
 @onready var sun: DirectionalLight3D = $SunLight
 @onready var moon: DirectionalLight3D = $MoonLight
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 
+# Celestial bodies
+var sun_mesh: MeshInstance3D
+var moon_mesh: MeshInstance3D
+var stars_mesh: MultiMeshInstance3D
+var clouds: Array = []
+
 # Internal variables
 var time_of_day: float = 0.0  # 0.0 to 1.0 (0 = midnight, 0.5 = noon)
 var time_scale: float = 1.0
 
 # Sky colors for different times of day
-var night_sky_color = Color(0.05, 0.05, 0.15)
-var sunrise_sky_color = Color(1.0, 0.5, 0.3)
-var day_sky_color = Color(0.5, 0.7, 1.0)
-var sunset_sky_color = Color(1.0, 0.4, 0.2)
+var night_sky_top_color = Color(0.02, 0.02, 0.1)      # Very dark blue at zenith
+var night_sky_horizon_color = Color(0.1, 0.1, 0.15)   # Slightly lighter at horizon
+var sunrise_sky_top_color = Color(0.4, 0.6, 0.9)      # Light blue
+var sunrise_sky_horizon_color = Color(1.0, 0.6, 0.4)  # Orange/pink
+var day_sky_top_color = Color(0.35, 0.65, 1.0)        # Bright blue
+var day_sky_horizon_color = Color(0.7, 0.85, 1.0)     # Light blue near horizon
+var sunset_sky_top_color = Color(0.4, 0.5, 0.8)       # Purple-blue
+var sunset_sky_horizon_color = Color(1.0, 0.5, 0.3)   # Orange/red
 
 # Light colors
 var night_light_color = Color(0.3, 0.3, 0.4)
-var day_light_color = Color(1.0, 0.95, 0.9)
-var sunrise_light_color = Color(1.0, 0.7, 0.5)
-var sunset_light_color = Color(1.0, 0.6, 0.4)
-var moon_light_color = Color(0.6, 0.7, 0.9)  # Soft blue moonlight
+var day_light_color = Color(1.0, 0.98, 0.95)
+var sunrise_light_color = Color(1.0, 0.8, 0.6)
+var sunset_light_color = Color(1.0, 0.7, 0.5)
+var moon_light_color = Color(0.5, 0.6, 0.8)
 
 func _ready():
 	time_of_day = start_time
 	setup_environment()
 	setup_moon()
+	create_celestial_bodies()
+	if enable_clouds:
+		create_clouds()
 	update_lighting()
 
 func _process(delta):
@@ -43,6 +58,9 @@ func _process(delta):
 		time_of_day -= 1.0
 	
 	update_lighting()
+	update_celestial_bodies()
+	if enable_clouds:
+		update_clouds(delta)
 
 func setup_environment():
 	# Create environment if it doesn't exist
@@ -54,13 +72,25 @@ func setup_environment():
 	# Setup sky
 	var sky = Sky.new()
 	var sky_material = ProceduralSkyMaterial.new()
+	
+	# Disable sun/moon disc in procedural sky (we'll draw our own)
+	sky_material.sun_angle_max = 0.0  # Hide sun disc
+	sky_material.sun_curve = 0.0
+	
 	sky.sky_material = sky_material
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	
 	# Setup ambient light
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.5
+	env.ambient_light_energy = 0.4
+	
+	# Add subtle fog for atmosphere
+	env.fog_enabled = true
+	env.fog_light_color = Color(0.7, 0.8, 0.9)
+	env.fog_light_energy = 0.5
+	env.fog_density = 0.001  # Very subtle
+	env.fog_aerial_perspective = 0.3
 
 func setup_moon():
 	# Configure moon light properties
@@ -69,13 +99,195 @@ func setup_moon():
 		moon.light_energy = 0.0  # Start invisible
 		moon.shadow_enabled = true
 
+func create_celestial_bodies():
+	# Create Sun
+	sun_mesh = MeshInstance3D.new()
+	add_child(sun_mesh)
+	
+	var sun_sphere = SphereMesh.new()
+	sun_sphere.radius = 8.0
+	sun_sphere.height = 16.0
+	sun_mesh.mesh = sun_sphere
+	
+	# Unshaded bright material for sun
+	var sun_material = StandardMaterial3D.new()
+	sun_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	sun_material.albedo_color = Color(1.0, 0.95, 0.8)
+	sun_material.emission_enabled = true
+	sun_material.emission = Color(1.0, 0.9, 0.7)
+	sun_material.emission_energy_multiplier = 2.0
+	sun_mesh.material_override = sun_material
+	
+	# Position far away
+	sun_mesh.position = Vector3(0, 100, -200)
+	
+	# Create Moon
+	moon_mesh = MeshInstance3D.new()
+	add_child(moon_mesh)
+	
+	var moon_sphere = SphereMesh.new()
+	moon_sphere.radius = 6.0
+	moon_sphere.height = 12.0
+	moon_mesh.mesh = moon_sphere
+	
+	# Slightly glowing moon material
+	var moon_material = StandardMaterial3D.new()
+	moon_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	moon_material.albedo_color = Color(0.9, 0.9, 1.0)
+	moon_material.emission_enabled = true
+	moon_material.emission = Color(0.8, 0.8, 1.0)
+	moon_material.emission_energy_multiplier = 0.5
+	moon_mesh.material_override = moon_material
+	
+	# Position opposite sun
+	moon_mesh.position = Vector3(0, 100, 200)
+	
+	# Create Stars
+	create_stars()
+
+func create_stars():
+	"""Create a starfield for nighttime"""
+	stars_mesh = MultiMeshInstance3D.new()
+	add_child(stars_mesh)
+	
+	# Create particle-like stars using MultiMesh
+	var star_mesh = SphereMesh.new()
+	star_mesh.radius = 0.3
+	star_mesh.height = 0.6
+	
+	var multi_mesh = MultiMesh.new()
+	multi_mesh.mesh = star_mesh
+	multi_mesh.transform_format = MultiMesh.TRANSFORM_3D
+	multi_mesh.instance_count = 200
+	
+	# Randomly place stars in a sphere around the world
+	for i in range(200):
+		# Random position on sphere
+		var theta = randf() * TAU
+		var phi = randf() * PI
+		var radius = 300.0
+		
+		var x = radius * sin(phi) * cos(theta)
+		var y = radius * sin(phi) * sin(theta) 
+		var z = radius * cos(phi)
+		
+		# Only place stars in upper hemisphere (above horizon)
+		if y > 0:
+			var transform = Transform3D()
+			transform.origin = Vector3(x, y, z)
+			var scale = 0.5 + randf() * 1.5  # Random sizes
+			transform = transform.scaled(Vector3.ONE * scale)
+			multi_mesh.set_instance_transform(i, transform)
+	
+	stars_mesh.multimesh = multi_mesh
+	
+	# Glowing star material
+	var star_material = StandardMaterial3D.new()
+	star_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	star_material.albedo_color = Color(1, 1, 1)
+	star_material.emission_enabled = true
+	star_material.emission = Color(1, 1, 1)
+	star_material.emission_energy_multiplier = 2.0
+	stars_mesh.material_override = star_material
+	
+	# Start invisible
+	stars_mesh.visible = false
+
+func create_clouds():
+	"""Create simple billboard clouds"""
+	for i in range(cloud_count):
+		var cloud = MeshInstance3D.new()
+		add_child(cloud)
+		
+		# Create a simple quad for billboard
+		var quad_mesh = QuadMesh.new()
+		var size = 15.0 + randf() * 20.0  # Vary cloud sizes
+		quad_mesh.size = Vector2(size, size * 0.6)
+		cloud.mesh = quad_mesh
+		
+		# Cloud material
+		var cloud_material = StandardMaterial3D.new()
+		cloud_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		cloud_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		cloud_material.albedo_color = Color(1, 1, 1, 0.7)
+		cloud_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		cloud.material_override = cloud_material
+		
+		# Random position in sky
+		var x = (randf() - 0.5) * 400.0
+		var y = 60.0 + randf() * 30.0  # Height variation
+		var z = (randf() - 0.5) * 400.0
+		cloud.position = Vector3(x, y, z)
+		
+		# Store cloud data
+		clouds.append({
+			"node": cloud,
+			"speed": 2.0 + randf() * 3.0,  # Random speed
+			"base_y": y
+		})
+
+func update_clouds(delta):
+	"""Animate clouds drifting"""
+	for cloud_data in clouds:
+		var cloud = cloud_data["node"]
+		# Drift in X direction
+		cloud.position.x += cloud_data["speed"] * delta
+		
+		# Wrap around
+		if cloud.position.x > 200.0:
+			cloud.position.x = -200.0
+		
+		# Subtle up/down bobbing
+		cloud.position.y = cloud_data["base_y"] + sin(Time.get_ticks_msec() * 0.0003 + cloud.position.x * 0.01) * 2.0
+
+func update_celestial_bodies():
+	"""Update sun and moon positions"""
+	# Calculate angle (0 to 360 degrees through the day)
+	var sun_angle = time_of_day * 360.0
+	var angle_rad = deg_to_rad(sun_angle)
+	
+	# Sun moves in an arc across the sky
+	var sun_distance = 200.0
+	sun_mesh.position = Vector3(
+		0,
+		sun_distance * sin(angle_rad - PI/2),  # Vertical movement
+		-sun_distance * cos(angle_rad - PI/2)  # Horizontal movement
+	)
+	
+	# Moon is opposite (180 degrees offset)
+	var moon_angle_rad = angle_rad + PI
+	moon_mesh.position = Vector3(
+		0,
+		sun_distance * sin(moon_angle_rad - PI/2),
+		-sun_distance * cos(moon_angle_rad - PI/2)
+	)
+	
+	# Show/hide sun and moon based on position
+	sun_mesh.visible = sun_mesh.position.y > -20.0  # Hide when below horizon
+	moon_mesh.visible = moon_mesh.position.y > -20.0
+	
+	# Stars only visible at night
+	if stars_mesh:
+		# Fade stars in/out
+		var star_alpha = 0.0
+		if time_of_day < 0.2 or time_of_day > 0.8:  # Night time
+			star_alpha = 1.0
+		elif time_of_day < 0.3:  # Morning fade out
+			star_alpha = 1.0 - ((time_of_day - 0.2) / 0.1)
+		elif time_of_day > 0.7:  # Evening fade in
+			star_alpha = (time_of_day - 0.7) / 0.1
+		
+		stars_mesh.visible = star_alpha > 0.0
+		if stars_mesh.visible:
+			var mat = stars_mesh.material_override as StandardMaterial3D
+			mat.albedo_color.a = star_alpha
+
 func update_lighting():
 	# Calculate sun rotation (sun moves in a circle)
-	# 0.0 = midnight (sun below horizon), 0.5 = noon (sun overhead)
-	var sun_angle = time_of_day * 360.0  # 0-360 degrees
-	sun.rotation_degrees.x = sun_angle - 90.0  # Offset so noon is overhead
+	var sun_angle = time_of_day * 360.0
+	sun.rotation_degrees.x = sun_angle - 90.0
 	
-	# Moon is opposite the sun (180 degrees offset)
+	# Moon is opposite the sun
 	if moon:
 		moon.rotation_degrees.x = (sun_angle + 180.0) - 90.0
 	
@@ -86,51 +298,72 @@ func update_lighting():
 	# Calculate lighting based on time of day
 	if time_of_day < 0.25:  # Night to sunrise (midnight to 6am)
 		var t = time_of_day / 0.25
-		sun.light_energy = lerp(0.0, 0.5, t)
+		sun.light_energy = lerp(0.0, 0.4, t)
 		sun.light_color = night_light_color.lerp(sunrise_light_color, t)
-		sky_material.sky_top_color = night_sky_color.lerp(sunrise_sky_color, t)
-		sky_material.sky_horizon_color = night_sky_color.lerp(sunrise_sky_color, t)
 		
-		# Moon is bright at night, fades at sunrise
+		# Sky gradient
+		sky_material.sky_top_color = night_sky_top_color.lerp(sunrise_sky_top_color, t)
+		sky_material.sky_horizon_color = night_sky_horizon_color.lerp(sunrise_sky_horizon_color, t)
+		
+		# Moon bright at night, fades at sunrise
 		if moon:
-			moon.light_energy = lerp(0.3, 0.0, t)
+			moon.light_energy = lerp(0.25, 0.0, t)
+		
+		# Fog color
+		env.fog_light_color = night_sky_horizon_color.lerp(sunrise_sky_horizon_color, t)
 		
 	elif time_of_day < 0.5:  # Sunrise to noon (6am to 12pm)
 		var t = (time_of_day - 0.25) / 0.25
-		sun.light_energy = lerp(0.5, 1.0, t)
+		sun.light_energy = lerp(0.4, 1.0, t)
 		sun.light_color = sunrise_light_color.lerp(day_light_color, t)
-		sky_material.sky_top_color = sunrise_sky_color.lerp(day_sky_color, t)
-		sky_material.sky_horizon_color = sunrise_sky_color.lerp(day_sky_color, t)
 		
-		# Moon is off during day
+		sky_material.sky_top_color = sunrise_sky_top_color.lerp(day_sky_top_color, t)
+		sky_material.sky_horizon_color = sunrise_sky_horizon_color.lerp(day_sky_horizon_color, t)
+		
 		if moon:
 			moon.light_energy = 0.0
+		
+		env.fog_light_color = sunrise_sky_horizon_color.lerp(day_sky_horizon_color, t)
 		
 	elif time_of_day < 0.75:  # Noon to sunset (12pm to 6pm)
 		var t = (time_of_day - 0.5) / 0.25
-		sun.light_energy = lerp(1.0, 0.5, t)
+		sun.light_energy = lerp(1.0, 0.4, t)
 		sun.light_color = day_light_color.lerp(sunset_light_color, t)
-		sky_material.sky_top_color = day_sky_color.lerp(sunset_sky_color, t)
-		sky_material.sky_horizon_color = day_sky_color.lerp(sunset_sky_color, t)
 		
-		# Moon is off during day
+		sky_material.sky_top_color = day_sky_top_color.lerp(sunset_sky_top_color, t)
+		sky_material.sky_horizon_color = day_sky_horizon_color.lerp(sunset_sky_horizon_color, t)
+		
 		if moon:
 			moon.light_energy = 0.0
 		
+		env.fog_light_color = day_sky_horizon_color.lerp(sunset_sky_horizon_color, t)
+		
 	else:  # Sunset to night (6pm to midnight)
 		var t = (time_of_day - 0.75) / 0.25
-		sun.light_energy = lerp(0.5, 0.0, t)
+		sun.light_energy = lerp(0.4, 0.0, t)
 		sun.light_color = sunset_light_color.lerp(night_light_color, t)
-		sky_material.sky_top_color = sunset_sky_color.lerp(night_sky_color, t)
-		sky_material.sky_horizon_color = sunset_sky_color.lerp(night_sky_color, t)
+		
+		sky_material.sky_top_color = sunset_sky_top_color.lerp(night_sky_top_color, t)
+		sky_material.sky_horizon_color = sunset_sky_horizon_color.lerp(night_sky_horizon_color, t)
 		
 		# Moon rises at sunset
 		if moon:
-			moon.light_energy = lerp(0.0, 0.3, t)
+			moon.light_energy = lerp(0.0, 0.25, t)
+		
+		env.fog_light_color = sunset_sky_horizon_color.lerp(night_sky_horizon_color, t)
 	
 	# Ground color (darker at night)
-	sky_material.ground_bottom_color = Color(0.2, 0.15, 0.1) * (sun.light_energy + 0.2)
-	sky_material.ground_horizon_color = sky_material.sky_horizon_color * 0.7
+	var ground_brightness = max(sun.light_energy * 0.7, 0.1)
+	sky_material.ground_bottom_color = Color(0.15, 0.12, 0.1) * ground_brightness
+	sky_material.ground_horizon_color = sky_material.sky_horizon_color * 0.6
+	
+	# Update cloud brightness based on time of day
+	if enable_clouds:
+		var cloud_brightness = max(sun.light_energy, 0.3)
+		for cloud_data in clouds:
+			var cloud = cloud_data["node"]
+			var mat = cloud.material_override as StandardMaterial3D
+			mat.albedo_color = Color(cloud_brightness, cloud_brightness, cloud_brightness, 0.7)
 
 func get_time_of_day() -> float:
 	return time_of_day
@@ -138,6 +371,7 @@ func get_time_of_day() -> float:
 func set_time_of_day(new_time: float):
 	time_of_day = clamp(new_time, 0.0, 1.0)
 	update_lighting()
+	update_celestial_bodies()
 
 func get_time_string() -> String:
 	var hour = int(time_of_day * 24.0)
