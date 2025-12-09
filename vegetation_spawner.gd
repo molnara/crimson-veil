@@ -132,7 +132,7 @@ func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise
 	# Approximate the terrain height calculation from chunk generation
 	var height_multiplier = chunk_manager.height_multiplier
 	
-	# Get modifiers (simplified - using fixed values)
+	# Get modifiers matching chunk.gd exactly
 	var height_mod = 1.0
 	var roughness_mod = 1.0
 	
@@ -253,22 +253,26 @@ func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: flo
 	add_child(mesh_instance)
 	
 	# Height offsets for all vegetation types
+	# Add small random downward jitter to prevent floating
+	var jitter = randf_range(0.0, 0.15)  # Random sink 0-0.15m
 	var adjusted_position = spawn_pos
+	adjusted_position.y -= jitter  # Apply jitter to all vegetation
+	
 	match veg_type:
 		VegType.ROCK:
-			adjusted_position.y += 0.15
+			adjusted_position.y -= 0.15  # Sink rocks into ground
 		VegType.BOULDER:
-			adjusted_position.y += 0.15
+			adjusted_position.y -= 0.15  # Sink boulders into ground
 		VegType.GRASS_TUFT:
-			adjusted_position.y += 0.5  # Lower grass
+			adjusted_position.y -= 0.1  # Sink grass slightly
 		VegType.CACTUS:
-			adjusted_position.y += 1.0  # Cacti need lift
+			adjusted_position.y += 0.2  # Cacti lift (after jitter)
 		VegType.TREE, VegType.PALM_TREE, VegType.PINE_TREE:
-			adjusted_position.y += 0.0  # Trees start at ground level
+			adjusted_position.y += 0.0  # Trees at ground level
 		VegType.MUSHROOM_RED, VegType.MUSHROOM_BROWN:
-			adjusted_position.y += 0.0  # Mushrooms sit on ground
+			adjusted_position.y -= 0.1  # Sink mushrooms
 		VegType.MUSHROOM_CLUSTER:
-			adjusted_position.y += 0.0  # Clusters sit on ground
+			adjusted_position.y -= 0.1  # Sink clusters
 	
 	mesh_instance.global_position = adjusted_position
 	

@@ -183,15 +183,15 @@ func create_collision():
 			var modified_height = base_height * roughness_mod
 			var height = modified_height * height_multiplier * height_mod
 			
-			# Apply same baseline offset as mesh generation
+			# Apply same baseline offset as mesh generation (MUST MATCH!)
 			if biome == Biome.OCEAN:
-				height = height + (height_multiplier * 0.3)
+				height = height - (height_multiplier * 0.3)  # Ocean goes DOWN
 			elif biome == Biome.BEACH:
-				height = height + (height_multiplier * 0.4)
+				height = height + (height_multiplier * 0.2)  # Beach at sea level
 			else:
-				height = height + (height_multiplier * 0.5)
+				height = height + (height_multiplier * 0.5)  # Normal baseline
 			
-			height = max(0.0, height)
+			# Don't clamp - allow negative heights for ocean underwater terrain
 			
 			height_data.append(height)
 	
