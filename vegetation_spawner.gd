@@ -143,6 +143,10 @@ func populate_chunk(chunk_pos: Vector2i):
 		if height == -999.0:  # Raycast failed
 			continue
 		
+		# Don't spawn vegetation underwater (water level is at y=0.0)
+		if height < 0.5:  # Need more margin for larger vegetation
+			continue
+		
 		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
 	
 	# Second pass: Dense ground cover (grass, flowers)
@@ -171,6 +175,10 @@ func populate_chunk(chunk_pos: Vector2i):
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		if height == -999.0:
+			continue
+		
+		# Don't spawn ground cover underwater (water level is at y=0.0)
+		if height < 0.3:  # Give some margin above water
 			continue
 		
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
@@ -442,89 +450,143 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 			create_harvestable_strawberry(mesh_instance)
 
 func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
-	"""Improved grass with crossed planes for 3D effect"""
+	"""Improved 3D grass blades using MultiMesh for better performance"""
+	# Create a MultiMeshInstance3D for multiple grass blades
+	var multi_mesh_instance = MultiMeshInstance3D.new()
+	mesh_instance.add_child(multi_mesh_instance)
+	
+	var blade_count = 5 + randi() % 5  # 5-9 blades per tuft (was 3-6)
+	
+	# Create the MultiMesh
+	var multi_mesh = MultiMesh.new()
+	multi_mesh.transform_format = MultiMesh.TRANSFORM_3D
+	multi_mesh.use_colors = true  # Enable color support
+	multi_mesh.instance_count = blade_count
+	
+	# Create a single 3D curved grass blade mesh
+	var blade_mesh = create_3d_grass_blade()
+	multi_mesh.mesh = blade_mesh
+	
+	# Position each blade instance
+	for i in range(blade_count):
+		var transform = Transform3D()
+		
+		# Random position in small cluster - wider spread
+		var offset_angle = randf() * TAU
+		var offset_dist = randf() * 0.12  # Wider cluster (was 0.08)
+		transform.origin = Vector3(
+			cos(offset_angle) * offset_dist,
+			0,
+			sin(offset_angle) * offset_dist
+		)
+		
+		# Random rotation
+		transform = transform.rotated(Vector3.UP, randf() * TAU)
+		
+		# Slight random lean
+		var lean_angle = (randf() - 0.5) * 0.2
+		var lean_dir = randf() * TAU
+		transform = transform.rotated(Vector3(cos(lean_dir), 0, sin(lean_dir)), lean_angle)
+		
+		# Random scale variation - larger overall
+		var scale = 1.0 + randf() * 0.5  # 1.0-1.5x scale (was 0.8-1.2x)
+		transform = transform.scaled(Vector3(scale, scale * (0.9 + randf() * 0.2), scale))
+		
+		multi_mesh.set_instance_transform(i, transform)
+		
+		# Random color variation per blade - subtle green tint variations
+		var green_variation = randf()
+		var grass_tint: Color
+		if green_variation > 0.7:
+			grass_tint = Color(0.95, 1.05, 0.9)  # Slightly yellow-green tint
+		elif green_variation > 0.4:
+			grass_tint = Color(1.0, 1.0, 1.0)  # No tint (standard green)
+		else:
+			grass_tint = Color(0.9, 0.95, 0.85)  # Slightly darker tint
+		
+		multi_mesh.set_instance_color(i, grass_tint)
+	
+	multi_mesh_instance.multimesh = multi_mesh
+	
+	# Material
+	var material = StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.roughness = 0.8
+	multi_mesh_instance.material_override = material
+
+func create_3d_grass_blade() -> ArrayMesh:
+	"""Create a single 3D curved grass blade mesh"""
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	
-	# Varied grass dimensions
-	var height = 0.3 + randf() * 0.4  # 0.3-0.7m tall
-	var width = 0.15 + randf() * 0.1  # 0.15-0.25m wide
+	# Blade dimensions - made larger for better visibility
+	var height = 0.65  # Taller blades (was 0.4)
+	var width_base = 0.12  # Wider at base (was 0.08)
+	var width_tip = 0.03  # Wider tip (was 0.02)
+	var segments = 4  # More segments = smoother curve
 	
-	# Random green color variation
-	var green_variation = randf()
-	var grass_color: Color
-	if green_variation > 0.7:
-		grass_color = Color(0.6, 0.85, 0.3)  # Yellow-green
-	elif green_variation > 0.4:
-		grass_color = Color(0.3, 0.75, 0.25)  # Bright green
-	else:
-		grass_color = Color(0.35, 0.65, 0.2)  # Dark green
+	# Color gradient - proper grass green colors
+	var base_color = Color(0.25, 0.45, 0.15, 1.0)  # Dark green at base
+	var tip_color = Color(0.45, 0.75, 0.35, 1.0)   # Bright green at tip
 	
-	# Darker at base, lighter at top
-	var base_color = grass_color * 0.6
-	var tip_color = grass_color * 1.2
-	
-	# Create two crossed planes for 3D grass effect
-	for i in range(2):
-		var angle = (i / 2.0) * PI / 2.0  # 0Ãƒâ€šÃ‚Â° and 45Ãƒâ€šÃ‚Â°
-		var cos_a = cos(angle)
-		var sin_a = sin(angle)
+	# Create curved blade with multiple segments
+	for seg in range(segments):
+		var t1 = float(seg) / segments
+		var t2 = float(seg + 1) / segments
 		
-		# Four corners of the grass blade
-		var p1 = Vector3(-width/2 * cos_a, 0, -width/2 * sin_a)
-		var p2 = Vector3(width/2 * cos_a, 0, width/2 * sin_a)
-		var p3 = Vector3(-width/2 * cos_a, height, -width/2 * sin_a)
-		var p4 = Vector3(width/2 * cos_a, height, width/2 * sin_a)
+		# Height with curve
+		var y1 = t1 * height
+		var y2 = t2 * height
 		
-		# Slight curve/taper at top
-		p3.y = height * 0.95
-		p4.y = height * 0.95
-		p3.x *= 0.7
-		p3.z *= 0.7
-		p4.x *= 0.7
-		p4.z *= 0.7
+		# Width tapering
+		var w1 = lerp(width_base, width_tip, t1)
+		var w2 = lerp(width_base, width_tip, t2)
 		
-		# Front face
-		surface_tool.set_color(base_color)
-		surface_tool.add_vertex(p1)
-		surface_tool.add_vertex(p2)
-		surface_tool.set_color(tip_color)
-		surface_tool.add_vertex(p3)
+		# Forward curve (grass bends slightly)
+		var curve1 = t1 * t1 * 0.15  # Quadratic curve
+		var curve2 = t2 * t2 * 0.15
 		
-		surface_tool.set_color(base_color)
-		surface_tool.add_vertex(p2)
-		surface_tool.set_color(tip_color)
-		surface_tool.add_vertex(p4)
-		surface_tool.add_vertex(p3)
+		# Color interpolation
+		var color1 = base_color.lerp(tip_color, t1)
+		var color2 = base_color.lerp(tip_color, t2)
 		
-		# Back face (for visibility from both sides)
-		surface_tool.set_color(base_color)
-		surface_tool.add_vertex(p2)
-		surface_tool.add_vertex(p1)
-		surface_tool.set_color(tip_color)
-		surface_tool.add_vertex(p3)
+		# Four corners of this segment
+		var p1_left = Vector3(-w1/2, y1, curve1)
+		var p1_right = Vector3(w1/2, y1, curve1)
+		var p2_left = Vector3(-w2/2, y2, curve2)
+		var p2_right = Vector3(w2/2, y2, curve2)
 		
-		surface_tool.set_color(tip_color)
-		surface_tool.add_vertex(p4)
-		surface_tool.set_color(base_color)
-		surface_tool.add_vertex(p2)
-		surface_tool.set_color(tip_color)
-		surface_tool.add_vertex(p3)
+		# Front face quad (as two triangles)
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_left)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_left)
+		
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_right)
+		surface_tool.add_vertex(p2_left)
+		
+		# Back face (for double-sided visibility)
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.add_vertex(p1_left)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_left)
+		
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_right)
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_left)
 	
 	surface_tool.generate_normals()
-	var grass_mesh = surface_tool.commit()
-	
-	var material = StandardMaterial3D.new()
-	material.vertex_color_use_as_albedo = true
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.roughness = 0.7
-	grass_mesh.surface_set_material(0, material)
-	
-	mesh_instance.mesh = grass_mesh
-	
-	# Random rotation for variety
-	mesh_instance.rotation.y = randf() * TAU
+	return surface_tool.commit()
 
 func create_grass_patch(mesh_instance: MeshInstance3D):
 	"""Create a small cluster of grass blades"""

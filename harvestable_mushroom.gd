@@ -22,6 +22,9 @@ func _ready():
 			drop_amount_min = 1
 			drop_amount_max = 1
 			mining_tool_required = "none"
+			# Subtle cyan-green glow
+			glow_strength = 0.22
+			glow_fade_delay = 0.18  # Same delay as strawberries
 			
 		MushroomType.BROWN:
 			resource_name = "Mushroom"
@@ -32,6 +35,9 @@ func _ready():
 			drop_amount_min = 1
 			drop_amount_max = 1
 			mining_tool_required = "none"
+			# Subtle cyan-green glow
+			glow_strength = 0.22
+			glow_fade_delay = 0.18  # Same delay as strawberries
 			
 		MushroomType.CLUSTER:
 			resource_name = "Mushrooms"
@@ -42,6 +48,9 @@ func _ready():
 			drop_amount_min = 2
 			drop_amount_max = 4
 			mining_tool_required = "none"
+			# Subtle cyan-green glow
+			glow_strength = 0.22
+			glow_fade_delay = 0.18  # Same delay as strawberries
 	
 	# Call parent _ready
 	super._ready()

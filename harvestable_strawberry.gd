@@ -14,6 +14,11 @@ func _ready():
 	drop_amount_max = 5
 	mining_tool_required = "none"
 	
+	# Set custom glow color for strawberries (pinkish-red)
+	glow_color = Color(0.8, 0.3, 0.4, 1.0)  # Darker pinkish-red glow
+	glow_strength = 0.2  # Much more subtle (was 0.35)
+	glow_fade_delay = 0.18  # Glow starts ~10:20 PM (very late, only in deep darkness), ends ~1:40 AM
+	
 	# Call parent _ready
 	super._ready()
 

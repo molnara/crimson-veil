@@ -27,6 +27,10 @@ func _ready():
 			drop_amount_min = 2
 			drop_amount_max = 4
 			mining_tool_required = "none"
+			# Subtle blue-gray glow for rocks
+			glow_color = Color(0.5, 0.6, 0.7, 1.0)
+			glow_strength = 0.18  # Reduced from 0.3
+			glow_fade_delay = 0.18  # Same delay as strawberries
 			
 		NodeType.STONE_DEPOSIT:
 			resource_name = "Stone Deposit"
@@ -37,6 +41,10 @@ func _ready():
 			drop_amount_min = 5
 			drop_amount_max = 10
 			mining_tool_required = "pickaxe"
+			# Slightly stronger glow for deposits
+			glow_color = Color(0.5, 0.6, 0.7, 1.0)
+			glow_strength = 0.25  # Reduced from 0.4
+			glow_fade_delay = 0.18  # Same delay as strawberries
 			
 		NodeType.COPPER_ORE:
 			resource_name = "Copper Ore"
@@ -47,6 +55,10 @@ func _ready():
 			drop_amount_min = 3
 			drop_amount_max = 6
 			mining_tool_required = "pickaxe"
+			# Orange-copper glow
+			glow_color = Color(1.0, 0.5, 0.3, 1.0)
+			glow_strength = 0.35  # Reduced from 0.6
+			glow_fade_delay = 0.18  # Same delay as strawberries
 			
 		NodeType.IRON_ORE:
 			resource_name = "Iron Ore"
@@ -57,6 +69,10 @@ func _ready():
 			drop_amount_min = 2
 			drop_amount_max = 5
 			mining_tool_required = "pickaxe"
+			# Silvery glow
+			glow_color = Color(0.7, 0.7, 0.8, 1.0)
+			glow_strength = 0.3  # Reduced from 0.5
+			glow_fade_delay = 0.18  # Same delay as strawberries
 			
 		NodeType.TREE:
 			resource_name = "Tree"
@@ -67,6 +83,8 @@ func _ready():
 			drop_amount_min = 5
 			drop_amount_max = 8
 			mining_tool_required = "axe"
+			# Disable glow for trees (or set very subtle)
+			enable_nighttime_glow = false
 			
 		NodeType.BUSH:
 			resource_name = "Bush"
@@ -77,6 +95,10 @@ func _ready():
 			drop_amount_min = 1
 			drop_amount_max = 3
 			mining_tool_required = "none"
+			# Subtle green glow for bushes
+			glow_color = Color(0.3, 0.6, 0.3, 1.0)
+			glow_strength = 0.18  # Reduced from 0.3
+			glow_fade_delay = 0.18  # Same delay as strawberries
 	
 	# NOW call parent _ready which will use these properties
 	super._ready()

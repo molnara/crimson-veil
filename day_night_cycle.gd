@@ -3,7 +3,8 @@ class_name DayNightCycle
 
 # Time settings
 @export var day_length_minutes: float = 10.0  ## Real-time minutes for a complete day/night cycle
-@export_range(0.0, 1.0) var start_time: float = 0.25  ## Starting time (0.0=midnight, 0.25=sunrise, 0.5=noon, 0.75=sunset, 1.0=midnight)
+@export_range(0, 23) var start_hour: int = 6  ## Starting hour (0-23, where 0=midnight, 6=6am, 12=noon, 18=6pm)
+@export_range(0, 59) var start_minute: int = 0  ## Starting minute (0-59)
 @export var enable_clouds: bool = true  ## Toggle cloud rendering on/off
 @export_range(0, 200) var cloud_count: int = 20  ## Total number of clouds in the sky
 
@@ -54,8 +55,8 @@ var time_of_day: float = 0.0  # 0.0 to 1.0 (0 = midnight, 0.5 = noon)
 var time_scale: float = 1.0
 
 # Sky colors for different times of day
-var night_sky_top_color = Color(0.02, 0.02, 0.1)      # Very dark blue at zenith
-var night_sky_horizon_color = Color(0.1, 0.1, 0.15)   # Slightly lighter at horizon
+var night_sky_top_color = Color(0.01, 0.01, 0.05)      # Much darker blue-black at zenith
+var night_sky_horizon_color = Color(0.05, 0.05, 0.08)   # Very dark at horizon
 var sunrise_sky_top_color = Color(0.4, 0.6, 0.9)      # Light blue
 var sunrise_sky_horizon_color = Color(1.0, 0.6, 0.4)  # Orange/pink
 var day_sky_top_color = Color(0.35, 0.65, 1.0)        # Bright blue
@@ -71,7 +72,8 @@ var sunset_light_color = Color(1.0, 0.7, 0.5)
 var moon_light_color = Color(0.5, 0.6, 0.8)
 
 func _ready():
-	time_of_day = start_time
+	# Convert start_hour and start_minute to time_of_day (0.0 to 1.0)
+	time_of_day = (start_hour + start_minute / 60.0) / 24.0
 	setup_environment()
 	setup_moon()
 	create_celestial_bodies()
@@ -119,7 +121,7 @@ func setup_environment():
 	# Add subtle fog for atmosphere
 	env.fog_enabled = true
 	env.fog_light_color = Color(0.7, 0.8, 0.9)
-	env.fog_light_energy = 0.5
+	env.fog_light_energy = 0.2  # Reduced from 0.5 to make nights darker
 	env.fog_density = 0.001  # Very subtle
 	env.fog_aerial_perspective = 0.3
 
@@ -566,23 +568,29 @@ func update_lighting():
 	# Calculate lighting based on time of day
 	if time_of_day < 0.25:  # Night to sunrise (midnight to 6am)
 		var t = time_of_day / 0.25
-		sun.light_energy = lerp(0.0, 0.4, t)
+		sun.light_energy = lerp(0.0, 0.3, t)
 		sun.light_color = night_light_color.lerp(sunrise_light_color, t)
 		
 		# Sky gradient
 		sky_material.sky_top_color = night_sky_top_color.lerp(sunrise_sky_top_color, t)
 		sky_material.sky_horizon_color = night_sky_horizon_color.lerp(sunrise_sky_horizon_color, t)
 		
-		# Moon bright at night, fades at sunrise
+		# Moon dimmer at night
 		if moon:
-			moon.light_energy = lerp(0.25, 0.0, t)
+			moon.light_energy = lerp(0.08, 0.0, t)
+		
+		# Ambient light - very dark at night
+		env.ambient_light_energy = lerp(0.02, 0.15, t)
+		
+		# Fog energy - very dim at night
+		env.fog_light_energy = lerp(0.02, 0.15, t)
 		
 		# Fog color
 		env.fog_light_color = night_sky_horizon_color.lerp(sunrise_sky_horizon_color, t)
 		
 	elif time_of_day < 0.5:  # Sunrise to noon (6am to 12pm)
 		var t = (time_of_day - 0.25) / 0.25
-		sun.light_energy = lerp(0.4, 1.0, t)
+		sun.light_energy = lerp(0.3, 1.0, t)
 		sun.light_color = sunrise_light_color.lerp(day_light_color, t)
 		
 		sky_material.sky_top_color = sunrise_sky_top_color.lerp(day_sky_top_color, t)
@@ -591,11 +599,17 @@ func update_lighting():
 		if moon:
 			moon.light_energy = 0.0
 		
+		# Ambient light - brighten during sunrise
+		env.ambient_light_energy = lerp(0.15, 0.4, t)
+		
+		# Fog energy - brighten during sunrise
+		env.fog_light_energy = lerp(0.15, 0.4, t)
+		
 		env.fog_light_color = sunrise_sky_horizon_color.lerp(day_sky_horizon_color, t)
 		
 	elif time_of_day < 0.75:  # Noon to sunset (12pm to 6pm)
 		var t = (time_of_day - 0.5) / 0.25
-		sun.light_energy = lerp(1.0, 0.4, t)
+		sun.light_energy = lerp(1.0, 0.3, t)
 		sun.light_color = day_light_color.lerp(sunset_light_color, t)
 		
 		sky_material.sky_top_color = day_sky_top_color.lerp(sunset_sky_top_color, t)
@@ -604,19 +618,31 @@ func update_lighting():
 		if moon:
 			moon.light_energy = 0.0
 		
+		# Ambient light - stay bright during day
+		env.ambient_light_energy = lerp(0.4, 0.15, t)
+		
+		# Fog energy - stay bright during day
+		env.fog_light_energy = lerp(0.4, 0.15, t)
+		
 		env.fog_light_color = day_sky_horizon_color.lerp(sunset_sky_horizon_color, t)
 		
 	else:  # Sunset to night (6pm to midnight)
 		var t = (time_of_day - 0.75) / 0.25
-		sun.light_energy = lerp(0.4, 0.0, t)
+		sun.light_energy = lerp(0.3, 0.0, t)
 		sun.light_color = sunset_light_color.lerp(night_light_color, t)
 		
 		sky_material.sky_top_color = sunset_sky_top_color.lerp(night_sky_top_color, t)
 		sky_material.sky_horizon_color = sunset_sky_horizon_color.lerp(night_sky_horizon_color, t)
 		
-		# Moon rises at sunset
+		# Moon rises at sunset - much dimmer
 		if moon:
-			moon.light_energy = lerp(0.0, 0.25, t)
+			moon.light_energy = lerp(0.0, 0.08, t)
+		
+		# Ambient light - get very dark at night
+		env.ambient_light_energy = lerp(0.15, 0.02, t)
+		
+		# Fog energy - get very dim at night
+		env.fog_light_energy = lerp(0.15, 0.02, t)
 		
 		env.fog_light_color = sunset_sky_horizon_color.lerp(night_sky_horizon_color, t)
 	

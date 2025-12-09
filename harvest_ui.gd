@@ -4,13 +4,68 @@ extends Control
 @onready var progress_bar = $CenterContainer/VBoxContainer/ProgressBar
 @onready var target_label = $CenterContainer/VBoxContainer/TargetLabel
 @onready var inventory_display = $InventoryDisplay/ItemList
+@onready var time_label = $TimeDisplay/TimeLabel
 
 var inventory: Inventory = null
+var day_night_cycle: DayNightCycle = null
 
 func _ready():
 	# Hide progress elements initially
 	progress_bar.visible = false
 	target_label.visible = false
+	
+	# Find DayNightCycle for time display
+	call_deferred("find_day_night_cycle")
+
+func find_day_night_cycle():
+	"""Find the DayNightCycle node in the scene"""
+	var root = get_tree().root
+	for child in root.get_children():
+		var cycle = find_node_by_type(child, "DayNightCycle")
+		if cycle:
+			day_night_cycle = cycle
+			print("Found DayNightCycle for UI")
+			return
+	
+	print("Warning: DayNightCycle not found for time display")
+
+func find_node_by_type(node: Node, type_name: String) -> Node:
+	"""Recursively search for a node by class name"""
+	if node.get_class() == type_name or (node.get_script() and node.get_script().get_global_name() == type_name):
+		return node
+	
+	for child in node.get_children():
+		var result = find_node_by_type(child, type_name)
+		if result:
+			return result
+	
+	return null
+
+func _process(_delta):
+	# Update time display
+	if day_night_cycle and time_label:
+		var time_of_day = day_night_cycle.get_time_of_day()
+		
+		# Convert to 24-hour time
+		var hour_24 = int(time_of_day * 24.0)
+		var minute = int((time_of_day * 24.0 - hour_24) * 60.0)
+		
+		# Convert to 12-hour format
+		var am_pm = "AM"
+		var hour_12 = hour_24
+		
+		if hour_24 >= 12:
+			am_pm = "PM"
+			if hour_24 > 12:
+				hour_12 = hour_24 - 12
+		
+		if hour_24 == 0:
+			hour_12 = 12  # Midnight is 12 AM
+		
+		# Format time string
+		var time_string = "%d:%02d %s" % [hour_12, minute, am_pm]
+		
+		time_label.text = time_string
 
 func set_inventory(inv: Inventory):
 	"""Connect to an inventory to display its contents"""
