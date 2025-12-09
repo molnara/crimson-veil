@@ -1,6 +1,9 @@
 extends StaticBody3D
 class_name HarvestableResource
 
+# Preload particle system
+const HarvestParticles = preload("res://harvest_particles.gd")
+
 # Resource properties
 @export var resource_name: String = "Resource"
 @export var resource_type: String = "generic"  # wood, stone, ore, etc.
@@ -107,6 +110,9 @@ func complete_harvest():
 	
 	emit_signal("harvested", drops)
 	
+	# Spawn break particles
+	spawn_break_particles()
+	
 	# Reset state
 	is_being_harvested = false
 	harvester = null
@@ -133,3 +139,10 @@ func get_info() -> Dictionary:
 		"harvest_time": harvest_time,
 		"tool_required": mining_tool_required
 	}
+
+func spawn_break_particles():
+	"""Spawn particle effect when resource breaks"""
+	# Get the world root to spawn particles in
+	var world = get_tree().root
+	if world:
+		HarvestParticles.create_break_particles(global_position, resource_type, world)

@@ -132,6 +132,9 @@ func start_falling():
 	is_falling = true
 	fall_progress = 0.0
 	
+	# Spawn wood particles at the base
+	spawn_break_particles()
+	
 	# Create stump if enabled
 	if leave_stump:
 		create_stump()

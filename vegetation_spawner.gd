@@ -4,7 +4,7 @@ class_name VegetationSpawner
 # Preload resource node classes
 const ResourceNodeClass = preload("res://resource_node.gd")
 const HarvestableTreeClass = preload("res://harvestable_tree.gd")
-const PixelTextureGenerator = preload("res://pixel_texture_generator.gd")
+# Note: PixelTextureGenerator is a global class, no need to preload
 
 # References
 var chunk_manager: ChunkManager
@@ -159,7 +159,7 @@ func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise:
 	
 	return -999.0  # Signal that raycast failed
 
-func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float):
+func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float):
 	"""Spawn trees, rocks, and other large vegetation"""
 	var veg_type: VegType
 	
@@ -229,7 +229,7 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 	
 	create_vegetation_mesh(veg_type, spawn_pos)
 
-func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float, cluster_value: float):
+func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float, cluster_value: float):
 	"""Spawn grass, flowers, and ground cover - dense and varied"""
 	var veg_type: VegType
 	

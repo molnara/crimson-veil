@@ -1,8 +1,7 @@
 extends StaticBody3D
 class_name Chunk
 
-# Preload pixel texture generator
-const PixelTextureGenerator = preload("res://pixel_texture_generator.gd")
+# Note: PixelTextureGenerator is a global class, no need to preload
 
 var chunk_position: Vector2i
 var chunk_size: int
