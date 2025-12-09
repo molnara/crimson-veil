@@ -15,7 +15,6 @@ enum TreeType {
 # Physics-based falling
 var is_falling: bool = false
 var fall_direction: Vector3 = Vector3.ZERO
-var original_rotation: Vector3 = Vector3.ZERO
 var fall_timer: float = 0.0
 var despawn_delay: float = 2.0  # Tree stays on ground for 2 seconds
 var fade_duration: float = 2.0  # Dissolve effect over 2 seconds
@@ -65,9 +64,6 @@ func _ready():
 			drop_amount_min = 5
 			drop_amount_max = 10
 			mining_tool_required = "axe"
-	
-	# Store original rotation
-	original_rotation = rotation
 	
 	# Cache all mesh instances for later fading
 	cache_mesh_instances(self)
@@ -513,5 +509,4 @@ func spawn_despawn_particles():
 func cancel_harvest():
 	"""Override to stop shake when cancelled"""
 	super.cancel_harvest()
-	# Reset rotation
-	rotation = original_rotation
+	# Rotation is already reset in parent class

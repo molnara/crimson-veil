@@ -24,6 +24,7 @@ var harvester: Node3D = null
 # Visual feedback
 var original_material: Material
 var harvest_progress: float = 0.0
+var original_rotation: Vector3 = Vector3.ZERO
 
 signal harvested(drops: Dictionary)
 signal harvest_started()
@@ -32,6 +33,7 @@ signal health_changed(current: float, maximum: float)
 
 func _ready():
 	current_health = max_health
+	original_rotation = rotation
 	
 	# Set collision layers - layer 2 for resources
 	collision_layer = 2
@@ -90,6 +92,7 @@ func cancel_harvest():
 	harvester = null
 	harvest_progress = 0.0
 	scale = Vector3.ONE  # Reset scale
+	rotation = original_rotation  # Reset rotation
 	
 	emit_signal("harvest_cancelled")
 	print("Cancelled harvesting ", resource_name)
