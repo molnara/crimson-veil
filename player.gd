@@ -13,8 +13,9 @@ var is_flying: bool = false  # Fly/noclip mode toggle
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 
-# Harvesting system
+# Systems
 var harvesting_system: HarvestingSystem
+var building_system: BuildingSystem
 var inventory: Inventory
 var harvest_ui: Control
 
@@ -41,6 +42,11 @@ func _ready():
 	add_child(harvesting_system)
 	harvesting_system.initialize(self, camera, inventory)
 	
+	# Initialize building system
+	building_system = BuildingSystem.new()
+	add_child(building_system)
+	building_system.initialize(self, camera, inventory)
+	
 	# Connect harvesting signals
 	harvesting_system.harvest_completed.connect(_on_harvest_completed)
 	
@@ -62,18 +68,45 @@ func _input(event):
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
 	# Toggle fly mode with F key
-	if event.is_action_pressed("ui_focus_next"):  # F key
+	if event.is_action_pressed("toggle_fly"):
 		is_flying = !is_flying
 		print("Fly mode: ", "ON" if is_flying else "OFF")
 	
-	# Start harvest on mouse click (left button) - single click like New World
+	# Toggle building mode with B key
+	if event.is_action_pressed("toggle_building"):
+		if building_system:
+			if building_system.preview_mode:
+				building_system.disable_building_mode()
+			else:
+				building_system.enable_building_mode("stone_block")
+	
+	# Cycle block type with Tab or C key when in building mode
+	if building_system and building_system.preview_mode:
+		if event.is_action_pressed("cycle_block_type"):
+			# Cycle through block types
+			var types = ["stone_block", "stone_wall", "stone_floor", "wood_plank"]
+			var current_index = types.find(building_system.current_block_type)
+			var next_index = (current_index + 1) % types.size()
+			building_system.set_block_type(types[next_index])
+	
+	# Mouse button handling
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			if harvesting_system and harvesting_system.is_looking_at_resource():
+			# Building mode takes priority
+			if building_system and building_system.preview_mode:
+				building_system.place_block()
+			# Otherwise try harvesting
+			elif harvesting_system and harvesting_system.is_looking_at_resource():
 				harvesting_system.start_harvest()
-		# Right-click to cancel harvest
+		
+		# Right-click: Remove block in building mode, or cancel harvest
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
-			if harvesting_system and harvesting_system.is_harvesting:
+			if building_system and building_system.preview_mode:
+				# Try to remove block at cursor
+				var block_data = building_system.get_block_at_raycast()
+				if block_data:
+					building_system.remove_block_at_position(block_data["position"])
+			elif harvesting_system and harvesting_system.is_harvesting:
 				harvesting_system.cancel_harvest()
 				print("Harvest manually cancelled")
 	
@@ -83,8 +116,8 @@ func _input(event):
 			harvesting_system.cancel_harvest()
 			print("Harvest cancelled by menu")
 	
-	# Print inventory with I key
-	if event.is_action_pressed("ui_text_completion_accept"):  # I key
+	# Print inventory with I key (debug)
+	if event.is_action_pressed("print_inventory"):
 		if inventory:
 			inventory.print_inventory()
 
@@ -113,7 +146,7 @@ func setup_ui():
 	else:
 		print("Warning: Could not load harvest_ui.tscn")
 
-func _on_harvest_completed(resource: HarvestableResource, drops: Dictionary):
+func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""
 	if inventory and drops.has("item") and drops.has("amount"):
 		inventory.add_item(drops["item"], drops["amount"])

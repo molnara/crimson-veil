@@ -127,7 +127,7 @@ func get_biome_at_position(world_x: float, world_z: float, base_noise: float) ->
 	
 	return Chunk.Biome.GRASSLAND
 
-func get_terrain_height_at_position(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
+func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
 	# Approximate the terrain height calculation from chunk generation
 	var height_multiplier = chunk_manager.height_multiplier
 	
@@ -171,7 +171,7 @@ func get_terrain_height_at_position(world_x: float, world_z: float, base_noise: 
 	
 	return max(0.0, height)
 
-func spawn_vegetation_for_biome(biome: Chunk.Biome, position: Vector3, world_x: float, world_z: float):
+func spawn_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float):
 	var veg_type: VegType
 	
 	# Determine vegetation type based on biome
@@ -244,14 +244,14 @@ func spawn_vegetation_for_biome(biome: Chunk.Biome, position: Vector3, world_x: 
 	
 	# Create the vegetation mesh
 	print("Spawning ", VegType.keys()[veg_type], " in biome ", Chunk.Biome.keys()[biome])
-	create_vegetation_mesh(veg_type, position, world_x, world_z)
+	create_vegetation_mesh(veg_type, spawn_pos, world_x, world_z)
 
-func create_vegetation_mesh(veg_type: VegType, position: Vector3, world_x: float, world_z: float):
+func create_vegetation_mesh(veg_type: VegType, spawn_pos: Vector3, _world_x: float, _world_z: float):
 	var mesh_instance = MeshInstance3D.new()
 	add_child(mesh_instance)
 	
 	# Height offsets for all vegetation types
-	var adjusted_position = position
+	var adjusted_position = spawn_pos
 	match veg_type:
 		VegType.ROCK:
 			adjusted_position.y += 0.15
@@ -433,10 +433,12 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	# Convert the mesh instance parent to a ResourceNode
 	var parent = mesh_instance.get_parent()
 	
+	# Store the position before creating the new node
+	var rock_position = mesh_instance.global_position
+	
 	# Create a ResourceNode to replace the mesh instance
 	var resource_node = ResourceNodeClass.new()
 	resource_node.node_type = ResourceNodeClass.NodeType.STONE_DEPOSIT if is_boulder else ResourceNodeClass.NodeType.ROCK
-	resource_node.global_position = mesh_instance.global_position
 	
 	# Create the mesh as a child of the resource node
 	var rock_mesh = MeshInstance3D.new()
@@ -479,6 +481,10 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	# Replace mesh_instance with resource_node in the scene tree
 	parent.remove_child(mesh_instance)
 	parent.add_child(resource_node)
+	
+	# Now set the position (after it's in the tree)
+	resource_node.global_position = rock_position
+	
 	mesh_instance.queue_free()
 
 func create_cactus(mesh_instance: MeshInstance3D):
