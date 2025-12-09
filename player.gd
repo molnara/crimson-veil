@@ -13,6 +13,11 @@ var is_flying: bool = false  # Fly/noclip mode toggle
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var spring_arm: SpringArm3D = $SpringArm3D
 
+# Harvesting system
+var harvesting_system: HarvestingSystem
+var inventory: Inventory
+var harvest_ui: Control
+
 # Get the gravity from the project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -26,6 +31,21 @@ func _ready():
 	floor_constant_speed = true
 	floor_block_on_wall = false
 	floor_snap_length = 0.3
+	
+	# Initialize inventory
+	inventory = Inventory.new()
+	add_child(inventory)
+	
+	# Initialize harvesting system
+	harvesting_system = HarvestingSystem.new()
+	add_child(harvesting_system)
+	harvesting_system.initialize(self, camera, inventory)
+	
+	# Connect harvesting signals
+	harvesting_system.harvest_completed.connect(_on_harvest_completed)
+	
+	# Load and setup UI
+	call_deferred("setup_ui")
 
 func _input(event):
 	# Mouse look
@@ -45,6 +65,58 @@ func _input(event):
 	if event.is_action_pressed("ui_focus_next"):  # F key
 		is_flying = !is_flying
 		print("Fly mode: ", "ON" if is_flying else "OFF")
+	
+	# Start harvest on mouse click (left button) - single click like New World
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+			if harvesting_system and harvesting_system.is_looking_at_resource():
+				harvesting_system.start_harvest()
+		# Right-click to cancel harvest
+		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
+			if harvesting_system and harvesting_system.is_harvesting:
+				harvesting_system.cancel_harvest()
+				print("Harvest manually cancelled")
+	
+	# Also cancel harvest when opening menu (ESC) but only if not already opening menu
+	if event.is_action_pressed("ui_cancel") and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+		if harvesting_system and harvesting_system.is_harvesting:
+			harvesting_system.cancel_harvest()
+			print("Harvest cancelled by menu")
+	
+	# Print inventory with I key
+	if event.is_action_pressed("ui_text_completion_accept"):  # I key
+		if inventory:
+			inventory.print_inventory()
+
+func setup_ui():
+	"""Setup the harvest UI"""
+	print("Loading harvest UI...")
+	var ui_scene = load("res://harvest_ui.tscn")
+	if ui_scene:
+		harvest_ui = ui_scene.instantiate()
+		get_tree().root.add_child(harvest_ui)
+		
+		# Connect UI to systems
+		if harvest_ui.has_method("set_inventory"):
+			harvest_ui.set_inventory(inventory)
+			print("Inventory connected to UI")
+		
+		if harvest_ui.has_method("get_progress_bar"):
+			harvesting_system.progress_bar = harvest_ui.get_progress_bar()
+			print("Progress bar connected")
+		
+		if harvest_ui.has_method("get_target_label"):
+			harvesting_system.target_label = harvest_ui.get_target_label()
+			print("Target label connected")
+		
+		print("Harvest UI loaded successfully")
+	else:
+		print("Warning: Could not load harvest_ui.tscn")
+
+func _on_harvest_completed(resource: HarvestableResource, drops: Dictionary):
+	"""Called when a resource is successfully harvested"""
+	if inventory and drops.has("item") and drops.has("amount"):
+		inventory.add_item(drops["item"], drops["amount"])
 
 func _physics_process(delta):
 	# Fly mode - noclip movement

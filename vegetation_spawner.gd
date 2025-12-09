@@ -1,6 +1,9 @@
 extends Node3D
 class_name VegetationSpawner
 
+# Preload resource node class
+const ResourceNodeClass = preload("res://resource_node.gd")
+
 # References
 var chunk_manager: ChunkManager
 var noise: FastNoiseLite
@@ -427,6 +430,18 @@ func create_pine_tree(mesh_instance: MeshInstance3D):
 	mesh_instance.mesh = pine_mesh
 
 func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
+	# Convert the mesh instance parent to a ResourceNode
+	var parent = mesh_instance.get_parent()
+	
+	# Create a ResourceNode to replace the mesh instance
+	var resource_node = ResourceNodeClass.new()
+	resource_node.node_type = ResourceNodeClass.NodeType.STONE_DEPOSIT if is_boulder else ResourceNodeClass.NodeType.ROCK
+	resource_node.global_position = mesh_instance.global_position
+	
+	# Create the mesh as a child of the resource node
+	var rock_mesh = MeshInstance3D.new()
+	resource_node.add_child(rock_mesh)
+	
 	# Use SphereMesh - simple and works perfectly
 	var size = 0.4 + randf() * 0.3 if not is_boulder else 0.7 + randf() * 0.4  # Smaller rocks
 	
@@ -444,15 +459,27 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	
 	sphere_mesh.material = material
 	
-	mesh_instance.mesh = sphere_mesh
+	rock_mesh.mesh = sphere_mesh
 	# Position is already adjusted in create_vegetation_mesh
 	
 	# Random slight tilt
-	mesh_instance.rotation.x = (randf() - 0.5) * 0.3
-	mesh_instance.rotation.z = (randf() - 0.5) * 0.3
+	rock_mesh.rotation.x = (randf() - 0.5) * 0.3
+	rock_mesh.rotation.z = (randf() - 0.5) * 0.3
 	
 	# Flatten it to make it look more rock-like
-	mesh_instance.scale = Vector3(1.0, 0.6, 0.9)  # Flatter
+	rock_mesh.scale = Vector3(1.0, 0.6, 0.9)  # Flatter
+	
+	# Add collision shape for the resource
+	var collision = CollisionShape3D.new()
+	var shape = SphereShape3D.new()
+	shape.radius = size / 2
+	collision.shape = shape
+	resource_node.add_child(collision)
+	
+	# Replace mesh_instance with resource_node in the scene tree
+	parent.remove_child(mesh_instance)
+	parent.add_child(resource_node)
+	mesh_instance.queue_free()
 
 func create_cactus(mesh_instance: MeshInstance3D):
 	# Simple cactus: tall cylinder
