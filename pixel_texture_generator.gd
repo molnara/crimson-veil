@@ -108,26 +108,106 @@ static func create_dirt_texture() -> ImageTexture:
 	return create_texture_from_image(image)
 
 static func create_bark_texture() -> ImageTexture:
-	"""Create a pixelated tree bark texture"""
+	"""Create a pixelated tree bark texture (default/oak style)"""
 	var image = Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGB8)
 	
 	# Bark colors (dark brown)
 	var base_color = Color(0.3, 0.2, 0.1)
 	var highlight_color = Color(0.4, 0.25, 0.15)
 	
-	# Create bark pattern (horizontal-ish lines)
+	# Create bark pattern (vertical-ish lines for oak)
 	for x in range(TEXTURE_SIZE):
 		for y in range(TEXTURE_SIZE):
 			var color = base_color
 			
-			# Horizontal bark lines
-			if y % 4 == 0 or y % 4 == 1:
+			# Vertical bark lines with some variation
+			if x % 4 == 0 or x % 4 == 1:
 				color = highlight_color
+			
+			# Add horizontal breaks occasionally
+			if y % 6 == 0:
+				color = base_color
 			
 			# Add noise
 			color.r += (randf() - 0.5) * 0.1
 			color.g += (randf() - 0.5) * 0.1
 			color.b += (randf() - 0.5) * 0.1
+			
+			image.set_pixel(x, y, color)
+	
+	return create_texture_from_image(image)
+
+static func create_pine_bark_texture() -> ImageTexture:
+	"""Create pine tree bark - rougher with horizontal segments"""
+	var image = Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGB8)
+	
+	# Pine colors - reddish brown with more contrast
+	var base_color = Color(0.35, 0.18, 0.12)  # Dark reddish-brown
+	var plate_color = Color(0.45, 0.22, 0.15)  # Lighter plates
+	var crack_color = Color(0.2, 0.1, 0.08)   # Very dark cracks
+	
+	# Create rough plated bark pattern (horizontal segments)
+	for x in range(TEXTURE_SIZE):
+		for y in range(TEXTURE_SIZE):
+			var color = base_color
+			
+			# Horizontal plates/segments
+			var plate_y = y % 5
+			if plate_y == 0:
+				color = crack_color  # Dark crack between plates
+			elif plate_y == 1 or plate_y == 2:
+				color = plate_color  # Raised plate
+			else:
+				color = base_color  # Base
+			
+			# Add vertical cracks/fissures
+			if x % 7 == 0:
+				color = crack_color.lerp(color, 0.5)
+			
+			# Random roughness
+			color.r += (randf() - 0.5) * 0.12
+			color.g += (randf() - 0.5) * 0.12
+			color.b += (randf() - 0.5) * 0.12
+			
+			image.set_pixel(x, y, color)
+	
+	return create_texture_from_image(image)
+
+static func create_palm_bark_texture() -> ImageTexture:
+	"""Create palm tree bark - diamond/crosshatch pattern with rings"""
+	var image = Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGB8)
+	
+	# Palm colors - tan/beige with more contrast
+	var base_color = Color(0.55, 0.45, 0.35)    # Tan base
+	var ring_color = Color(0.4, 0.32, 0.24)     # Darker rings
+	var highlight_color = Color(0.65, 0.55, 0.42)  # Lighter spots
+	
+	# Create diamond/crosshatch pattern with horizontal rings
+	for x in range(TEXTURE_SIZE):
+		for y in range(TEXTURE_SIZE):
+			var color = base_color
+			
+			# Horizontal ring pattern (distinctive palm feature)
+			var ring_y = y % 6
+			if ring_y == 0 or ring_y == 1:
+				color = ring_color  # Dark ring/scar
+			elif ring_y == 5:
+				color = highlight_color  # Light ridge
+			
+			# Diamond/crosshatch texture
+			var pattern = (x + y) % 5
+			if pattern == 0 or pattern == 1:
+				color = color.darkened(0.1)
+			
+			# Opposite diagonal for crosshatch
+			var pattern2 = (x - y + TEXTURE_SIZE) % 5
+			if pattern2 == 0:
+				color = color.lightened(0.1)
+			
+			# Add subtle variation
+			color.r += (randf() - 0.5) * 0.08
+			color.g += (randf() - 0.5) * 0.08
+			color.b += (randf() - 0.5) * 0.08
 			
 			image.set_pixel(x, y, color)
 	

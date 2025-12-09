@@ -14,9 +14,35 @@ var cluster_noise: FastNoiseLite  # For grass clustering
 var player: Node3D
 
 # Vegetation settings
-@export var vegetation_density: float = 0.4  # 0.0 to 1.0, for trees/rocks
-@export var grass_density: float = 0.8  # Higher density for grass specifically
-@export var spawn_radius: int = 2  # How many chunks around player to populate
+@export_range(0.0, 1.0) var vegetation_density: float = 0.4  ## Density of trees and rocks (0.0 = none, 1.0 = maximum)
+@export_range(0.0, 1.0) var grass_density: float = 0.8  ## Density of grass and ground cover (higher than vegetation for fuller look)
+@export_range(1, 5) var spawn_radius: int = 2  ## How many chunks around player to populate with vegetation
+
+@export_group("Tree Size Variation")
+@export_range(2.0, 15.0) var tree_height_min: float = 3.5  ## Minimum tree height in meters (smallest trees)
+@export_range(2.0, 15.0) var tree_height_max: float = 9.5  ## Maximum tree height in meters (tallest trees)
+@export_range(0.1, 1.0) var trunk_radius_base: float = 0.3  ## Base trunk radius in meters (scales with tree size)
+
+@export_group("Tree Branch Settings")
+@export_range(2, 8) var branch_count_min: int = 3  ## Minimum number of branches per tree
+@export_range(2, 8) var branch_count_max: int = 5  ## Maximum number of branches per tree
+@export_range(0.5, 3.0) var branch_length_min: float = 1.6  ## Minimum branch length in meters
+@export_range(0.5, 3.0) var branch_length_max: float = 2.0  ## Maximum branch length in meters
+@export_range(0.0, 1.0) var branch_height_start: float = 0.5  ## Where branches start as fraction of trunk height (0.5 = halfway up)
+@export_range(0.0, 1.0) var branch_height_end: float = 0.85  ## Where branches end as fraction of trunk height (0.85 = near top)
+@export_range(0.0, 0.5) var branch_upward_angle: float = 0.25  ## How much branches angle upward (0 = horizontal, 0.5 = steep)
+
+@export_group("Tree Foliage Settings")
+@export_range(2, 8) var branch_foliage_layers: int = 4  ## Number of foliage disc layers per branch (more = fuller coverage)
+@export_range(2, 10) var top_foliage_layers: int = 5  ## Number of foliage disc layers at tree top (more = denser crown)
+@export_range(0.1, 1.0) var foliage_disc_thickness: float = 0.4  ## Base thickness of foliage discs in meters
+@export_range(0.0, 1.0) var foliage_layer_gap: float = 0.2  ## Vertical spacing between foliage layers (lower = tighter, less trunk visible)
+@export_range(0.5, 2.0) var foliage_disc_size: float = 0.75  ## Size multiplier for foliage disc radius (larger = wider canopy)
+@export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.88  ## Where top crown starts as fraction of trunk height (higher = near top)
+
+@export_group("Ground Cover Settings")
+@export_range(10, 150) var ground_cover_samples_per_chunk: int = 60  ## Number of grass/flower samples per chunk (higher = denser)
+@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 15  ## Number of tree/rock samples per chunk (lower = more sparse)
 
 # Track which chunks have vegetation
 var populated_chunks: Dictionary = {}
@@ -87,7 +113,7 @@ func populate_chunk(chunk_pos: Vector2i):
 	var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
 	
 	# First pass: Trees, rocks, and large vegetation
-	var samples_per_chunk = 15  # Reduced from 25 for sparser vegetation
+	var samples_per_chunk = large_vegetation_samples_per_chunk
 	
 	for i in range(samples_per_chunk):
 		var local_x = randf() * chunk_size
@@ -113,7 +139,7 @@ func populate_chunk(chunk_pos: Vector2i):
 	
 	# Second pass: Dense ground cover (grass, flowers)
 	# Much higher sample count for ground cover
-	var ground_cover_samples = 60  # Reduced from 100 for less dense grass
+	var ground_cover_samples = ground_cover_samples_per_chunk
 	
 	for i in range(ground_cover_samples):
 		var local_x = randf() * chunk_size
@@ -404,7 +430,7 @@ func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
 	
 	# Create two crossed planes for 3D grass effect
 	for i in range(2):
-		var angle = (i / 2.0) * PI / 2.0  # 0° and 45°
+		var angle = (i / 2.0) * PI / 2.0  # 0Â° and 45Â°
 		var cos_a = cos(angle)
 		var sin_a = sin(angle)
 		
@@ -630,32 +656,19 @@ func create_tree(mesh_instance: MeshInstance3D):
 	tree.collision_layer = 2
 	tree.collision_mask = 0
 	
-	# Much more varied tree sizes - but with higher minimums
+	# Much more varied tree sizes - configurable
 	var size_variation = randf()
 	var trunk_height: float
 	var trunk_radius: float
 	var foliage_size_multiplier: float
 	
-	if size_variation > 0.85:
-		# Very large trees (15%)
-		trunk_height = 5.5 + randf() * 2.0  # 5.5-7.5m tall
-		trunk_radius = 0.45 + randf() * 0.15  # Thicker trunk
-		foliage_size_multiplier = 1.4 + randf() * 0.3
-	elif size_variation > 0.5:
-		# Medium-large trees (35%)
-		trunk_height = 4.5 + randf() * 1.0  # 4.5-5.5m tall
-		trunk_radius = 0.35 + randf() * 0.1
-		foliage_size_multiplier = 1.2 + randf() * 0.3
-	elif size_variation > 0.2:
-		# Medium trees (30%)
-		trunk_height = 3.5 + randf() * 1.0  # 3.5-4.5m tall
-		trunk_radius = 0.3 + randf() * 0.05
-		foliage_size_multiplier = 1.0 + randf() * 0.2
-	else:
-		# Smaller trees (20%) - but still decent size
-		trunk_height = 2.8 + randf() * 0.7  # 2.8-3.5m tall (minimum increased)
-		trunk_radius = 0.25 + randf() * 0.05
-		foliage_size_multiplier = 0.9 + randf() * 0.2
+	# Map size_variation to height range
+	trunk_height = tree_height_min + randf() * (tree_height_max - tree_height_min)
+	
+	# Scale trunk radius and foliage based on height
+	var height_ratio = (trunk_height - tree_height_min) / (tree_height_max - tree_height_min)
+	trunk_radius = trunk_radius_base * (0.8 + height_ratio * 0.6)  # 80-140% of base
+	foliage_size_multiplier = 0.9 + height_ratio * 0.8  # 0.9-1.7 multiplier
 	
 	# Create trunk
 	var trunk_mesh = MeshInstance3D.new()
@@ -668,28 +681,14 @@ func create_tree(mesh_instance: MeshInstance3D):
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Pixelated bark texture
+	# Pixelated bark texture - OAK style with medium-dark brown
 	var bark_texture = PixelTextureGenerator.create_bark_texture()
 	var bark_variation = randf() * 0.1
-	var bark_tint = Color(0.35 + bark_variation, 0.22 + bark_variation * 0.5, 0.13 + bark_variation * 0.3)
+	var bark_tint = Color(0.55 + bark_variation, 0.42 + bark_variation * 0.5, 0.28 + bark_variation * 0.3)  # Medium brown
 	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, bark_tint)
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
-	# Foliage - varied size and position based on tree size
-	var foliage = MeshInstance3D.new()
-	trunk_mesh.add_child(foliage)
-	
-	var foliage_mesh = SphereMesh.new()
-	var base_foliage_size = 1.8 + randf() * 0.7  # 1.8-2.5m radius
-	foliage_mesh.radius = base_foliage_size * foliage_size_multiplier
-	foliage_mesh.height = foliage_mesh.radius * 2.0
-	foliage.mesh = foliage_mesh
-	
-	# Position foliage higher on taller trees
-	var foliage_height_ratio = 0.55 + randf() * 0.15  # 55-70% up the trunk
-	foliage.position = Vector3(0, trunk_height * foliage_height_ratio, 0)
-	
-	# Pixelated leaves texture with color variation
+	# Pixelated leaves texture with color variation (defined once for all foliage)
 	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
 	var green_variation = randf()
 	var foliage_tint: Color
@@ -700,7 +699,121 @@ func create_tree(mesh_instance: MeshInstance3D):
 	else:
 		foliage_tint = Color(0.75, 0.85, 0.75)  # Darker green
 	var foliage_material = PixelTextureGenerator.create_pixel_material(leaves_texture, foliage_tint)
-	foliage.set_surface_override_material(0, foliage_material)
+	
+	# Create natural branching structure with multiple foliage clusters
+	var branch_count = branch_count_min + randi() % (branch_count_max - branch_count_min + 1)
+	var top_foliage_height_ratio = top_crown_height_ratio + randf() * 0.08
+	var top_foliage_height = trunk_height * top_foliage_height_ratio
+	
+	for i in range(branch_count):
+		var branch_angle = (i / float(branch_count)) * TAU + randf() * 0.5  # Distribute around trunk
+		var branch_height_ratio = branch_height_start + (i / float(branch_count)) * (branch_height_end - branch_height_start)
+		var branch_height_local = trunk_height * branch_height_ratio  # Height in WORLD space
+		
+		# Branch extends outward and slightly up - configurable length
+		var branch_length = (branch_length_min + randf() * (branch_length_max - branch_length_min)) * foliage_size_multiplier
+		
+		# Calculate branch start point (on trunk at height) - in TRUNK_MESH local space
+		# Trunk mesh is centered at trunk_height/2, so we need to offset
+		var branch_start_local = Vector3(0, branch_height_local - trunk_height / 2, 0)
+		
+		# Calculate branch end point (extends outward and up) - in TRUNK_MESH local space
+		var horizontal_extent = branch_length * 0.95  # Most of length is horizontal
+		var vertical_rise = branch_length * branch_upward_angle  # Configurable upward angle
+		var branch_end_local = Vector3(
+			cos(branch_angle) * horizontal_extent,
+			(branch_height_local - trunk_height / 2) + vertical_rise,
+			sin(branch_angle) * horizontal_extent
+		)
+		
+		# Create branch cylinder - THINNER branches
+		var branch = MeshInstance3D.new()
+		trunk_mesh.add_child(branch)
+		
+		var branch_mesh = CylinderMesh.new()
+		branch_mesh.height = branch_length
+		branch_mesh.top_radius = trunk_radius * 0.15
+		branch_mesh.bottom_radius = trunk_radius * 0.22
+		branch.mesh = branch_mesh
+		
+		# Position branch at midpoint between start and end
+		branch.position = (branch_start_local + branch_end_local) / 2.0
+		
+		# Rotate branch to point from start to end
+		var branch_direction = (branch_end_local - branch_start_local).normalized()
+		var default_up = Vector3.UP
+		
+		# Only rotate if not already aligned
+		if not branch_direction.is_equal_approx(default_up):
+			var rotation_axis = default_up.cross(branch_direction)
+			if rotation_axis.length() > 0.001:
+				rotation_axis = rotation_axis.normalized()
+				var rotation_angle = acos(clamp(default_up.dot(branch_direction), -1.0, 1.0))
+				branch.rotate(rotation_axis, rotation_angle)
+		
+		branch.set_surface_override_material(0, trunk_material)
+		
+		# Foliage cluster at branch end - LAYERED FLAT DISCS instead of spheres
+		# Create stacked disc layers for natural leaf cluster
+		var layer_count = branch_foliage_layers + (randi() % 2)  # Configurable + random 0-1
+		
+		for layer in range(layer_count):
+			var foliage = MeshInstance3D.new()
+			trunk_mesh.add_child(foliage)
+			
+			# Flattened cylinder mesh (disc shape)
+			var disc_mesh = CylinderMesh.new()
+			var disc_size = foliage_disc_size * (0.6 + randf() * 0.3) * foliage_size_multiplier  # Configurable size
+			disc_size *= (1.0 - layer * 0.18)  # Each layer progressively smaller
+			disc_mesh.top_radius = disc_size
+			disc_mesh.bottom_radius = disc_size * 0.9
+			
+			# Progressive thickness - bottom thick, top thin
+			var base_thickness = foliage_disc_thickness + randf() * 0.15  # Configurable base thickness
+			var thickness_factor = 1.0 - (layer / float(layer_count)) * 0.6  # Bottom 100%, top 40%
+			disc_mesh.height = base_thickness * thickness_factor
+			
+			disc_mesh.radial_segments = 8
+			disc_mesh.rings = 1
+			foliage.mesh = disc_mesh
+			
+			# Stack layers vertically - configurable gap
+			var layer_offset = layer * foliage_layer_gap
+			foliage.position = branch_end_local + Vector3(0, layer_offset, 0)
+			
+			# Random rotation for natural look
+			foliage.rotation.y = randf() * TAU
+			
+			foliage.set_surface_override_material(0, foliage_material)
+	
+	# Add top crown foliage - LAYERED DISCS
+	var top_layer_count = top_foliage_layers + (randi() % 2)  # Configurable + random 0-1
+	
+	for layer in range(top_layer_count):
+		var top_foliage = MeshInstance3D.new()
+		trunk_mesh.add_child(top_foliage)
+		
+		var top_disc = CylinderMesh.new()
+		var top_size = foliage_disc_size * (0.8 + randf() * 0.4) * foliage_size_multiplier  # Configurable size
+		top_size *= (1.0 - layer * 0.15)  # Each layer progressively smaller
+		top_disc.top_radius = top_size
+		top_disc.bottom_radius = top_size * 0.85
+		
+		# Progressive thickness - bottom thick, top thin
+		var base_thickness = foliage_disc_thickness * 1.1 + randf() * 0.2  # Slightly thicker than branch foliage
+		var thickness_factor = 1.0 - (layer / float(top_layer_count)) * 0.65  # Bottom 100%, top 35%
+		top_disc.height = base_thickness * thickness_factor
+		
+		top_disc.radial_segments = 8
+		top_disc.rings = 1
+		top_foliage.mesh = top_disc
+		
+		# Stack layers - configurable gap
+		var layer_height_local = (top_foliage_height - trunk_height / 2) + layer * (foliage_layer_gap * 1.25)
+		top_foliage.position = Vector3(0, layer_height_local, 0)
+		top_foliage.rotation.y = randf() * TAU
+		
+		top_foliage.set_surface_override_material(0, foliage_material)
 	
 	# Add collision shape for the tree (scaled to trunk size)
 	var collision = CollisionShape3D.new()
@@ -744,9 +857,9 @@ func create_pine_tree(mesh_instance: MeshInstance3D):
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Pixelated bark texture (darker for pine)
-	var bark_texture = PixelTextureGenerator.create_bark_texture()
-	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(0.85, 0.75, 0.65))
+	# Pixelated bark texture - PINE style with reddish-brown
+	var bark_texture = PixelTextureGenerator.create_pine_bark_texture()
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(1.0, 0.85, 0.75))  # Reddish tint
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
 	# Pine foliage (cone levels) with pixelated texture
@@ -813,9 +926,9 @@ func create_palm_tree(mesh_instance: MeshInstance3D):
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Pixelated bark texture (lighter/tan for palm)
-	var bark_texture = PixelTextureGenerator.create_bark_texture()
-	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(1.4, 1.2, 0.9))
+	# Pixelated bark texture - PALM style with tan/beige
+	var bark_texture = PixelTextureGenerator.create_palm_bark_texture()
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(1.15, 1.05, 0.85))  # Tan/beige tint
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
 	# Palm fronds with pixelated texture
