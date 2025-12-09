@@ -4,6 +4,7 @@ class_name VegetationSpawner
 # Preload resource node classes
 const ResourceNodeClass = preload("res://resource_node.gd")
 const HarvestableTreeClass = preload("res://harvestable_tree.gd")
+const PixelTextureGenerator = preload("res://pixel_texture_generator.gd")
 
 # References
 var chunk_manager: ChunkManager
@@ -86,7 +87,7 @@ func populate_chunk(chunk_pos: Vector2i):
 	var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
 	
 	# First pass: Trees, rocks, and large vegetation
-	var samples_per_chunk = 25
+	var samples_per_chunk = 15  # Reduced from 25 for sparser vegetation
 	
 	for i in range(samples_per_chunk):
 		var local_x = randf() * chunk_size
@@ -112,7 +113,7 @@ func populate_chunk(chunk_pos: Vector2i):
 	
 	# Second pass: Dense ground cover (grass, flowers)
 	# Much higher sample count for ground cover
-	var ground_cover_samples = 100  # More samples for denser coverage
+	var ground_cover_samples = 60  # Reduced from 100 for less dense grass
 	
 	for i in range(ground_cover_samples):
 		var local_x = randf() * chunk_size
@@ -191,9 +192,9 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 		
 		Chunk.Biome.DESERT:
 			var rand = randf()
-			if rand > 0.6:
+			if rand > 0.8:
 				veg_type = VegType.CACTUS
-			elif rand > 0.2:
+			elif rand > 0.5:
 				veg_type = VegType.ROCK
 			else:
 				return
@@ -667,11 +668,11 @@ func create_tree(mesh_instance: MeshInstance3D):
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Slightly varied bark colors
+	# Pixelated bark texture
+	var bark_texture = PixelTextureGenerator.create_bark_texture()
 	var bark_variation = randf() * 0.1
-	var trunk_material = StandardMaterial3D.new()
-	trunk_material.albedo_color = Color(0.35 + bark_variation, 0.22 + bark_variation * 0.5, 0.13 + bark_variation * 0.3)
-	trunk_material.roughness = 0.9
+	var bark_tint = Color(0.35 + bark_variation, 0.22 + bark_variation * 0.5, 0.13 + bark_variation * 0.3)
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, bark_tint)
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
 	# Foliage - varied size and position based on tree size
@@ -688,16 +689,17 @@ func create_tree(mesh_instance: MeshInstance3D):
 	var foliage_height_ratio = 0.55 + randf() * 0.15  # 55-70% up the trunk
 	foliage.position = Vector3(0, trunk_height * foliage_height_ratio, 0)
 	
-	# Varied foliage colors (different shades of green)
+	# Pixelated leaves texture with color variation
+	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
 	var green_variation = randf()
-	var foliage_material = StandardMaterial3D.new()
+	var foliage_tint: Color
 	if green_variation > 0.7:
-		foliage_material.albedo_color = Color(0.25, 0.65, 0.25)  # Darker green
+		foliage_tint = Color(0.9, 1.0, 0.9)  # Lighter green
 	elif green_variation > 0.3:
-		foliage_material.albedo_color = Color(0.2, 0.6, 0.2)  # Standard green
+		foliage_tint = Color(0.85, 0.95, 0.85)  # Standard green
 	else:
-		foliage_material.albedo_color = Color(0.15, 0.55, 0.15)  # Very dark green
-	foliage_material.roughness = 0.8
+		foliage_tint = Color(0.75, 0.85, 0.75)  # Darker green
+	var foliage_material = PixelTextureGenerator.create_pixel_material(leaves_texture, foliage_tint)
 	foliage.set_surface_override_material(0, foliage_material)
 	
 	# Add collision shape for the tree (scaled to trunk size)
@@ -742,30 +744,31 @@ func create_pine_tree(mesh_instance: MeshInstance3D):
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	var trunk_material = StandardMaterial3D.new()
-	trunk_material.albedo_color = Color(0.35, 0.25, 0.2)
-	trunk_material.roughness = 0.9
+	# Pixelated bark texture (darker for pine)
+	var bark_texture = PixelTextureGenerator.create_bark_texture()
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(0.85, 0.75, 0.65))
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
-	# Pine foliage (cone levels)
+	# Pine foliage (cone levels) with pixelated texture
+	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
 	var cone_levels = 3
 	for i in range(cone_levels):
 		var cone = MeshInstance3D.new()
 		trunk_mesh.add_child(cone)
 		
 		var cone_mesh = CylinderMesh.new()
-		var level_height = trunk_height * (0.8 - i * 0.2)
-		var cone_size = 1.5 - i * 0.3
+		# i=0 should be BOTTOM (large), i=2 should be TOP (small)
+		var level_height = trunk_height * (0.4 + i * 0.2)  # 0.4, 0.6, 0.8 (bottom to top)
+		var cone_size = 1.5 - i * 0.3  # 1.5, 1.2, 0.9 (large to small)
 		
 		cone_mesh.height = cone_size
-		cone_mesh.top_radius = 0.0
-		cone_mesh.bottom_radius = cone_size * 0.7
+		cone_mesh.top_radius = 0.0  # Point at top
+		cone_mesh.bottom_radius = cone_size * 0.7  # Wide at bottom
 		cone.mesh = cone_mesh
 		cone.position = Vector3(0, level_height, 0)
 		
-		var cone_material = StandardMaterial3D.new()
-		cone_material.albedo_color = Color(0.15, 0.4, 0.2)
-		cone_material.roughness = 0.8
+		# Dark green pixelated texture for pine needles
+		var cone_material = PixelTextureGenerator.create_pixel_material(leaves_texture, Color(0.5, 0.8, 0.5))
 		cone.set_surface_override_material(0, cone_material)
 	
 	# Add collision shape for the tree
@@ -810,12 +813,13 @@ func create_palm_tree(mesh_instance: MeshInstance3D):
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	var trunk_material = StandardMaterial3D.new()
-	trunk_material.albedo_color = Color(0.6, 0.5, 0.3)
-	trunk_material.roughness = 0.8
+	# Pixelated bark texture (lighter/tan for palm)
+	var bark_texture = PixelTextureGenerator.create_bark_texture()
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(1.4, 1.2, 0.9))
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
-	# Palm fronds
+	# Palm fronds with pixelated texture
+	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
 	var palm_count = 6
 	for i in range(palm_count):
 		var frond = MeshInstance3D.new()
@@ -830,9 +834,8 @@ func create_palm_tree(mesh_instance: MeshInstance3D):
 		frond.rotation.y = angle
 		frond.rotation.x = -0.5
 		
-		var frond_material = StandardMaterial3D.new()
-		frond_material.albedo_color = Color(0.2, 0.7, 0.3)
-		frond_material.roughness = 0.7
+		# Bright green pixelated texture for palm fronds
+		var frond_material = PixelTextureGenerator.create_pixel_material(leaves_texture, Color(0.6, 1.4, 0.8))
 		frond.set_surface_override_material(0, frond_material)
 	
 	# Add collision shape for the tree
@@ -876,10 +879,10 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	sphere_mesh.radial_segments = 8
 	sphere_mesh.rings = 6
 	
-	var material = StandardMaterial3D.new()
-	material.albedo_color = Color(0.5 + randf() * 0.2, 0.5 + randf() * 0.2, 0.5 + randf() * 0.2)
-	material.roughness = 0.95
-	material.metallic = 0.1
+	# Pixelated stone texture with color variation
+	var stone_texture = PixelTextureGenerator.create_stone_texture()
+	var stone_tint = Color(0.9 + randf() * 0.2, 0.9 + randf() * 0.2, 0.9 + randf() * 0.2)
+	var material = PixelTextureGenerator.create_pixel_material(stone_texture, stone_tint)
 	
 	sphere_mesh.material = material
 	rock_mesh.mesh = sphere_mesh
@@ -900,20 +903,73 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	mesh_instance.queue_free()
 
 func create_cactus(mesh_instance: MeshInstance3D):
-	var height = 1.5 + randf() * 1.0
-	var radius = 0.2
+	"""Create a more detailed cactus with arms"""
+	var main_height = 1.5 + randf() * 1.0  # 1.5-2.5m tall
+	var main_radius = 0.25
 	
-	var cylinder_mesh = CylinderMesh.new()
-	cylinder_mesh.height = height
-	cylinder_mesh.top_radius = radius
-	cylinder_mesh.bottom_radius = radius
+	# Main trunk
+	var trunk_mesh = CylinderMesh.new()
+	trunk_mesh.height = main_height
+	trunk_mesh.top_radius = main_radius * 0.9  # Slightly narrower at top
+	trunk_mesh.bottom_radius = main_radius
+	trunk_mesh.radial_segments = 8  # Octagonal for that chunky look
 	
-	mesh_instance.mesh = cylinder_mesh
+	mesh_instance.mesh = trunk_mesh
+	# Lift the mesh so the bottom sits on the ground (cylinder is centered at origin)
+	mesh_instance.position.y += main_height / 2
 	
-	var material = StandardMaterial3D.new()
-	material.albedo_color = Color(0.3, 0.6, 0.3)
-	material.roughness = 0.7
+	# Pixelated grass texture tinted yellow-green for desert cactus
+	var grass_texture = PixelTextureGenerator.create_grass_texture()
+	var material = PixelTextureGenerator.create_pixel_material(grass_texture, Color(0.8, 1.1, 0.5))
 	mesh_instance.set_surface_override_material(0, material)
+	
+	# Add 1-3 cactus arms
+	var arm_count = 1 + randi() % 3  # 1, 2, or 3 arms
+	
+	for i in range(arm_count):
+		var arm = MeshInstance3D.new()
+		mesh_instance.add_child(arm)
+		
+		# Arm dimensions (smaller than main trunk)
+		var arm_height = main_height * (0.3 + randf() * 0.3)  # 30-60% of main height
+		var arm_radius = main_radius * 0.7
+		
+		# Create vertical arm
+		var arm_mesh = CylinderMesh.new()
+		arm_mesh.height = arm_height
+		arm_mesh.top_radius = arm_radius * 0.8
+		arm_mesh.bottom_radius = arm_radius
+		arm_mesh.radial_segments = 8
+		arm.mesh = arm_mesh
+		
+		# Position arm partway up the main trunk (relative to mesh_instance which is at main_height/2)
+		var arm_attach_height = main_height * (0.4 + randf() * 0.3)  # 40-70% up from base
+		
+		# Horizontal extension from trunk
+		var side = 1 if i % 2 == 0 else -1  # Alternate sides
+		var horizontal_offset = main_radius + arm_radius + 0.1
+		arm.position.x = side * horizontal_offset
+		arm.position.y = arm_attach_height - main_height / 2 + arm_height / 2  # Position vertically
+		
+		# Create the horizontal connecting piece
+		var connector = MeshInstance3D.new()
+		mesh_instance.add_child(connector)
+		
+		var connector_mesh = CylinderMesh.new()
+		connector_mesh.height = horizontal_offset
+		connector_mesh.top_radius = arm_radius * 0.9
+		connector_mesh.bottom_radius = arm_radius * 0.9
+		connector_mesh.radial_segments = 8
+		connector.mesh = connector_mesh
+		
+		# Rotate to horizontal and position
+		connector.rotation.z = PI / 2  # Horizontal
+		connector.position.y = arm_attach_height - main_height / 2
+		connector.position.x = side * horizontal_offset / 2
+		
+		# Apply same material to arms
+		arm.set_surface_override_material(0, material)
+		connector.set_surface_override_material(0, material)
 
 func create_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bool):
 	if is_cluster:
