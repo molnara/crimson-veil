@@ -4,6 +4,7 @@ class_name VegetationSpawner
 # Preload resource node classes
 const ResourceNodeClass = preload("res://resource_node.gd")
 const HarvestableTreeClass = preload("res://harvestable_tree.gd")
+const HarvestableMushroomClass = preload("res://harvestable_mushroom.gd")
 # Note: PixelTextureGenerator is a global class, no need to preload
 
 # References
@@ -393,11 +394,11 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 		VegType.GRASS_PATCH:
 			create_grass_patch(mesh_instance)
 		VegType.MUSHROOM_RED:
-			create_mushroom(mesh_instance, true, false)
+			create_harvestable_mushroom(mesh_instance, true, false)
 		VegType.MUSHROOM_BROWN:
-			create_mushroom(mesh_instance, false, false)
+			create_harvestable_mushroom(mesh_instance, false, false)
 		VegType.MUSHROOM_CLUSTER:
-			create_mushroom(mesh_instance, false, true)
+			create_harvestable_mushroom(mesh_instance, false, true)
 		VegType.WILDFLOWER_YELLOW:
 			create_wildflower(mesh_instance, Color(1.0, 0.9, 0.2))
 		VegType.WILDFLOWER_PURPLE:
@@ -430,7 +431,7 @@ func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
 	
 	# Create two crossed planes for 3D grass effect
 	for i in range(2):
-		var angle = (i / 2.0) * PI / 2.0  # 0Â° and 45Â°
+		var angle = (i / 2.0) * PI / 2.0  # 0Ã‚Â° and 45Ã‚Â°
 		var cos_a = cos(angle)
 		var sin_a = sin(angle)
 		
@@ -1099,6 +1100,71 @@ func create_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bo
 	else:
 		var size = 0.2 + randf() * 0.15
 		create_single_mushroom(mesh_instance, is_red, size)
+
+func create_harvestable_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bool):
+	"""Create a harvestable mushroom that can be harvested for items"""
+	var parent = mesh_instance.get_parent()
+	var mushroom_position = mesh_instance.global_position
+	
+	# Create the harvestable mushroom node
+	var mushroom = HarvestableMushroomClass.new()
+	
+	# Set mushroom type
+	if is_cluster:
+		mushroom.mushroom_type = HarvestableMushroomClass.MushroomType.CLUSTER
+	elif is_red:
+		mushroom.mushroom_type = HarvestableMushroomClass.MushroomType.RED
+	else:
+		mushroom.mushroom_type = HarvestableMushroomClass.MushroomType.BROWN
+	
+	# Set collision for harvesting
+	mushroom.collision_layer = 2
+	mushroom.collision_mask = 0
+	
+	# Create the visual mesh
+	if is_cluster:
+		# Create cluster of small mushrooms
+		var cluster_count = 3 + randi() % 3
+		for i in range(cluster_count):
+			var small_mushroom = MeshInstance3D.new()
+			mushroom.add_child(small_mushroom)
+			
+			var offset_x = (randf() - 0.5) * 0.3
+			var offset_z = (randf() - 0.5) * 0.3
+			small_mushroom.position = Vector3(offset_x, 0, offset_z)
+			
+			create_single_mushroom(small_mushroom, false, 0.15 + randf() * 0.1)
+	else:
+		# Create single mushroom
+		var mushroom_mesh = MeshInstance3D.new()
+		mushroom.add_child(mushroom_mesh)
+		
+		var size = 0.2 + randf() * 0.15
+		create_single_mushroom(mushroom_mesh, is_red, size)
+	
+	# Add collision shape for the mushroom
+	var collision = CollisionShape3D.new()
+	var shape = CylinderShape3D.new()
+	
+	# Size based on type
+	if is_cluster:
+		shape.radius = 0.3
+		shape.height = 0.3
+	else:
+		var size = 0.2 + randf() * 0.15
+		shape.radius = size * 0.8
+		shape.height = size * 2.0
+	
+	collision.shape = shape
+	collision.position.y = shape.height / 2
+	mushroom.add_child(collision)
+	
+	# Replace mesh_instance with mushroom in scene
+	parent.remove_child(mesh_instance)
+	parent.add_child(mushroom)
+	mushroom.global_position = mushroom_position
+	mesh_instance.queue_free()
+
 
 func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: float):
 	var surface_tool = SurfaceTool.new()
