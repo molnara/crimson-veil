@@ -42,6 +42,11 @@ func _ready():
 	if camera:
 		print("Camera global position: ", camera.global_position)
 	
+	# Set collision layers - player only collides with terrain, not critters
+	collision_layer = 1  # Player is on layer 1
+	collision_mask = 1 + 2  # Detect layers 1 (terrain) and 2 (resources), but NOT layer 8 (critters)
+	# Layer 8 (critters) is intentionally excluded so player passes through them
+	
 	# Enable floor snapping and sliding for smooth terrain following
 	floor_constant_speed = true
 	floor_block_on_wall = false

@@ -139,7 +139,7 @@ func create_celestial_bodies():
 	
 	# Use a quad (flat plane) for billboard effect
 	var sun_quad = QuadMesh.new()
-	sun_quad.size = Vector2(40.0, 40.0)  # Much bigger - like Minecraft
+	sun_quad.size = Vector2(70.0, 70.0)  # Same size as moon for consistency
 	sun_mesh.mesh = sun_quad
 	
 	# Create pixelated sun texture
@@ -165,7 +165,7 @@ func create_celestial_bodies():
 	add_child(moon_mesh)
 	
 	var moon_quad = QuadMesh.new()
-	moon_quad.size = Vector2(35.0, 35.0)  # Slightly smaller than sun
+	moon_quad.size = Vector2(70.0, 70.0)  # Much bigger so pixels are visible
 	moon_mesh.mesh = moon_quad
 	
 	# Create pixelated moon texture
@@ -191,7 +191,7 @@ func create_celestial_bodies():
 
 func create_pixelated_sun_texture() -> ImageTexture:
 	"""Create a Minecraft-style pixelated sun texture"""
-	var size = 32  # 32x32 pixels for smoother look
+	var size = 64  # 64x64 pixels to match moon resolution
 	var image = Image.create(size, size, false, Image.FORMAT_RGBA8)
 	
 	# Sun colors - bright yellow/orange with less contrast
@@ -241,7 +241,7 @@ func create_pixelated_sun_texture() -> ImageTexture:
 
 func create_pixelated_moon_texture() -> ImageTexture:
 	"""Create a Minecraft-style pixelated moon texture with craters"""
-	var size = 32  # 32x32 pixels for finer detail
+	var size = 64  # 64x64 pixels for better visibility at distance
 	var image = Image.create(size, size, false, Image.FORMAT_RGBA8)
 	
 	# Moon colors - gray/white with less contrast

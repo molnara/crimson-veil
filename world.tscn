@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bc354ntptv04q"]
+[gd_scene load_steps=9 format=3 uid="uid://bc354ntptv04q"]
 
 [ext_resource type="Script" uid="uid://ckhk1lvasit4r" path="res://chunk_manager.gd" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://c2gqjpxjajo8c" path="res://day_night_cycle.gd" id="4_aqk2v"]
 [ext_resource type="Script" uid="uid://5k6aextniq48" path="res://vegetation_spawner.gd" id="5_036b0"]
 [ext_resource type="Script" uid="uid://c33xs1ujes8lw" path="res://water_plane.gd" id="6_dwbse"]
+[ext_resource type="Script" uid="uid://wn1w2h0qttrp" path="res://critter_spawner.gd" id="7_critter"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aqk2v"]
 
@@ -36,7 +37,7 @@ near = 0.3
 [node name="DayNightCycle" type="Node3D" parent="."]
 script = ExtResource("4_aqk2v")
 day_length_minutes = 2.0
-start_hour = 21
+start_hour = 18
 
 [node name="SunLight" type="DirectionalLight3D" parent="DayNightCycle"]
 
@@ -49,6 +50,9 @@ shadow_enabled = true
 
 [node name="VegetationSpawner" type="Node3D" parent="."]
 script = ExtResource("5_036b0")
+
+[node name="CritterSpawner" type="Node3D" parent="."]
+script = ExtResource("7_critter")
 
 [node name="WaterPlane" type="MeshInstance3D" parent="."]
 script = ExtResource("6_dwbse")

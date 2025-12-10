@@ -3,6 +3,7 @@ extends Node3D
 @onready var chunk_manager = $ChunkManager
 @onready var player = $Player
 @onready var vegetation_spawner = $VegetationSpawner
+@onready var critter_spawner = $CritterSpawner
 
 var chunks_ready = false
 
@@ -13,6 +14,10 @@ func _ready():
 	# Initialize vegetation spawner
 	if vegetation_spawner:
 		vegetation_spawner.initialize(chunk_manager)
+	
+	# Initialize critter spawner
+	if critter_spawner:
+		critter_spawner.initialize(chunk_manager)
 	
 	# Generate initial chunks
 	chunk_manager.generate_initial_chunks()
