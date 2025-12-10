@@ -10,6 +10,8 @@ CURRENT SPRINT (Next 1-2 weeks)
 VISUAL POLISH
 -------------
 [ ] Make clouds less pixelated - Increase resolution to match sun/moon quality
+[ ] Expand tree felling mechanic - Valheim-style log breakage into individual wood pieces with physics
+[ ] Update crosshair/reticle - Make more visible and obvious (current center dot is hard to see)
 [X] Add highlight around harvestable objects when in range - Green glow for correct tool, red for wrong tool (COMPLETE)
 
 
