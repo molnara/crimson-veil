@@ -94,7 +94,7 @@ TECHNICAL DEBT / REFACTORING
 
 BUGS / FIXES
 ------------
-[ ] Sun/moon seem to change sizes as I explore
+[X] Sun/moon seem to change sizes as I explore - FIXED
 [X] Crabs still don't seem to spawn - FIXED
 [X] Rocks are not glowing (blue-ish) at night (should behave just like mushrooms) - FIXED
 

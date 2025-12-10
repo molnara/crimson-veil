@@ -44,6 +44,9 @@ class_name DayNightCycle
 @onready var moon: DirectionalLight3D = $MoonLight
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 
+# Player reference (set by world.gd)
+var player: Node3D = null
+
 # Celestial bodies
 var sun_mesh: MeshInstance3D
 var moon_mesh: MeshInstance3D
@@ -83,6 +86,10 @@ func _ready():
 	if enable_clouds:
 		create_clouds()
 	update_lighting()
+
+func set_player(player_node: Node3D):
+	"""Set player reference for positioning celestial bodies relative to player"""
+	player = player_node
 
 func _process(delta):
 	# Update time of day
@@ -538,14 +545,17 @@ func update_clouds(delta):
 		cloud.position.y = cloud_data["base_y"] + sin(Time.get_ticks_msec() * 0.0003 + cloud.position.x * 0.01) * 2.0
 
 func update_celestial_bodies():
-	"""Update sun and moon positions"""
+	"""Update sun and moon positions relative to player"""
 	# Calculate angle (0 to 360 degrees through the day)
 	var sun_angle = time_of_day * 360.0
 	var angle_rad = deg_to_rad(sun_angle)
 	
-	# Sun moves in an arc across the sky
+	# Get player position (or use origin if player not set yet)
+	var reference_pos = player.global_position if player else Vector3.ZERO
+	
+	# Sun moves in an arc across the sky, positioned relative to player
 	var sun_distance = 200.0
-	sun_mesh.position = Vector3(
+	sun_mesh.position = reference_pos + Vector3(
 		0,
 		sun_distance * sin(angle_rad - PI/2),  # Vertical movement
 		-sun_distance * cos(angle_rad - PI/2)  # Horizontal movement
@@ -553,15 +563,15 @@ func update_celestial_bodies():
 	
 	# Moon is opposite (180 degrees offset)
 	var moon_angle_rad = angle_rad + PI
-	moon_mesh.position = Vector3(
+	moon_mesh.position = reference_pos + Vector3(
 		0,
 		sun_distance * sin(moon_angle_rad - PI/2),
 		-sun_distance * cos(moon_angle_rad - PI/2)
 	)
 	
 	# Show/hide sun and moon based on position
-	sun_mesh.visible = sun_mesh.position.y > -20.0  # Hide when below horizon
-	moon_mesh.visible = moon_mesh.position.y > -20.0
+	sun_mesh.visible = sun_mesh.position.y > reference_pos.y - 20.0  # Hide when below horizon
+	moon_mesh.visible = moon_mesh.position.y > reference_pos.y - 20.0
 	
 	# Stars only visible at night
 	if stars_mesh:

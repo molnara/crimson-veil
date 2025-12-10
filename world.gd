@@ -31,6 +31,10 @@ func _ready():
 	# Connect the player to the chunk manager
 	chunk_manager.set_player(player)
 	
+	# Connect player to day/night cycle for celestial body positioning
+	if day_night_cycle:
+		day_night_cycle.set_player(player)
+	
 	# Initialize vegetation spawner
 	if vegetation_spawner:
 		vegetation_spawner.initialize(chunk_manager)
