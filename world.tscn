@@ -49,22 +49,6 @@ shadow_enabled = true
 
 [node name="VegetationSpawner" type="Node3D" parent="."]
 script = ExtResource("5_036b0")
-tree_height_min = null
-tree_height_max = null
-trunk_radius_base = null
-branch_count_min = null
-branch_count_max = null
-branch_length_min = null
-branch_length_max = null
-branch_height_start = null
-branch_height_end = null
-branch_upward_angle = null
-branch_foliage_layers = null
-top_foliage_layers = null
-foliage_disc_thickness = null
-foliage_layer_gap = null
-foliage_disc_size = null
-top_crown_height_ratio = null
 
 [node name="CritterSpawner" type="Node3D" parent="."]
 script = ExtResource("7_critter")

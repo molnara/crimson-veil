@@ -50,7 +50,7 @@ var player: Node3D
 @export_range(0.0, 1.0) var strawberry_density: float = 0.20  ## Density of strawberry bushes (0.0 = none, 1.0 = maximum)
 @export_range(0.0, 1.0) var grass_density: float = 0.8  ## Density of grass and ground cover (higher for fuller look)
 @export_range(0.0, 1.0) var flower_density: float = 0.15  ## Density of wildflowers (0.0 = none, 1.0 = maximum)
-@export_range(1, 6) var spawn_radius: int = 4  ## How many chunks around player to populate with vegetation (increased from 2 for large biomes)
+@export_range(1, 5) var spawn_radius: int = 2  ## How many chunks around player to populate with vegetation
 
 @export_group("Tree Size Variation")
 @export_range(2.0, 15.0) var tree_height_min: float = 3.5  ## Minimum tree height in meters (smallest trees)
@@ -74,13 +74,28 @@ var player: Node3D
 @export_range(0.5, 2.0) var foliage_disc_size: float = 0.75  ## Size multiplier for foliage disc radius (larger = wider canopy)
 @export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.88  ## Where top crown starts as fraction of trunk height (higher = near top)
 
+@export_group("Tree Trunk Tilt Settings")
+@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.15  ## Maximum trunk tilt angle in radians (0 = vertical, 0.4 = ~23°)
+@export_range(0.0, 1.0) var trunk_tilt_influence: float = 0.7  ## How much taller trees lean (0 = no influence, 1 = tall trees lean most)
+
+@export_group("Character Tree Settings")
+@export_range(0.0, 0.15) var character_tree_chance: float = 0.05  ## Chance for rare "character" trees with unique features (0-15%)
+@export_range(0.0, 1.0) var branch_asymmetry_amount: float = 0.4  ## How much branches favor one side (0 = symmetric, 1 = extreme one-sided)
+
 @export_group("Ground Cover Settings")
-@export_range(10, 150) var ground_cover_samples_per_chunk: int = 80  ## Number of grass/flower samples per chunk (increased from 60 for large biomes)
-@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 20  ## Number of tree/rock samples per chunk (increased from 15 for large biomes)
+@export_range(10, 150) var ground_cover_samples_per_chunk: int = 60  ## Number of grass/flower samples per chunk (higher = denser)
+@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 15  ## Number of tree/rock samples per chunk (lower = more sparse)
 
 # Track which chunks have vegetation
 var populated_chunks: Dictionary = {}
 var initialized: bool = false
+
+# Tree shape types for visual variety
+enum TreeShape {
+	PYRAMIDAL,    # Young/skinny - branches angle up, tight crown
+	ROUND,        # Mature - even spread, full crown
+	WIDE_SPREAD   # Old - branches angle out wide, flat crown
+}
 
 # Vegetation types per biome
 enum VegType {
@@ -106,13 +121,13 @@ func _ready():
 	# Initialize vegetation noise (different from terrain noise)
 	vegetation_noise = FastNoiseLite.new()
 	vegetation_noise.seed = randi()
-	vegetation_noise.frequency = 0.35  # Reduced from 0.5 for larger vegetation clusters in large biomes
+	vegetation_noise.frequency = 0.5  # High frequency for scattered placement
 	vegetation_noise.noise_type = FastNoiseLite.TYPE_CELLULAR
 	
 	# Initialize cluster noise for grass patches
 	cluster_noise = FastNoiseLite.new()
 	cluster_noise.seed = vegetation_noise.seed + 1000
-	cluster_noise.frequency = 0.10  # Reduced from 0.15 for larger grass patches in large biomes
+	cluster_noise.frequency = 0.15  # Lower frequency = larger patches
 	cluster_noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	
 	print("VegetationSpawner ready, waiting for initialization...")
@@ -177,63 +192,18 @@ func populate_chunk(chunk_pos: Vector2i):
 			continue
 		
 		var base_noise = noise.get_noise_2d(world_x, world_z)
-		
-		# EARLY REJECTION: Use base_noise to filter obvious oceans and extreme mountains
-		# Ocean: base_noise < -0.25, Extreme mountains: base_noise > 0.45
-		# (Slightly different thresholds than ground cover since large vegetation can handle more varied terrain)
-		if base_noise < -0.25 or base_noise > 0.45:
-			continue
-		
 		var biome = get_biome_at_position(world_x, world_z, base_noise)
 		
-		# Skip ocean biome (redundant with base_noise check, but explicit)
 		if biome == Chunk.Biome.OCEAN:
 			continue
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		
-		# ELEVATION CHECK: Don't spawn vegetation underwater or at extreme heights
-		# Lower bound: 0.8m (well above water to avoid ice/shallow water spawns)
-		# Upper bound: 35m (trees/mushrooms/strawberries shouldn't be at mountain peaks)
-		# Note: Rocks have higher tolerance (checked per-vegetation-type below)
-		if height < 0.8:  # Increased from 0.5
+		# Don't spawn vegetation underwater (water level is at y=0.0)
+		if height < 0.5:  # Need more margin for larger vegetation
 			continue
 		
-		# SLOPE CHECK: Don't spawn large vegetation on steep slopes
-		# Sample nearby points to calculate terrain slope
-		var sample_dist = 0.5
-		var h_n = get_terrain_height_at_position(world_x, world_z + sample_dist, 
-			noise.get_noise_2d(world_x, world_z + sample_dist), biome)
-		var h_s = get_terrain_height_at_position(world_x, world_z - sample_dist,
-			noise.get_noise_2d(world_x, world_z - sample_dist), biome)
-		var h_e = get_terrain_height_at_position(world_x + sample_dist, world_z,
-			noise.get_noise_2d(world_x + sample_dist, world_z), biome)
-		var h_w = get_terrain_height_at_position(world_x - sample_dist, world_z,
-			noise.get_noise_2d(world_x - sample_dist, world_z), biome)
-		
-		var slope_ns = abs(h_n - h_s) / (sample_dist * 2.0)
-		var slope_ew = abs(h_e - h_w) / (sample_dist * 2.0)
-		var max_slope = max(slope_ns, slope_ew)
-		
-		# Slope tolerance varies by vegetation type:
-		# - Trees/mushrooms/strawberries: max 0.8 slope (~38 degrees)
-		# - Rocks: max 1.2 slope (~50 degrees) - more tolerant
-		# For now, use stricter limit and relax for rocks in spawn_large_vegetation_for_biome
-		if max_slope > 0.8:
-			continue
-		
-		# BIOME-SPECIFIC ELEVATION LIMITS
-		# Some biomes shouldn't have vegetation at high elevations
-		if biome == Chunk.Biome.MOUNTAIN or biome == Chunk.Biome.SNOW:
-			# Mountains/snow: only rocks, and only below 50m
-			if height > 50.0:
-				continue
-		else:
-			# Other biomes: trees/mushrooms/strawberries max at 30m
-			if height > 30.0:
-				continue
-		
-		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, max_slope)
+		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
 	
 	# PASS 2: Dense ground cover (grass, flowers)
 	# PERFORMANCE: Higher sample count but lightweight meshes (no collision, MultiMesh)
@@ -246,56 +216,10 @@ func populate_chunk(chunk_pos: Vector2i):
 		var world_z = world_offset.y + local_z
 		
 		var base_noise = noise.get_noise_2d(world_x, world_z)
-		
-		# EARLY REJECTION: Check base_noise first - reject obvious mountains/oceans
-		# base_noise > 0.4 = mountains, < -0.2 = ocean/beach
-		# Use tighter thresholds to catch edge cases
-		if base_noise > 0.30 or base_noise < -0.25:  # Tightened from 0.35
-			continue
-		
-		# DESERT CHECK: Reject desert conditions explicitly with buffer zone
-		# Desert = hot (temp > 0.2) and dry (moisture < 0.0)
-		# Check center point AND nearby points to avoid spawning on desert boundaries
-		var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
-		var moisture = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z)
-		
-		# Check if center point or any nearby point is in desert conditions
-		var is_desert = (temperature > 0.15 and moisture < 0.05)
-		
-		# Also check 4 nearby points to catch boundary transitions
-		if not is_desert:
-			var check_dist = 2.0  # Check 2 meters in each direction
-			var temp_n = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z + check_dist)
-			var moist_n = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z + check_dist)
-			if temp_n > 0.15 and moist_n < 0.05:
-				is_desert = true
-			
-			if not is_desert:
-				var temp_s = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z - check_dist)
-				var moist_s = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z - check_dist)
-				if temp_s > 0.15 and moist_s < 0.05:
-					is_desert = true
-			
-			if not is_desert:
-				var temp_e = chunk_manager.temperature_noise.get_noise_2d(world_x + check_dist, world_z)
-				var moist_e = chunk_manager.moisture_noise.get_noise_2d(world_x + check_dist, world_z)
-				if temp_e > 0.15 and moist_e < 0.05:
-					is_desert = true
-			
-			if not is_desert:
-				var temp_w = chunk_manager.temperature_noise.get_noise_2d(world_x - check_dist, world_z)
-				var moist_w = chunk_manager.moisture_noise.get_noise_2d(world_x - check_dist, world_z)
-				if temp_w > 0.15 and moist_w < 0.05:
-					is_desert = true
-		
-		if is_desert:
-			continue  # Skip desert and near-desert areas
-		
 		var biome = get_biome_at_position(world_x, world_z, base_noise)
 		
-		# Only spawn ground cover in biomes that support it
-		# CRITICAL: Grass only in Grassland, Forest, Beach
-		if biome != Chunk.Biome.GRASSLAND and biome != Chunk.Biome.FOREST and biome != Chunk.Biome.BEACH:
+		# Only spawn ground cover in certain biomes
+		if biome == Chunk.Biome.OCEAN:
 			continue
 		
 		# Use cluster noise to create patches
@@ -307,48 +231,8 @@ func populate_chunk(chunk_pos: Vector2i):
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		
-		# ABSOLUTE HEIGHT CHECK: Reject based on actual world height
-		# Water level is at y=0, so anything below 0.5m is too close to water/ice
-		# Anything above 10m is mountain terrain (lowered from 12m)
-		if height < 0.5 or height > 10.0:  # Increased from 0.3 to 0.5
-			continue
-		
-		# STRICT SLOPE CHECK: Sample 4 points very close together
-		var sample_dist = 0.3  # Tighter sample distance
-		var h_n = get_terrain_height_at_position(world_x, world_z + sample_dist, 
-			noise.get_noise_2d(world_x, world_z + sample_dist), biome)
-		var h_s = get_terrain_height_at_position(world_x, world_z - sample_dist,
-			noise.get_noise_2d(world_x, world_z - sample_dist), biome)
-		var h_e = get_terrain_height_at_position(world_x + sample_dist, world_z,
-			noise.get_noise_2d(world_x + sample_dist, world_z), biome)
-		var h_w = get_terrain_height_at_position(world_x - sample_dist, world_z,
-			noise.get_noise_2d(world_x - sample_dist, world_z), biome)
-		
-		# Calculate slope - reject if ANY direction has steep change
-		var slope_ns = abs(h_n - h_s) / (sample_dist * 2.0)
-		var slope_ew = abs(h_e - h_w) / (sample_dist * 2.0)
-		var max_slope = max(slope_ns, slope_ew)
-		
-		if max_slope > 0.6:  # Stricter: 0.6 instead of 0.7 (~31 degrees)
-			continue
-		
-		# BROADER SLOPE CHECK: Also check with larger sample distance to catch mountain slopes
-		# Sometimes local terrain is flat but sits on a steep mountain face
-		var broad_dist = 1.5
-		var h_n_broad = get_terrain_height_at_position(world_x, world_z + broad_dist,
-			noise.get_noise_2d(world_x, world_z + broad_dist), biome)
-		var h_s_broad = get_terrain_height_at_position(world_x, world_z - broad_dist,
-			noise.get_noise_2d(world_x, world_z - broad_dist), biome)
-		var h_e_broad = get_terrain_height_at_position(world_x + broad_dist, world_z,
-			noise.get_noise_2d(world_x + broad_dist, world_z), biome)
-		var h_w_broad = get_terrain_height_at_position(world_x - broad_dist, world_z,
-			noise.get_noise_2d(world_x - broad_dist, world_z), biome)
-		
-		var slope_ns_broad = abs(h_n_broad - h_s_broad) / (broad_dist * 2.0)
-		var slope_ew_broad = abs(h_e_broad - h_w_broad) / (broad_dist * 2.0)
-		var max_slope_broad = max(slope_ns_broad, slope_ew_broad)
-		
-		if max_slope_broad > 0.8:  # Broader check is more tolerant
+		# Don't spawn ground cover underwater (water level is at y=0.0)
+		if height < 0.3:  # Give some margin above water
 			continue
 		
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
@@ -382,32 +266,15 @@ func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise:
 	# Fallback to calculated if raycast fails (terrain might not be loaded yet)
 	return calculated_height
 
-func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float, slope: float):
-	"""Spawn trees, rocks, and other large vegetation
-	
-	Now includes slope parameter to make vegetation-specific decisions
-	Also adds explicit biome validation to prevent cross-biome spawning
-	"""
+func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float):
+	"""Spawn trees, rocks, and other large vegetation"""
 	var veg_type: VegType
 	var rand = randf()
 	
-	# ADDITIONAL DESERT CHECK: Prevent non-desert vegetation in desert conditions
-	# Check temperature/moisture directly (same as ground cover)
-	var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
-	var moisture = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z)
-	var is_desert_conditions = (temperature > 0.15 and moisture < 0.05)
-	
 	match biome:
 		Chunk.Biome.FOREST:
-			# BIOME VALIDATION: Don't spawn forest vegetation if desert conditions detected
-			if is_desert_conditions:
-				return
-			
 			# Trees
 			if rand > (1.0 - tree_density * 0.65):
-				# Trees shouldn't spawn on steep slopes
-				if slope > 0.8:
-					return
 				if randf() > 0.5:
 					veg_type = VegType.TREE
 				else:
@@ -424,10 +291,8 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 			# Strawberries
 			elif rand > (1.0 - strawberry_density * 0.25):
 				veg_type = VegType.STRAWBERRY_BUSH
-			# Rocks (can handle steeper slopes up to 1.2)
+			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.50):
-				if slope > 1.2:
-					return
 				var rock_rand = randf()
 				if rock_rand > 0.95:  # 5% boulders
 					veg_type = VegType.BOULDER
@@ -439,23 +304,14 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 				return
 		
 		Chunk.Biome.GRASSLAND:
-			# BIOME VALIDATION: Don't spawn grassland vegetation if desert conditions detected
-			if is_desert_conditions:
-				return
-			
 			# Trees
 			if rand > (1.0 - tree_density * 0.20):
-				# Trees shouldn't spawn on steep slopes
-				if slope > 0.8:
-					return
 				veg_type = VegType.TREE
 			# Strawberries
 			elif rand > (1.0 - strawberry_density * 0.40):
 				veg_type = VegType.STRAWBERRY_BUSH
-			# Rocks (can handle steeper slopes)
+			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.65):
-				if slope > 1.2:
-					return
 				var rock_rand = randf()
 				if rock_rand > 0.92:  # 8% boulders
 					veg_type = VegType.BOULDER
@@ -467,20 +323,11 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 				return
 		
 		Chunk.Biome.DESERT:
-			# BIOME VALIDATION: Only spawn desert vegetation in actual desert conditions
-			if not is_desert_conditions:
-				return
-			
 			# Cactus (uses tree density)
 			if rand > (1.0 - tree_density * 0.30):
-				# Cacti shouldn't spawn on steep slopes
-				if slope > 0.8:
-					return
 				veg_type = VegType.CACTUS
-			# Rocks (can handle steeper slopes)
+			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.70):
-				if slope > 1.2:
-					return
 				var rock_rand = randf()
 				if rock_rand > 0.90:  # 10% boulders
 					veg_type = VegType.BOULDER
@@ -492,10 +339,8 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 				return
 		
 		Chunk.Biome.MOUNTAIN:
-			# Mountains: only rocks, can handle very steep slopes
+			# Boulders and rocks (more boulders)
 			if rand > (1.0 - rock_density * 0.60):
-				if slope > 1.5:  # More tolerant for mountain rocks
-					return
 				var rock_rand = randf()
 				if rock_rand > 0.5:  # 50% boulders
 					veg_type = VegType.BOULDER
@@ -507,16 +352,11 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 				return
 		
 		Chunk.Biome.SNOW:
-			# Snow: pine trees and rocks
+			# Pine trees
 			if rand > (1.0 - tree_density * 0.35):
-				# Pine trees shouldn't spawn on steep slopes
-				if slope > 0.8:
-					return
 				veg_type = VegType.PINE_TREE
-			# Rocks (can handle steeper slopes)
+			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.55):
-				if slope > 1.2:
-					return
 				var rock_rand = randf()
 				if rock_rand > 0.88:  # 12% boulders
 					veg_type = VegType.BOULDER
@@ -528,20 +368,11 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, wo
 				return
 		
 		Chunk.Biome.BEACH:
-			# BIOME VALIDATION: Don't spawn beach vegetation if desert conditions detected
-			if is_desert_conditions:
-				return
-			
 			# Palm trees
 			if rand > (1.0 - tree_density * 0.25):
-				# Palm trees shouldn't spawn on steep slopes
-				if slope > 0.8:
-					return
 				veg_type = VegType.PALM_TREE
-			# Rocks (can handle moderate slopes)
+			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.50):
-				if slope > 1.0:  # Beach rocks more limited than mountain rocks
-					return
 				var rock_rand = randf()
 				if rock_rand > 0.75:  # Only 25% regular rocks
 					veg_type = VegType.ROCK
@@ -663,85 +494,46 @@ func get_biome_at_position(world_x: float, world_z: float, base_noise: float) ->
 	
 	return Chunk.Biome.GRASSLAND
 
-func get_terrain_height_at_position(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
-	"""Calculate terrain height - MUST MATCH chunk.gd generation exactly
-	
-	CRITICAL: This calculation must be identical to chunk.gd or vegetation spawns at wrong heights
-	Uses: base_noise, detail_noise, ridge_noise, biome-specific modifiers
-	"""
+func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
 	var height_multiplier = chunk_manager.height_multiplier
 	
-	# Get detail and ridge noise (same as chunk generation)
-	var detail = chunk_manager.detail_noise.get_noise_2d(world_x, world_z)
-	var ridge = chunk_manager.ridge_noise.get_noise_2d(world_x, world_z)
-	
-	# Get biome-specific modifiers (MUST MATCH chunk.gd values exactly)
 	var height_mod = 1.0
 	var roughness_mod = 1.0
 	
 	match biome:
 		Chunk.Biome.OCEAN:
-			height_mod = 0.15  # MUST MATCH chunk.gd
+			height_mod = 0.3
 			roughness_mod = 0.7
 		Chunk.Biome.BEACH:
 			height_mod = 0.7
 			roughness_mod = 0.7
-		Chunk.Biome.GRASSLAND:
-			height_mod = 1.0
-			roughness_mod = 0.85
-		Chunk.Biome.FOREST:
-			height_mod = 1.05
-			roughness_mod = 0.95
+		Chunk.Biome.MOUNTAIN:
+			height_mod = 1.3
+			roughness_mod = 1.1
+		Chunk.Biome.SNOW:
+			height_mod = 1.4
+			roughness_mod = 1.05
 		Chunk.Biome.DESERT:
 			height_mod = 0.9
 			roughness_mod = 0.8
-		Chunk.Biome.MOUNTAIN:
-			height_mod = 1.5  # MUST MATCH chunk.gd
-			roughness_mod = 1.2
-		Chunk.Biome.SNOW:
-			height_mod = 1.6  # MUST MATCH chunk.gd
-			roughness_mod = 1.15
+		Chunk.Biome.FOREST:
+			height_mod = 1.05
+			roughness_mod = 0.95
+		Chunk.Biome.GRASSLAND:
+			height_mod = 1.0
+			roughness_mod = 0.85
 	
-	# Apply roughness modifier
 	var modified_height = base_noise * roughness_mod
+	var height = modified_height * height_multiplier * height_mod
 	
-	# Add detail noise (small bumps)
-	modified_height += detail * 0.2
-	
-	var height: float
-	
-	# Mountains get exponential height + ridge features (MUST MATCH chunk.gd)
-	if biome == Chunk.Biome.MOUNTAIN or biome == Chunk.Biome.SNOW:
-		var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
-		height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
-	else:
-		height = modified_height * height_multiplier * height_mod
-	
-	# Calculate beach blend for smooth transitions
-	var beach_blend = calculate_beach_blend_vegetation(base_noise)
-	
-	# Apply baseline offset with beach blending (MUST MATCH chunk.gd)
 	if biome == Chunk.Biome.OCEAN:
-		height = height - (height_multiplier * 0.6)
+		height = height - (height_multiplier * 0.3)
 	elif biome == Chunk.Biome.BEACH:
-		# Smooth beach transition
-		var ocean_height = height - (height_multiplier * 0.6)
-		var land_height = height + (height_multiplier * 0.2)
-		height = lerp(ocean_height, land_height, beach_blend)
+		height = height + (height_multiplier * 0.2)
 	else:
 		height = height + (height_multiplier * 0.5)
 	
 	return height
-
-func calculate_beach_blend_vegetation(base_noise: float) -> float:
-	"""Calculate beach blend factor - matches chunk.gd logic"""
-	if base_noise < -0.35:
-		return 0.0
-	elif base_noise > -0.2:
-		return 1.0
-	else:
-		var blend = (base_noise + 0.35) / 0.15
-		return blend * blend * (3.0 - 2.0 * blend)
 
 func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 	var mesh_instance = MeshInstance3D.new()
@@ -1075,7 +867,7 @@ func create_wildflower(mesh_instance: MeshInstance3D, color: Color):
 # Keep all the tree, rock, cactus, mushroom functions from the original file
 
 func create_tree(mesh_instance: MeshInstance3D):
-	"""Create a harvestable tree"""
+	"""Create a harvestable tree with variety in shape, trunk tilt, asymmetry, and rare character trees"""
 	var parent = mesh_instance.get_parent()
 	var tree_position = mesh_instance.global_position
 	
@@ -1088,18 +880,43 @@ func create_tree(mesh_instance: MeshInstance3D):
 	tree.collision_mask = 0
 	
 	# Much more varied tree sizes - configurable
-	var size_variation = randf()
-	var trunk_height: float
-	var trunk_radius: float
-	var foliage_size_multiplier: float
-	
-	# Map size_variation to height range
-	trunk_height = tree_height_min + randf() * (tree_height_max - tree_height_min)
+	var trunk_height: float = tree_height_min + randf() * (tree_height_max - tree_height_min)
 	
 	# Scale trunk radius and foliage based on height
 	var height_ratio = (trunk_height - tree_height_min) / (tree_height_max - tree_height_min)
-	trunk_radius = trunk_radius_base * (0.8 + height_ratio * 0.6)  # 80-140% of base
-	foliage_size_multiplier = 0.9 + height_ratio * 0.8  # 0.9-1.7 multiplier
+	var trunk_radius = trunk_radius_base * (0.8 + height_ratio * 0.6)  # 80-140% of base
+	var foliage_size_multiplier = 0.9 + height_ratio * 0.8  # 0.9-1.7 multiplier
+	
+	# Character tree check (rare special trees)
+	var is_character_tree = randf() < character_tree_chance
+	var character_type = 0  # 0=gnarly, 1=lightning, 2=ancient
+	if is_character_tree:
+		character_type = randi() % 3
+	
+	# Determine tree shape (affects branch angles and distribution)
+	var shape_roll = randf()
+	var tree_shape: TreeShape
+	if is_character_tree and character_type == 2:  # Ancient trees are wide spread
+		tree_shape = TreeShape.WIDE_SPREAD
+	elif shape_roll < 0.3:
+		tree_shape = TreeShape.PYRAMIDAL
+	elif shape_roll < 0.7:
+		tree_shape = TreeShape.ROUND
+	else:
+		tree_shape = TreeShape.WIDE_SPREAD
+	
+	# Calculate trunk tilt using noise for natural randomness
+	var tilt_noise = vegetation_noise.get_noise_2d(tree_position.x * 0.1, tree_position.z * 0.1)
+	var tilt_amount = abs(tilt_noise) * trunk_tilt_max * (0.5 + height_ratio * trunk_tilt_influence)
+	if is_character_tree and character_type == 0:  # Gnarly trees lean more
+		tilt_amount *= 1.8
+	var tilt_direction = randf() * TAU  # Random direction
+	var trunk_tilt_x = cos(tilt_direction) * tilt_amount
+	var trunk_tilt_z = sin(tilt_direction) * tilt_amount
+	
+	# Branch asymmetry direction (used for wind-stressed look)
+	var asymmetry_angle = randf() * TAU
+	var asymmetry_strength = branch_asymmetry_amount * randf()
 	
 	# Create trunk
 	var trunk_mesh = MeshInstance3D.new()
@@ -1107,19 +924,54 @@ func create_tree(mesh_instance: MeshInstance3D):
 	
 	var cylinder_mesh = CylinderMesh.new()
 	cylinder_mesh.height = trunk_height
-	cylinder_mesh.top_radius = trunk_radius * 0.7  # Tapers toward top
-	cylinder_mesh.bottom_radius = trunk_radius
+	
+	# Character tree trunk modifications
+	if is_character_tree:
+		match character_type:
+			0:  # Gnarly - thicker, more tapered
+				cylinder_mesh.top_radius = trunk_radius * 0.5
+				cylinder_mesh.bottom_radius = trunk_radius * 1.3
+			1:  # Lightning struck - thinner top
+				cylinder_mesh.top_radius = trunk_radius * 0.4
+				cylinder_mesh.bottom_radius = trunk_radius
+			2:  # Ancient - massive trunk
+				cylinder_mesh.top_radius = trunk_radius * 0.9
+				cylinder_mesh.bottom_radius = trunk_radius * 1.5
+				trunk_height *= 1.2
+				cylinder_mesh.height = trunk_height
+	else:
+		cylinder_mesh.top_radius = trunk_radius * 0.7  # Tapers toward top
+		cylinder_mesh.bottom_radius = trunk_radius
+	
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Pixelated bark texture - OAK style with medium-dark brown
+	# Apply trunk tilt BEFORE adding branches/foliage so local space is correct
+	trunk_mesh.rotation.x = trunk_tilt_x
+	trunk_mesh.rotation.z = trunk_tilt_z
+	
+	# Bark texture with more color variation
 	var bark_texture = PixelTextureGenerator.create_bark_texture()
-	var bark_variation = randf() * 0.1
-	var bark_tint = Color(0.55 + bark_variation, 0.42 + bark_variation * 0.5, 0.28 + bark_variation * 0.3)  # Medium brown
+	var bark_hue_shift = randf() * 0.25  # More variation
+	var bark_tint: Color
+	
+	# Character trees can have distinct bark
+	if is_character_tree and character_type == 2:  # Ancient - darker, grayer bark
+		bark_tint = Color(0.45 + bark_hue_shift * 0.4, 0.40 + bark_hue_shift * 0.3, 0.35 + bark_hue_shift * 0.25)
+	else:
+		# Normal variation: medium browns to gray-browns
+		var brown_intensity = randf()
+		if brown_intensity > 0.7:
+			bark_tint = Color(0.60 + bark_hue_shift * 0.5, 0.48 + bark_hue_shift * 0.4, 0.32 + bark_hue_shift * 0.3)  # Warmer brown
+		elif brown_intensity > 0.3:
+			bark_tint = Color(0.55 + bark_hue_shift * 0.5, 0.42 + bark_hue_shift * 0.4, 0.28 + bark_hue_shift * 0.3)  # Medium brown
+		else:
+			bark_tint = Color(0.48 + bark_hue_shift * 0.5, 0.44 + bark_hue_shift * 0.4, 0.38 + bark_hue_shift * 0.35)  # Gray-brown
+	
 	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, bark_tint)
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
-	# Pixelated leaves texture with color variation (defined once for all foliage)
+	# Pixelated leaves texture with color variation
 	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
 	var green_variation = randf()
 	var foliage_tint: Color
@@ -1131,33 +983,90 @@ func create_tree(mesh_instance: MeshInstance3D):
 		foliage_tint = Color(0.75, 0.85, 0.75)  # Darker green
 	var foliage_material = PixelTextureGenerator.create_pixel_material(leaves_texture, foliage_tint)
 	
-	# Create natural branching structure with multiple foliage clusters
-	var branch_count = branch_count_min + randi() % (branch_count_max - branch_count_min + 1)
+	# Shape-specific parameters
+	var branch_count: int
+	var branch_angle_variation: float
+	var branch_vertical_angle: float
+	var top_crown_size_mod: float
+	var branch_height_range_end: float  # How high branches go (fraction of trunk)
+	
+	match tree_shape:
+		TreeShape.PYRAMIDAL:
+			branch_count = branch_count_min + 1
+			branch_angle_variation = 0.3  # Less horizontal spread
+			branch_vertical_angle = branch_upward_angle * 1.5  # Steeper upward
+			top_crown_size_mod = 0.8  # Smaller top crown
+			branch_height_range_end = branch_height_end  # Standard
+		TreeShape.ROUND:
+			branch_count = (branch_count_min + branch_count_max) / 2
+			branch_angle_variation = 0.6  # Moderate spread
+			branch_vertical_angle = branch_upward_angle  # Standard angle
+			top_crown_size_mod = 1.0  # Normal crown
+			branch_height_range_end = branch_height_end  # Standard
+		TreeShape.WIDE_SPREAD:
+			branch_count = branch_count_max
+			branch_angle_variation = 1.2  # Maximum spread
+			branch_vertical_angle = branch_upward_angle * 0.4  # Nearly horizontal
+			top_crown_size_mod = 1.3  # Larger, flatter crown
+			branch_height_range_end = min(0.92, branch_height_end + 0.07)  # Branches reach higher
+	
+	# Character tree modifications
+	if is_character_tree:
+		match character_type:
+			0:  # Gnarly - more branches, wild angles
+				branch_count += 2
+				branch_angle_variation *= 1.5
+			1:  # Lightning struck - fewer branches, reduced top crown
+				branch_count = max(2, branch_count - 2)
+				top_crown_size_mod *= 0.5
+			2:  # Ancient - more branches, wider spread
+				branch_count += 1
+				branch_angle_variation *= 1.3
+				top_crown_size_mod *= 1.4
+	
+	# Create natural branching structure with asymmetry
 	var top_foliage_height_ratio = top_crown_height_ratio + randf() * 0.08
+	if is_character_tree and character_type == 1:  # Lightning struck - lower crown
+		top_foliage_height_ratio *= 0.7
+	elif tree_shape == TreeShape.WIDE_SPREAD:  # Wide-spread trees have lower crowns
+		top_foliage_height_ratio *= 0.92  # Start crown slightly lower (8% lower)
 	var top_foliage_height = trunk_height * top_foliage_height_ratio
 	
 	for i in range(branch_count):
-		var branch_angle = (i / float(branch_count)) * TAU + randf() * 0.5  # Distribute around trunk
-		var branch_height_ratio = branch_height_start + (i / float(branch_count)) * (branch_height_end - branch_height_start)
-		var branch_height_local = trunk_height * branch_height_ratio  # Height in WORLD space
+		# Base angle distribution
+		var branch_angle = (i / float(branch_count)) * TAU + (randf() - 0.5) * 1.0
 		
-		# Branch extends outward and slightly up - configurable length
+		# Apply asymmetry (branches favor one side)
+		var angle_diff = fmod(branch_angle - asymmetry_angle + PI, TAU) - PI  # Distance from favored direction
+		var asymmetry_factor = 1.0 - abs(angle_diff) / PI  # 1.0 at favored angle, 0.0 at opposite
+		var branch_probability = 1.0 - asymmetry_strength * (1.0 - asymmetry_factor)
+		
+		# Skip some branches on the "away" side for asymmetric look
+		if randf() > branch_probability:
+			continue
+		
+		var branch_height_ratio = branch_height_start + (i / float(branch_count)) * (branch_height_range_end - branch_height_start)
+		var branch_height_local = trunk_height * branch_height_ratio
+		
+		# Branch length varies by shape and asymmetry
 		var branch_length = (branch_length_min + randf() * (branch_length_max - branch_length_min)) * foliage_size_multiplier
+		branch_length *= (0.9 + randf() * 0.3)  # Individual variation
+		# Branches on favored side are slightly longer
+		branch_length *= (1.0 + asymmetry_factor * asymmetry_strength * 0.3)
 		
-		# Calculate branch start point (on trunk at height) - in TRUNK_MESH local space
-		# Trunk mesh is centered at trunk_height/2, so we need to offset
+		# Calculate branch start point (on trunk at height)
 		var branch_start_local = Vector3(0, branch_height_local - trunk_height / 2, 0)
 		
-		# Calculate branch end point (extends outward and up) - in TRUNK_MESH local space
-		var horizontal_extent = branch_length * 0.95  # Most of length is horizontal
-		var vertical_rise = branch_length * branch_upward_angle  # Configurable upward angle
+		# Calculate branch end point with shape-specific spread
+		var horizontal_extent = branch_length * (0.85 + branch_angle_variation * 0.15)
+		var vertical_rise = branch_length * branch_vertical_angle
 		var branch_end_local = Vector3(
 			cos(branch_angle) * horizontal_extent,
 			(branch_height_local - trunk_height / 2) + vertical_rise,
 			sin(branch_angle) * horizontal_extent
 		)
 		
-		# Create branch cylinder - THINNER branches
+		# Create branch cylinder
 		var branch = MeshInstance3D.new()
 		trunk_mesh.add_child(branch)
 		
@@ -1184,67 +1093,76 @@ func create_tree(mesh_instance: MeshInstance3D):
 		
 		branch.set_surface_override_material(0, trunk_material)
 		
-		# Foliage cluster at branch end - LAYERED FLAT DISCS instead of spheres
-		# Create stacked disc layers for natural leaf cluster
-		var layer_count = branch_foliage_layers + (randi() % 2)  # Configurable + random 0-1
+		# Foliage cluster at branch end - layered discs
+		var layer_count = branch_foliage_layers + (randi() % 2)
 		
 		for layer in range(layer_count):
 			var foliage = MeshInstance3D.new()
 			trunk_mesh.add_child(foliage)
 			
-			# Flattened cylinder mesh (disc shape)
 			var disc_mesh = CylinderMesh.new()
-			var disc_size = foliage_disc_size * (0.6 + randf() * 0.3) * foliage_size_multiplier  # Configurable size
+			var disc_size = foliage_disc_size * (0.6 + randf() * 0.3) * foliage_size_multiplier
 			disc_size *= (1.0 - layer * 0.18)  # Each layer progressively smaller
 			disc_mesh.top_radius = disc_size
 			disc_mesh.bottom_radius = disc_size * 0.9
 			
-			# Progressive thickness - bottom thick, top thin
-			var base_thickness = foliage_disc_thickness + randf() * 0.15  # Configurable base thickness
-			var thickness_factor = 1.0 - (layer / float(layer_count)) * 0.6  # Bottom 100%, top 40%
+			# Progressive thickness
+			var base_thickness = foliage_disc_thickness + randf() * 0.15
+			var thickness_factor = 1.0 - (layer / float(layer_count)) * 0.6
 			disc_mesh.height = base_thickness * thickness_factor
 			
 			disc_mesh.radial_segments = 8
 			disc_mesh.rings = 1
 			foliage.mesh = disc_mesh
 			
-			# Stack layers vertically - configurable gap
+			# Stack layers vertically
 			var layer_offset = layer * foliage_layer_gap
 			foliage.position = branch_end_local + Vector3(0, layer_offset, 0)
-			
-			# Random rotation for natural look
 			foliage.rotation.y = randf() * TAU
 			
 			foliage.set_surface_override_material(0, foliage_material)
 	
-	# Add top crown foliage - LAYERED DISCS
-	var top_layer_count = top_foliage_layers + (randi() % 2)  # Configurable + random 0-1
-	
-	for layer in range(top_layer_count):
-		var top_foliage = MeshInstance3D.new()
-		trunk_mesh.add_child(top_foliage)
+	# Add top crown foliage - shape-specific sizing (skip for some character trees)
+	if not (is_character_tree and character_type == 1 and randf() < 0.5):  # Lightning struck sometimes has no top crown
+		var top_layer_count = top_foliage_layers + (randi() % 2)
 		
-		var top_disc = CylinderMesh.new()
-		var top_size = foliage_disc_size * (0.8 + randf() * 0.4) * foliage_size_multiplier  # Configurable size
-		top_size *= (1.0 - layer * 0.15)  # Each layer progressively smaller
-		top_disc.top_radius = top_size
-		top_disc.bottom_radius = top_size * 0.85
+		# Calculate crown centering offset for heavily tilted trees with asymmetric branches
+		# This prevents top crown from looking disconnected on extreme lean + asymmetry
+		var crown_center_offset = Vector3.ZERO
+		if tilt_amount > trunk_tilt_max * 0.5 and asymmetry_strength > 0.2:
+			# Shift crown slightly opposite to asymmetry direction to stay over branch mass
+			var centering_strength = (tilt_amount / trunk_tilt_max) * asymmetry_strength * 0.4
+			crown_center_offset = Vector3(
+				-cos(asymmetry_angle) * centering_strength * trunk_height * 0.15,
+				0,
+				-sin(asymmetry_angle) * centering_strength * trunk_height * 0.15
+			)
 		
-		# Progressive thickness - bottom thick, top thin
-		var base_thickness = foliage_disc_thickness * 1.1 + randf() * 0.2  # Slightly thicker than branch foliage
-		var thickness_factor = 1.0 - (layer / float(top_layer_count)) * 0.65  # Bottom 100%, top 35%
-		top_disc.height = base_thickness * thickness_factor
-		
-		top_disc.radial_segments = 8
-		top_disc.rings = 1
-		top_foliage.mesh = top_disc
-		
-		# Stack layers - configurable gap
-		var layer_height_local = (top_foliage_height - trunk_height / 2) + layer * (foliage_layer_gap * 1.25)
-		top_foliage.position = Vector3(0, layer_height_local, 0)
-		top_foliage.rotation.y = randf() * TAU
-		
-		top_foliage.set_surface_override_material(0, foliage_material)
+		for layer in range(top_layer_count):
+			var top_foliage = MeshInstance3D.new()
+			trunk_mesh.add_child(top_foliage)
+			
+			var top_disc = CylinderMesh.new()
+			var top_size = foliage_disc_size * (0.8 + randf() * 0.4) * foliage_size_multiplier * top_crown_size_mod
+			top_size *= (1.0 - layer * 0.15)
+			top_disc.top_radius = top_size
+			top_disc.bottom_radius = top_size * 0.85
+			
+			# Progressive thickness
+			var base_thickness = foliage_disc_thickness * 1.1 + randf() * 0.2
+			var thickness_factor = 1.0 - (layer / float(top_layer_count)) * 0.65
+			top_disc.height = base_thickness * thickness_factor
+			
+			top_disc.radial_segments = 8
+			top_disc.rings = 1
+			top_foliage.mesh = top_disc
+			
+			# Stack layers with centering offset applied
+			var layer_height_local = (top_foliage_height - trunk_height / 2) + layer * (foliage_layer_gap * 1.25)
+			top_foliage.position = Vector3(0, layer_height_local, 0) + crown_center_offset
+			top_foliage.rotation.y = randf() * TAU
+			
+			top_foliage.set_surface_override_material(0, foliage_material)
 	
 	# Add collision shape for the tree (scaled to trunk size)
 	var collision = CollisionShape3D.new()
@@ -1262,7 +1180,7 @@ func create_tree(mesh_instance: MeshInstance3D):
 	mesh_instance.queue_free()
 
 func create_pine_tree(mesh_instance: MeshInstance3D):
-	"""Create a harvestable pine tree"""
+	"""Create a harvestable pine tree with variety in shape, trunk tilt, and character trees"""
 	var parent = mesh_instance.get_parent()
 	var tree_position = mesh_instance.global_position
 	
@@ -1274,45 +1192,131 @@ func create_pine_tree(mesh_instance: MeshInstance3D):
 	tree.collision_layer = 2
 	tree.collision_mask = 0
 	
-	# Create tree visual
-	var trunk_height = 3.0 + randf() * 2.0
-	var trunk_radius = 0.25
+	# Size variation for pines
+	var trunk_height = tree_height_min * 0.8 + randf() * (tree_height_max * 0.9 - tree_height_min * 0.8)  # Slightly shorter than oaks
+	var height_ratio = (trunk_height - tree_height_min * 0.8) / (tree_height_max * 0.9 - tree_height_min * 0.8)
+	var trunk_radius = trunk_radius_base * 0.8 * (0.85 + height_ratio * 0.5)  # Thinner than oaks
+	
+	# Character tree check (rare special pines)
+	var is_character_tree = randf() < character_tree_chance
+	var character_type = 0  # 0=windswept, 1=dead/sparse, 2=ancient
+	if is_character_tree:
+		character_type = randi() % 3
+	
+	# Calculate trunk tilt
+	var tilt_noise = vegetation_noise.get_noise_2d(tree_position.x * 0.1, tree_position.z * 0.1)
+	var tilt_amount = abs(tilt_noise) * trunk_tilt_max * (0.5 + height_ratio * trunk_tilt_influence)
+	if is_character_tree and character_type == 0:  # Windswept pines lean more
+		tilt_amount *= 2.2
+	var tilt_direction = randf() * TAU
+	var trunk_tilt_x = cos(tilt_direction) * tilt_amount
+	var trunk_tilt_z = sin(tilt_direction) * tilt_amount
 	
 	var trunk_mesh = MeshInstance3D.new()
 	tree.add_child(trunk_mesh)
 	
 	var cylinder_mesh = CylinderMesh.new()
 	cylinder_mesh.height = trunk_height
-	cylinder_mesh.top_radius = trunk_radius * 0.6
-	cylinder_mesh.bottom_radius = trunk_radius
+	
+	# Character tree trunk modifications
+	if is_character_tree:
+		match character_type:
+			0:  # Windswept - more taper
+				cylinder_mesh.top_radius = trunk_radius * 0.4
+				cylinder_mesh.bottom_radius = trunk_radius * 1.2
+			1:  # Dead/sparse - thinner
+				cylinder_mesh.top_radius = trunk_radius * 0.5
+				cylinder_mesh.bottom_radius = trunk_radius * 0.9
+			2:  # Ancient - thicker
+				cylinder_mesh.top_radius = trunk_radius * 0.7
+				cylinder_mesh.bottom_radius = trunk_radius * 1.4
+				trunk_height *= 1.3
+				cylinder_mesh.height = trunk_height
+	else:
+		cylinder_mesh.top_radius = trunk_radius * 0.6
+		cylinder_mesh.bottom_radius = trunk_radius
+	
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Pixelated bark texture - PINE style with reddish-brown
+	# Apply trunk tilt
+	trunk_mesh.rotation.x = trunk_tilt_x
+	trunk_mesh.rotation.z = trunk_tilt_z
+	
+	# Bark texture with variation
 	var bark_texture = PixelTextureGenerator.create_pine_bark_texture()
-	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(1.0, 0.85, 0.75))  # Reddish tint
+	var bark_hue_shift = randf() * 0.2
+	var bark_tint: Color
+	
+	if is_character_tree and character_type == 2:  # Ancient - darker bark
+		bark_tint = Color(0.85 + bark_hue_shift * 0.3, 0.70 + bark_hue_shift * 0.25, 0.60 + bark_hue_shift * 0.2)
+	else:
+		# Normal pine bark variation (reddish-brown tones)
+		bark_tint = Color(1.0 + bark_hue_shift * 0.4, 0.85 + bark_hue_shift * 0.3, 0.75 + bark_hue_shift * 0.25)
+	
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, bark_tint)
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
 	# Pine foliage (cone levels) with pixelated texture
 	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
+	
+	# Foliage color variation
+	var green_variation = randf()
+	var foliage_tint: Color
+	if green_variation > 0.7:
+		foliage_tint = Color(0.6, 0.9, 0.6)  # Lighter pine green
+	elif green_variation > 0.3:
+		foliage_tint = Color(0.5, 0.8, 0.5)  # Standard pine green
+	else:
+		foliage_tint = Color(0.4, 0.7, 0.45)  # Darker pine green
+	
+	# Character tree cone modifications
 	var cone_levels = 3
+	if is_character_tree:
+		match character_type:
+			0:  # Windswept - asymmetric cones
+				cone_levels = 3
+			1:  # Dead/sparse - fewer, smaller cones
+				cone_levels = 2
+				foliage_tint = foliage_tint * 0.7  # Browner/dead look
+			2:  # Ancient - more cone levels
+				cone_levels = 4
+	
+	# Asymmetry for windswept look
+	var asymmetry_angle = randf() * TAU
+	var asymmetry_strength = branch_asymmetry_amount * randf()
+	if is_character_tree and character_type == 0:
+		asymmetry_strength *= 1.4  # Windswept but not extreme (reduced from 2.0)
+	
 	for i in range(cone_levels):
 		var cone = MeshInstance3D.new()
 		trunk_mesh.add_child(cone)
 		
 		var cone_mesh = CylinderMesh.new()
-		# i=0 should be BOTTOM (large), i=2 should be TOP (small)
-		var level_height = trunk_height * (0.4 + i * 0.2)  # 0.4, 0.6, 0.8 (bottom to top)
-		var cone_size = 1.5 - i * 0.3  # 1.5, 1.2, 0.9 (large to small)
+		# i=0 should be BOTTOM (large), higher i = TOP (small)
+		var level_ratio = i / float(cone_levels - 1) if cone_levels > 1 else 0.5
+		var level_height = trunk_height * (0.35 + level_ratio * 0.5)  # Distribute along trunk
+		var cone_size = (1.8 - level_ratio * 0.9) * (0.9 + height_ratio * 0.4)  # Scale with tree size
 		
 		cone_mesh.height = cone_size
 		cone_mesh.top_radius = 0.0  # Point at top
 		cone_mesh.bottom_radius = cone_size * 0.7  # Wide at bottom
 		cone.mesh = cone_mesh
-		cone.position = Vector3(0, level_height, 0)
 		
-		# Dark green pixelated texture for pine needles
-		var cone_material = PixelTextureGenerator.create_pixel_material(leaves_texture, Color(0.5, 0.8, 0.5))
+		# Apply asymmetry to cone position (windswept effect)
+		var cone_offset = Vector3.ZERO
+		if asymmetry_strength > 0.1:
+			var offset_dist = asymmetry_strength * cone_size * 0.08  # Reduced from 0.15 - minimal offset
+			cone_offset = Vector3(
+				cos(asymmetry_angle) * offset_dist,
+				0,
+				sin(asymmetry_angle) * offset_dist
+			)
+		
+		cone.position = Vector3(0, level_height, 0) + cone_offset
+		cone.rotation.y = randf() * TAU  # Random rotation for variety
+		
+		var cone_material = PixelTextureGenerator.create_pixel_material(leaves_texture, foliage_tint)
 		cone.set_surface_override_material(0, cone_material)
 	
 	# Add collision shape for the tree
@@ -1331,7 +1335,7 @@ func create_pine_tree(mesh_instance: MeshInstance3D):
 	mesh_instance.queue_free()
 
 func create_palm_tree(mesh_instance: MeshInstance3D):
-	"""Create a harvestable palm tree"""
+	"""Create a harvestable palm tree with variety in shape, trunk tilt, and character trees"""
 	var parent = mesh_instance.get_parent()
 	var tree_position = mesh_instance.global_position
 	
@@ -1343,43 +1347,142 @@ func create_palm_tree(mesh_instance: MeshInstance3D):
 	tree.collision_layer = 2
 	tree.collision_mask = 0
 	
-	# Create tree visual
-	var trunk_height = 3.0 + randf() * 1.5
-	var trunk_radius = 0.25
+	# Size variation for palms
+	var trunk_height = tree_height_min * 0.7 + randf() * (tree_height_max * 0.6 - tree_height_min * 0.7)  # Palms are shorter
+	var height_ratio = (trunk_height - tree_height_min * 0.7) / (tree_height_max * 0.6 - tree_height_min * 0.7)
+	var trunk_radius = trunk_radius_base * 0.75 * (0.9 + height_ratio * 0.4)  # Slightly thinner than oaks
+	
+	# Character tree check (rare special palms)
+	var is_character_tree = randf() < character_tree_chance
+	var character_type = 0  # 0=bent, 1=hurricane-damaged, 2=ancient
+	if is_character_tree:
+		character_type = randi() % 3
+	
+	# Calculate trunk tilt (palms naturally lean more)
+	var tilt_noise = vegetation_noise.get_noise_2d(tree_position.x * 0.1, tree_position.z * 0.1)
+	var tilt_amount = abs(tilt_noise) * trunk_tilt_max * 1.5 * (0.6 + height_ratio * trunk_tilt_influence)  # Palms lean more
+	if is_character_tree and character_type == 0:  # Bent palms lean dramatically
+		tilt_amount *= 2.5
+	var tilt_direction = randf() * TAU
+	var trunk_tilt_x = cos(tilt_direction) * tilt_amount
+	var trunk_tilt_z = sin(tilt_direction) * tilt_amount
 	
 	var trunk_mesh = MeshInstance3D.new()
 	tree.add_child(trunk_mesh)
 	
 	var cylinder_mesh = CylinderMesh.new()
 	cylinder_mesh.height = trunk_height
-	cylinder_mesh.top_radius = trunk_radius * 0.7
-	cylinder_mesh.bottom_radius = trunk_radius
+	
+	# Character tree trunk modifications
+	if is_character_tree:
+		match character_type:
+			0:  # Bent - more curved/tapered
+				cylinder_mesh.top_radius = trunk_radius * 0.5
+				cylinder_mesh.bottom_radius = trunk_radius * 1.1
+			1:  # Hurricane-damaged - broken/thin top
+				cylinder_mesh.top_radius = trunk_radius * 0.4
+				cylinder_mesh.bottom_radius = trunk_radius
+				trunk_height *= 0.7  # Shorter from damage
+				cylinder_mesh.height = trunk_height
+			2:  # Ancient - thicker, taller
+				cylinder_mesh.top_radius = trunk_radius * 0.8
+				cylinder_mesh.bottom_radius = trunk_radius * 1.3
+				trunk_height *= 1.25
+				cylinder_mesh.height = trunk_height
+	else:
+		cylinder_mesh.top_radius = trunk_radius * 0.7
+		cylinder_mesh.bottom_radius = trunk_radius
+	
 	trunk_mesh.mesh = cylinder_mesh
 	trunk_mesh.position.y = trunk_height / 2
 	
-	# Pixelated bark texture - PALM style with tan/beige
+	# Apply trunk tilt
+	trunk_mesh.rotation.x = trunk_tilt_x
+	trunk_mesh.rotation.z = trunk_tilt_z
+	
+	# Bark texture with variation
 	var bark_texture = PixelTextureGenerator.create_palm_bark_texture()
-	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, Color(1.15, 1.05, 0.85))  # Tan/beige tint
+	var bark_hue_shift = randf() * 0.15
+	var bark_tint: Color
+	
+	if is_character_tree and character_type == 2:  # Ancient - darker bark
+		bark_tint = Color(1.05 + bark_hue_shift * 0.3, 0.95 + bark_hue_shift * 0.25, 0.75 + bark_hue_shift * 0.2)
+	else:
+		# Normal palm bark variation (tan/beige tones)
+		var tone = randf()
+		if tone > 0.6:
+			bark_tint = Color(1.20 + bark_hue_shift * 0.4, 1.10 + bark_hue_shift * 0.3, 0.90 + bark_hue_shift * 0.25)  # Light tan
+		else:
+			bark_tint = Color(1.15 + bark_hue_shift * 0.4, 1.05 + bark_hue_shift * 0.3, 0.85 + bark_hue_shift * 0.25)  # Standard tan
+	
+	var trunk_material = PixelTextureGenerator.create_pixel_material(bark_texture, bark_tint)
 	trunk_mesh.set_surface_override_material(0, trunk_material)
 	
 	# Palm fronds with pixelated texture
 	var leaves_texture = PixelTextureGenerator.create_leaves_texture()
-	var palm_count = 6
+	
+	# Foliage color variation
+	var green_variation = randf()
+	var foliage_tint: Color
+	if green_variation > 0.7:
+		foliage_tint = Color(0.7, 1.5, 0.9)  # Lighter tropical green
+	elif green_variation > 0.3:
+		foliage_tint = Color(0.6, 1.4, 0.8)  # Standard tropical green
+	else:
+		foliage_tint = Color(0.5, 1.3, 0.7)  # Darker tropical green
+	
+	# Character tree frond modifications
+	var palm_count = 6 + randi() % 3  # 6-8 fronds
+	var frond_length = 2.0 + randf() * 0.8
+	
+	if is_character_tree:
+		match character_type:
+			0:  # Bent - fronds droop more
+				frond_length *= 1.2
+			1:  # Hurricane-damaged - fewer, broken fronds
+				palm_count = 3 + randi() % 3  # Only 3-5 fronds
+				frond_length *= 0.7
+			2:  # Ancient - more, longer fronds
+				palm_count = 8 + randi() % 3  # 8-10 fronds
+				frond_length *= 1.3
+	
+	# Asymmetry for wind effect
+	var asymmetry_angle = randf() * TAU
+	var asymmetry_strength = branch_asymmetry_amount * randf() * 0.7  # Palms have less asymmetry
+	
 	for i in range(palm_count):
+		# Base angle distribution
+		var angle = (i / float(palm_count)) * TAU
+		
+		# Apply asymmetry (some fronds favor one side)
+		var angle_diff = fmod(angle - asymmetry_angle + PI, TAU) - PI
+		var asymmetry_factor = 1.0 - abs(angle_diff) / PI
+		var frond_probability = 1.0 - asymmetry_strength * (1.0 - asymmetry_factor)
+		
+		# Skip some fronds on "away" side
+		if randf() > frond_probability and not is_character_tree:
+			continue
+		
 		var frond = MeshInstance3D.new()
 		trunk_mesh.add_child(frond)
 		
 		var box_mesh = BoxMesh.new()
-		box_mesh.size = Vector3(0.2, 0.1, 2.0)
+		var this_frond_length = frond_length * (0.9 + randf() * 0.2)  # Individual variation
+		# Favored side fronds are slightly longer
+		this_frond_length *= (1.0 + asymmetry_factor * asymmetry_strength * 0.25)
+		box_mesh.size = Vector3(0.2, 0.1, this_frond_length)
 		frond.mesh = box_mesh
 		
-		var angle = (i / float(palm_count)) * TAU
 		frond.position = Vector3(0, trunk_height * 0.45, 0)
 		frond.rotation.y = angle
-		frond.rotation.x = -0.5
 		
-		# Bright green pixelated texture for palm fronds
-		var frond_material = PixelTextureGenerator.create_pixel_material(leaves_texture, Color(0.6, 1.4, 0.8))
+		# Droop angle varies
+		var droop = -0.5 - randf() * 0.3  # Base droop
+		if is_character_tree and character_type == 0:  # Bent palms droop more
+			droop -= 0.4
+		frond.rotation.x = droop
+		
+		var frond_material = PixelTextureGenerator.create_pixel_material(leaves_texture, foliage_tint)
 		frond.set_surface_override_material(0, frond_material)
 	
 	# Add collision shape for the tree
