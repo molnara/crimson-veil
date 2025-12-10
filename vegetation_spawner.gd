@@ -75,7 +75,7 @@ var player: Node3D
 @export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.88  ## Where top crown starts as fraction of trunk height (higher = near top)
 
 @export_group("Tree Trunk Tilt Settings")
-@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.15  ## Maximum trunk tilt angle in radians (0 = vertical, 0.4 = ~23°)
+@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.15  ## Maximum trunk tilt angle in radians (0 = vertical, 0.4 = ~23Â°)
 @export_range(0.0, 1.0) var trunk_tilt_influence: float = 0.7  ## How much taller trees lean (0 = no influence, 1 = tall trees lean most)
 
 @export_group("Character Tree Settings")
@@ -114,7 +114,9 @@ enum VegType {
 	WILDFLOWER_YELLOW,
 	WILDFLOWER_PURPLE,
 	WILDFLOWER_WHITE,
-	STRAWBERRY_BUSH
+	STRAWBERRY_BUSH_SMALL,
+	STRAWBERRY_BUSH_MEDIUM,
+	STRAWBERRY_BUSH_LARGE
 }
 
 func _ready():
@@ -288,9 +290,15 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 					veg_type = VegType.MUSHROOM_BROWN
 				else:
 					veg_type = VegType.MUSHROOM_CLUSTER
-			# Strawberries
+			# Strawberries (random size distribution)
 			elif rand > (1.0 - strawberry_density * 0.25):
-				veg_type = VegType.STRAWBERRY_BUSH
+				var size_rand = randf()
+				if size_rand > 0.85:  # 15% large
+					veg_type = VegType.STRAWBERRY_BUSH_LARGE
+				elif size_rand > 0.30:  # 55% medium
+					veg_type = VegType.STRAWBERRY_BUSH_MEDIUM
+				else:  # 30% small
+					veg_type = VegType.STRAWBERRY_BUSH_SMALL
 			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.50):
 				var rock_rand = randf()
@@ -307,9 +315,15 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Trees
 			if rand > (1.0 - tree_density * 0.20):
 				veg_type = VegType.TREE
-			# Strawberries
+			# Strawberries (random size distribution)
 			elif rand > (1.0 - strawberry_density * 0.40):
-				veg_type = VegType.STRAWBERRY_BUSH
+				var size_rand = randf()
+				if size_rand > 0.85:  # 15% large
+					veg_type = VegType.STRAWBERRY_BUSH_LARGE
+				elif size_rand > 0.30:  # 55% medium
+					veg_type = VegType.STRAWBERRY_BUSH_MEDIUM
+				else:  # 30% small
+					veg_type = VegType.STRAWBERRY_BUSH_SMALL
 			# Rocks (high spawn rate, mostly small)
 			elif rand > (1.0 - rock_density * 0.65):
 				var rock_rand = randf()
@@ -571,8 +585,12 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 			create_wildflower(mesh_instance, Color(0.7, 0.3, 0.8))
 		VegType.WILDFLOWER_WHITE:
 			create_wildflower(mesh_instance, Color(0.95, 0.95, 1.0))
-		VegType.STRAWBERRY_BUSH:
-			create_harvestable_strawberry(mesh_instance)
+		VegType.STRAWBERRY_BUSH_SMALL:
+			create_harvestable_strawberry(mesh_instance, HarvestableStrawberry.BushSize.SMALL)
+		VegType.STRAWBERRY_BUSH_MEDIUM:
+			create_harvestable_strawberry(mesh_instance, HarvestableStrawberry.BushSize.MEDIUM)
+		VegType.STRAWBERRY_BUSH_LARGE:
+			create_harvestable_strawberry(mesh_instance, HarvestableStrawberry.BushSize.LARGE)
 
 func create_grass_tuft_improved(mesh_instance: MeshInstance3D):
 	"""Improved 3D grass blades using MultiMesh for better performance"""
@@ -1844,13 +1862,14 @@ func create_single_mushroom(mesh_instance: MeshInstance3D, is_red: bool, size: f
 	
 	mesh_instance.mesh = mushroom_mesh
 
-func create_harvestable_strawberry(mesh_instance: MeshInstance3D):
-	"""Create a harvestable strawberry bush"""
+func create_harvestable_strawberry(mesh_instance: MeshInstance3D, bush_size: HarvestableStrawberry.BushSize = HarvestableStrawberry.BushSize.MEDIUM):
+	"""Create a harvestable strawberry bush with specified size"""
 	var parent = mesh_instance.get_parent()
 	var strawberry_position = mesh_instance.global_position
 	
-	# Create the harvestable strawberry node
+	# Create the harvestable strawberry node with size
 	var strawberry = HarvestableStrawberryClass.new()
+	strawberry.bush_size = bush_size
 	
 	# Set collision for harvesting
 	strawberry.collision_layer = 2
@@ -1860,14 +1879,25 @@ func create_harvestable_strawberry(mesh_instance: MeshInstance3D):
 	var bush_mesh = MeshInstance3D.new()
 	strawberry.add_child(bush_mesh)
 	
-	create_strawberry_bush_visual(bush_mesh)
+	create_strawberry_bush_visual(bush_mesh, bush_size)
 	
-	# Add collision shape for the strawberry bush (bigger to match new size)
+	# Add collision shape for the strawberry bush (size-dependent)
 	var collision = CollisionShape3D.new()
 	var shape = SphereShape3D.new()
-	shape.radius = 0.5  # Increased from 0.4
+	
+	# Scale collision based on bush size
+	match bush_size:
+		HarvestableStrawberry.BushSize.SMALL:
+			shape.radius = 0.35
+			collision.position.y = 0.25
+		HarvestableStrawberry.BushSize.MEDIUM:
+			shape.radius = 0.5
+			collision.position.y = 0.4
+		HarvestableStrawberry.BushSize.LARGE:
+			shape.radius = 0.65
+			collision.position.y = 0.5
+	
 	collision.shape = shape
-	collision.position.y = 0.4  # Raised from 0.3
 	strawberry.add_child(collision)
 	
 	# Replace mesh_instance with strawberry in scene
@@ -1876,10 +1906,26 @@ func create_harvestable_strawberry(mesh_instance: MeshInstance3D):
 	strawberry.global_position = strawberry_position
 	mesh_instance.queue_free()
 
-func create_strawberry_bush_visual(mesh_instance: MeshInstance3D):
+func create_strawberry_bush_visual(mesh_instance: MeshInstance3D, bush_size: HarvestableStrawberry.BushSize = HarvestableStrawberry.BushSize.MEDIUM):
 	"""Create the visual appearance of a strawberry bush with pixelated textures"""
-	var bush_height = 0.6 + randf() * 0.3  # 0.6-0.9m tall (taller)
-	var bush_radius = 0.4 + randf() * 0.15  # Base radius (wider)
+	# Size-dependent dimensions
+	var bush_height: float
+	var bush_radius: float
+	var berry_count_base: int
+	
+	match bush_size:
+		HarvestableStrawberry.BushSize.SMALL:
+			bush_height = 0.4 + randf() * 0.15  # 0.4-0.55m
+			bush_radius = 0.25 + randf() * 0.1  # 0.25-0.35m
+			berry_count_base = 6  # 6-10 berries
+		HarvestableStrawberry.BushSize.MEDIUM:
+			bush_height = 0.6 + randf() * 0.3  # 0.6-0.9m
+			bush_radius = 0.4 + randf() * 0.15  # 0.4-0.55m
+			berry_count_base = 12  # 12-19 berries
+		HarvestableStrawberry.BushSize.LARGE:
+			bush_height = 0.9 + randf() * 0.4  # 0.9-1.3m
+			bush_radius = 0.55 + randf() * 0.2  # 0.55-0.75m
+			berry_count_base = 18  # 18-26 berries
 	
 	# Create bush body (leaves)
 	var bush_body = MeshInstance3D.new()
@@ -1892,7 +1938,7 @@ func create_strawberry_bush_visual(mesh_instance: MeshInstance3D):
 	bush_body.set_surface_override_material(0, leaf_material)
 	
 	# Add strawberry berries with solid color (too small for texture)
-	var berry_count = 12 + randi() % 8  # 12-19 berries
+	var berry_count = berry_count_base + randi() % 8
 	
 	# Create solid berry material (no texture)
 	var berry_material = StandardMaterial3D.new()
