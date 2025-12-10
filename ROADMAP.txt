@@ -96,12 +96,12 @@ BUGS / FIXES
 ------------
 [ ] Crabs still don't seem to spawn
 [ ] Sun/moon seem to change sizes as I explore
-[ ] Rocks are not glowing (blue-ish) at night (should behave just like mushrooms)
+[X] Rocks are not glowing (blue-ish) at night (should behave just like mushrooms) - FIXED
 
 
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
+- Core loop: Explore â†’ Gather â†’ Craft â†’ Build â†’ Unlock new biomes â†’ Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop

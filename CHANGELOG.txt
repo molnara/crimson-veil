@@ -6,6 +6,7 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-10 19:45] [FIX] Fixed rock nighttime glow - rocks now glow blue-gray at night like other resources
 [2024-12-10 18:30] [MINOR] Updated ROADMAP.txt - organized priorities, added bugs, moved tool system to completed
 [2024-12-10 17:15] [MINOR] Updated DEVELOPMENT_GUIDE.md - clarified commit workflow
 [2024-12-10 16:45] [MINOR] Added real-time tool indicator updates when cycling tools

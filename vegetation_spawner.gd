@@ -75,7 +75,7 @@ var player: Node3D
 @export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.88  ## Where top crown starts as fraction of trunk height (higher = near top)
 
 @export_group("Tree Trunk Tilt Settings")
-@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.15  ## Maximum trunk tilt angle in radians (0 = vertical, 0.4 = ~23Â°)
+@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.15  ## Maximum trunk tilt angle in radians (0 = vertical, 0.4 = ~23Ã‚Â°)
 @export_range(0.0, 1.0) var trunk_tilt_influence: float = 0.7  ## How much taller trees lean (0 = no influence, 1 = tall trees lean most)
 
 @export_group("Character Tree Settings")
@@ -1525,25 +1525,24 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	var rock_position = mesh_instance.global_position
 	
 	var resource_node = ResourceNodeClass.new()
+	# Set node_type BEFORE adding to tree so _ready() configures glow properly
+	resource_node.node_type = ResourceNodeClass.NodeType.ROCK
 	
-	# Add to tree first (triggers _ready())
-	parent.remove_child(mesh_instance)
-	parent.add_child(resource_node)
-	resource_node.global_position = rock_position
-	
-	# NOW set properties after _ready() has been called
-	resource_node.resource_type = "stone"
-	resource_node.resource_name = "Boulder" if is_boulder else "Rock"
-	resource_node.harvest_time = 3.0 if is_boulder else 2.0
-	resource_node.drop_item = "stone"
-	resource_node.drop_amount_min = 6 if is_boulder else 2
-	resource_node.drop_amount_max = 10 if is_boulder else 4
-	resource_node.max_health = 100.0 if is_boulder else 50.0
-	resource_node.current_health = resource_node.max_health
+	# Override properties for boulders vs regular rocks (do this before _ready())
+	if is_boulder:
+		resource_node.resource_name = "Boulder"
+		resource_node.harvest_time = 3.0
+		resource_node.drop_amount_min = 6
+		resource_node.drop_amount_max = 10
+		resource_node.max_health = 100.0
+		resource_node.current_health = 100.0
+	# Regular rocks already configured correctly by node_type
 	
 	resource_node.collision_layer = 2
 	resource_node.collision_mask = 0
 	
+	# Create and add rock_mesh BEFORE adding to tree
+	# This is critical - _ready() needs to find the mesh to setup glow
 	var rock_mesh = MeshInstance3D.new()
 	resource_node.add_child(rock_mesh)
 	
@@ -1558,18 +1557,29 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	var stone_tint = Color(0.9 + randf() * 0.2, 0.9 + randf() * 0.2, 0.9 + randf() * 0.2)
 	var material = PixelTextureGenerator.create_pixel_material(stone_texture, stone_tint)
 	
-	sphere_mesh.material = material
+	# CRITICAL: Duplicate material so each rock has its own instance for glow modification
+	material = material.duplicate()
+	
 	rock_mesh.mesh = sphere_mesh
+	# CRITICAL FIX: Use set_surface_override_material instead of sphere_mesh.material
+	# This allows the glow system to find and modify the material correctly
+	rock_mesh.set_surface_override_material(0, material)
 	
 	rock_mesh.rotation.x = (randf() - 0.5) * 0.3
 	rock_mesh.rotation.z = (randf() - 0.5) * 0.3
 	rock_mesh.scale = Vector3(1.0, 0.6, 0.9)
 	
+	# Add collision shape
 	var collision = CollisionShape3D.new()
 	var shape = SphereShape3D.new()
 	shape.radius = size / 2
 	collision.shape = shape
 	resource_node.add_child(collision)
+	
+	# NOW add to tree (triggers _ready() which will find rock_mesh and setup glow)
+	parent.remove_child(mesh_instance)
+	parent.add_child(resource_node)
+	resource_node.global_position = rock_position
 	
 	mesh_instance.queue_free()
 
@@ -1581,18 +1591,12 @@ func create_small_rock(mesh_instance: MeshInstance3D):
 	var rock_position = mesh_instance.global_position
 	
 	var resource_node = ResourceNodeClass.new()
+	# Set node_type BEFORE adding to tree so _ready() configures glow properly
+	resource_node.node_type = ResourceNodeClass.NodeType.ROCK
 	
-	# Don't set properties yet - they'll be overwritten by _ready()
-	# Add to tree first
-	parent.remove_child(mesh_instance)
-	parent.add_child(resource_node)
-	resource_node.global_position = rock_position
-	
-	# NOW set properties after _ready() has been called
-	resource_node.resource_type = "stone"
+	# Override properties for small rocks (do this before _ready())
 	resource_node.resource_name = "Small Rock"
-	resource_node.harvest_time = 1.0  # Faster to harvest
-	resource_node.drop_item = "stone"
+	resource_node.harvest_time = 1.0
 	resource_node.drop_amount_min = 1
 	resource_node.drop_amount_max = 1
 	resource_node.max_health = 30.0
@@ -1601,6 +1605,8 @@ func create_small_rock(mesh_instance: MeshInstance3D):
 	resource_node.collision_layer = 2
 	resource_node.collision_mask = 0
 	
+	# Create and add rock_mesh BEFORE adding to tree
+	# This is critical - _ready() needs to find the mesh to setup glow
 	var rock_mesh = MeshInstance3D.new()
 	resource_node.add_child(rock_mesh)
 	
@@ -1615,18 +1621,29 @@ func create_small_rock(mesh_instance: MeshInstance3D):
 	var stone_tint = Color(0.9 + randf() * 0.2, 0.9 + randf() * 0.2, 0.9 + randf() * 0.2)
 	var material = PixelTextureGenerator.create_pixel_material(stone_texture, stone_tint)
 	
-	sphere_mesh.material = material
+	# CRITICAL: Duplicate material so each rock has its own instance for glow modification
+	material = material.duplicate()
+	
 	rock_mesh.mesh = sphere_mesh
+	# CRITICAL FIX: Use set_surface_override_material instead of sphere_mesh.material
+	# This allows the glow system to find and modify the material correctly
+	rock_mesh.set_surface_override_material(0, material)
 	
 	rock_mesh.rotation.x = (randf() - 0.5) * 0.3
 	rock_mesh.rotation.z = (randf() - 0.5) * 0.3
 	rock_mesh.scale = Vector3(1.0, 0.6, 0.9)
 	
+	# Add collision shape
 	var collision = CollisionShape3D.new()
 	var shape = SphereShape3D.new()
 	shape.radius = size / 2
 	collision.shape = shape
 	resource_node.add_child(collision)
+	
+	# NOW add to tree (triggers _ready() which will find rock_mesh and setup glow)
+	parent.remove_child(mesh_instance)
+	parent.add_child(resource_node)
+	resource_node.global_position = rock_position
 	
 	mesh_instance.queue_free()
 
