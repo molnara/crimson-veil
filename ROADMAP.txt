@@ -7,6 +7,11 @@ CURRENT SPRINT (Next 1-2 weeks)
 [ ] Crafting system - Simple crafting recipes to convert resources into tools/items
 [ ] Inventory UI - Visual display of collected resources and equipped tools
 
+VISUAL POLISH
+-------------
+[ ] Make clouds less pixelated - Increase resolution to match sun/moon quality
+[ ] Add highlight around harvestable objects when in range - Green glow for correct tool, red for wrong tool
+
 
 IN PROGRESS
 -----------
