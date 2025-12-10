@@ -121,6 +121,28 @@ func unload_chunk(chunk_pos: Vector2i):
 		chunk.queue_free()
 		chunks.erase(chunk_pos)
 
+func update_view_distance(new_distance: int):
+	"""Update view distance at runtime and unload distant chunks"""
+	var old_distance = view_distance
+	view_distance = new_distance
+	
+	if new_distance < old_distance:
+		# If view distance decreased, unload chunks that are now too far
+		var player_chunk_pos = world_to_chunk(player.global_position)
+		var chunks_to_unload = []
+		
+		for chunk_pos in chunks.keys():
+			var distance = (chunk_pos - player_chunk_pos).length()
+			if distance > view_distance + 3:
+				chunks_to_unload.append(chunk_pos)
+		
+		for chunk_pos in chunks_to_unload:
+			unload_chunk(chunk_pos)
+		
+		print("View distance decreased to ", new_distance, ", unloaded ", chunks_to_unload.size(), " chunks")
+	else:
+		print("View distance increased to ", new_distance, ", new chunks will load naturally")
+
 func calculate_terrain_height_at_position(world_x: float, world_z: float) -> float:
 	"""Calculate terrain height at a world position using noise generators
 	

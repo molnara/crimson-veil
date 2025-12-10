@@ -371,8 +371,25 @@ func create_stars():
 	# Start invisible
 	stars_mesh.visible = false
 
+func clear_clouds():
+	"""Remove all existing clouds"""
+	for cloud_data in clouds:
+		if is_instance_valid(cloud_data["node"]):
+			cloud_data["node"].queue_free()
+	clouds.clear()
+
+func update_cloud_count(new_count: int):
+	"""Update the number of clouds at runtime"""
+	cloud_count = new_count
+	if enable_clouds:
+		create_clouds()
+		print("Cloud count updated to: ", new_count)
+
 func create_clouds():
 	"""Create pixelated billboard clouds with procedural textures"""
+	# Clear existing clouds first
+	clear_clouds()
+	
 	for i in range(cloud_count):
 		var cloud = MeshInstance3D.new()
 		add_child(cloud)
