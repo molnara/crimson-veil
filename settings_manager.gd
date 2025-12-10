@@ -98,6 +98,33 @@ func _ready():
 	
 	# Apply all settings
 	call_deferred("apply_all_settings")
+	
+	# Monitor window size changes to prevent manual resizing
+	get_window().size_changed.connect(_on_window_size_changed)
+
+func _on_window_size_changed():
+	"""Snap window back to set resolution if manually resized"""
+	# Skip if we're applying settings (avoid infinite loop)
+	if get_meta("applying_resolution", false):
+		return
+	
+	# Get target resolution
+	var target = parse_resolution(get_setting("display", "resolution"))
+	if not target:
+		return
+	
+	# If current size doesn't match target, restore it
+	var current = get_window().size
+	if current != target:
+		print("Window resized to ", current, " - restoring to ", target)
+		call_deferred("_restore_resolution", target)
+
+func _restore_resolution(target: Vector2i):
+	"""Restore window to target resolution"""
+	set_meta("applying_resolution", true)
+	get_window().size = target
+	await get_tree().process_frame
+	set_meta("applying_resolution", false)
 
 func load_settings():
 	"""Load settings from config file, using defaults if file doesn't exist"""
@@ -166,12 +193,17 @@ func apply_all_settings():
 
 func apply_display_settings():
 	"""Apply display-related settings"""
+	set_meta("applying_resolution", true)
+	
 	# Resolution
 	var resolution_string = get_setting("display", "resolution")
 	var resolution = parse_resolution(resolution_string)
 	if resolution:
 		get_window().size = resolution
 		print("Resolution set to: ", resolution)
+	
+	# Make window non-resizable to prevent manual resizing breaking the set resolution
+	get_window().unresizable = true
 	
 	# Fullscreen - don't apply in editor
 	var fullscreen = get_setting("display", "fullscreen")
@@ -206,6 +238,9 @@ func apply_display_settings():
 		3:
 			get_viewport().msaa_3d = Viewport.MSAA_8X
 	print("MSAA: ", msaa)
+	
+	await get_tree().process_frame
+	set_meta("applying_resolution", false)
 
 func apply_graphics_settings():
 	"""Apply graphics-related settings (requires game world to exist)"""
