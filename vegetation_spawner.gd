@@ -50,7 +50,7 @@ var player: Node3D
 @export_range(0.0, 1.0) var strawberry_density: float = 0.20  ## Density of strawberry bushes (0.0 = none, 1.0 = maximum)
 @export_range(0.0, 1.0) var grass_density: float = 0.8  ## Density of grass and ground cover (higher for fuller look)
 @export_range(0.0, 1.0) var flower_density: float = 0.15  ## Density of wildflowers (0.0 = none, 1.0 = maximum)
-@export_range(1, 5) var spawn_radius: int = 2  ## How many chunks around player to populate with vegetation
+@export_range(1, 6) var spawn_radius: int = 4  ## How many chunks around player to populate with vegetation (increased from 2 for large biomes)
 
 @export_group("Tree Size Variation")
 @export_range(2.0, 15.0) var tree_height_min: float = 3.5  ## Minimum tree height in meters (smallest trees)
@@ -75,8 +75,8 @@ var player: Node3D
 @export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.88  ## Where top crown starts as fraction of trunk height (higher = near top)
 
 @export_group("Ground Cover Settings")
-@export_range(10, 150) var ground_cover_samples_per_chunk: int = 60  ## Number of grass/flower samples per chunk (higher = denser)
-@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 15  ## Number of tree/rock samples per chunk (lower = more sparse)
+@export_range(10, 150) var ground_cover_samples_per_chunk: int = 80  ## Number of grass/flower samples per chunk (increased from 60 for large biomes)
+@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 20  ## Number of tree/rock samples per chunk (increased from 15 for large biomes)
 
 # Track which chunks have vegetation
 var populated_chunks: Dictionary = {}
@@ -106,13 +106,13 @@ func _ready():
 	# Initialize vegetation noise (different from terrain noise)
 	vegetation_noise = FastNoiseLite.new()
 	vegetation_noise.seed = randi()
-	vegetation_noise.frequency = 0.5  # High frequency for scattered placement
+	vegetation_noise.frequency = 0.35  # Reduced from 0.5 for larger vegetation clusters in large biomes
 	vegetation_noise.noise_type = FastNoiseLite.TYPE_CELLULAR
 	
 	# Initialize cluster noise for grass patches
 	cluster_noise = FastNoiseLite.new()
 	cluster_noise.seed = vegetation_noise.seed + 1000
-	cluster_noise.frequency = 0.15  # Lower frequency = larger patches
+	cluster_noise.frequency = 0.10  # Reduced from 0.15 for larger grass patches in large biomes
 	cluster_noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	
 	print("VegetationSpawner ready, waiting for initialization...")
@@ -177,18 +177,63 @@ func populate_chunk(chunk_pos: Vector2i):
 			continue
 		
 		var base_noise = noise.get_noise_2d(world_x, world_z)
+		
+		# EARLY REJECTION: Use base_noise to filter obvious oceans and extreme mountains
+		# Ocean: base_noise < -0.25, Extreme mountains: base_noise > 0.45
+		# (Slightly different thresholds than ground cover since large vegetation can handle more varied terrain)
+		if base_noise < -0.25 or base_noise > 0.45:
+			continue
+		
 		var biome = get_biome_at_position(world_x, world_z, base_noise)
 		
+		# Skip ocean biome (redundant with base_noise check, but explicit)
 		if biome == Chunk.Biome.OCEAN:
 			continue
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		
-		# Don't spawn vegetation underwater (water level is at y=0.0)
-		if height < 0.5:  # Need more margin for larger vegetation
+		# ELEVATION CHECK: Don't spawn vegetation underwater or at extreme heights
+		# Lower bound: 0.8m (well above water to avoid ice/shallow water spawns)
+		# Upper bound: 35m (trees/mushrooms/strawberries shouldn't be at mountain peaks)
+		# Note: Rocks have higher tolerance (checked per-vegetation-type below)
+		if height < 0.8:  # Increased from 0.5
 			continue
 		
-		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
+		# SLOPE CHECK: Don't spawn large vegetation on steep slopes
+		# Sample nearby points to calculate terrain slope
+		var sample_dist = 0.5
+		var h_n = get_terrain_height_at_position(world_x, world_z + sample_dist, 
+			noise.get_noise_2d(world_x, world_z + sample_dist), biome)
+		var h_s = get_terrain_height_at_position(world_x, world_z - sample_dist,
+			noise.get_noise_2d(world_x, world_z - sample_dist), biome)
+		var h_e = get_terrain_height_at_position(world_x + sample_dist, world_z,
+			noise.get_noise_2d(world_x + sample_dist, world_z), biome)
+		var h_w = get_terrain_height_at_position(world_x - sample_dist, world_z,
+			noise.get_noise_2d(world_x - sample_dist, world_z), biome)
+		
+		var slope_ns = abs(h_n - h_s) / (sample_dist * 2.0)
+		var slope_ew = abs(h_e - h_w) / (sample_dist * 2.0)
+		var max_slope = max(slope_ns, slope_ew)
+		
+		# Slope tolerance varies by vegetation type:
+		# - Trees/mushrooms/strawberries: max 0.8 slope (~38 degrees)
+		# - Rocks: max 1.2 slope (~50 degrees) - more tolerant
+		# For now, use stricter limit and relax for rocks in spawn_large_vegetation_for_biome
+		if max_slope > 0.8:
+			continue
+		
+		# BIOME-SPECIFIC ELEVATION LIMITS
+		# Some biomes shouldn't have vegetation at high elevations
+		if biome == Chunk.Biome.MOUNTAIN or biome == Chunk.Biome.SNOW:
+			# Mountains/snow: only rocks, and only below 50m
+			if height > 50.0:
+				continue
+		else:
+			# Other biomes: trees/mushrooms/strawberries max at 30m
+			if height > 30.0:
+				continue
+		
+		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, max_slope)
 	
 	# PASS 2: Dense ground cover (grass, flowers)
 	# PERFORMANCE: Higher sample count but lightweight meshes (no collision, MultiMesh)
@@ -263,9 +308,9 @@ func populate_chunk(chunk_pos: Vector2i):
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		
 		# ABSOLUTE HEIGHT CHECK: Reject based on actual world height
-		# Water level is at y=0, so anything below 0.3m is too close to water
+		# Water level is at y=0, so anything below 0.5m is too close to water/ice
 		# Anything above 10m is mountain terrain (lowered from 12m)
-		if height < 0.3 or height > 10.0:
+		if height < 0.5 or height > 10.0:  # Increased from 0.3 to 0.5
 			continue
 		
 		# STRICT SLOPE CHECK: Sample 4 points very close together
@@ -285,6 +330,25 @@ func populate_chunk(chunk_pos: Vector2i):
 		var max_slope = max(slope_ns, slope_ew)
 		
 		if max_slope > 0.6:  # Stricter: 0.6 instead of 0.7 (~31 degrees)
+			continue
+		
+		# BROADER SLOPE CHECK: Also check with larger sample distance to catch mountain slopes
+		# Sometimes local terrain is flat but sits on a steep mountain face
+		var broad_dist = 1.5
+		var h_n_broad = get_terrain_height_at_position(world_x, world_z + broad_dist,
+			noise.get_noise_2d(world_x, world_z + broad_dist), biome)
+		var h_s_broad = get_terrain_height_at_position(world_x, world_z - broad_dist,
+			noise.get_noise_2d(world_x, world_z - broad_dist), biome)
+		var h_e_broad = get_terrain_height_at_position(world_x + broad_dist, world_z,
+			noise.get_noise_2d(world_x + broad_dist, world_z), biome)
+		var h_w_broad = get_terrain_height_at_position(world_x - broad_dist, world_z,
+			noise.get_noise_2d(world_x - broad_dist, world_z), biome)
+		
+		var slope_ns_broad = abs(h_n_broad - h_s_broad) / (broad_dist * 2.0)
+		var slope_ew_broad = abs(h_e_broad - h_w_broad) / (broad_dist * 2.0)
+		var max_slope_broad = max(slope_ns_broad, slope_ew_broad)
+		
+		if max_slope_broad > 0.8:  # Broader check is more tolerant
 			continue
 		
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
@@ -318,15 +382,32 @@ func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise:
 	# Fallback to calculated if raycast fails (terrain might not be loaded yet)
 	return calculated_height
 
-func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float):
-	"""Spawn trees, rocks, and other large vegetation"""
+func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, world_x: float, world_z: float, slope: float):
+	"""Spawn trees, rocks, and other large vegetation
+	
+	Now includes slope parameter to make vegetation-specific decisions
+	Also adds explicit biome validation to prevent cross-biome spawning
+	"""
 	var veg_type: VegType
 	var rand = randf()
 	
+	# ADDITIONAL DESERT CHECK: Prevent non-desert vegetation in desert conditions
+	# Check temperature/moisture directly (same as ground cover)
+	var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
+	var moisture = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z)
+	var is_desert_conditions = (temperature > 0.15 and moisture < 0.05)
+	
 	match biome:
 		Chunk.Biome.FOREST:
+			# BIOME VALIDATION: Don't spawn forest vegetation if desert conditions detected
+			if is_desert_conditions:
+				return
+			
 			# Trees
 			if rand > (1.0 - tree_density * 0.65):
+				# Trees shouldn't spawn on steep slopes
+				if slope > 0.8:
+					return
 				if randf() > 0.5:
 					veg_type = VegType.TREE
 				else:
@@ -343,8 +424,10 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Strawberries
 			elif rand > (1.0 - strawberry_density * 0.25):
 				veg_type = VegType.STRAWBERRY_BUSH
-			# Rocks (high spawn rate, mostly small)
+			# Rocks (can handle steeper slopes up to 1.2)
 			elif rand > (1.0 - rock_density * 0.50):
+				if slope > 1.2:
+					return
 				var rock_rand = randf()
 				if rock_rand > 0.95:  # 5% boulders
 					veg_type = VegType.BOULDER
@@ -356,14 +439,23 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.GRASSLAND:
+			# BIOME VALIDATION: Don't spawn grassland vegetation if desert conditions detected
+			if is_desert_conditions:
+				return
+			
 			# Trees
 			if rand > (1.0 - tree_density * 0.20):
+				# Trees shouldn't spawn on steep slopes
+				if slope > 0.8:
+					return
 				veg_type = VegType.TREE
 			# Strawberries
 			elif rand > (1.0 - strawberry_density * 0.40):
 				veg_type = VegType.STRAWBERRY_BUSH
-			# Rocks (high spawn rate, mostly small)
+			# Rocks (can handle steeper slopes)
 			elif rand > (1.0 - rock_density * 0.65):
+				if slope > 1.2:
+					return
 				var rock_rand = randf()
 				if rock_rand > 0.92:  # 8% boulders
 					veg_type = VegType.BOULDER
@@ -375,11 +467,20 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.DESERT:
+			# BIOME VALIDATION: Only spawn desert vegetation in actual desert conditions
+			if not is_desert_conditions:
+				return
+			
 			# Cactus (uses tree density)
 			if rand > (1.0 - tree_density * 0.30):
+				# Cacti shouldn't spawn on steep slopes
+				if slope > 0.8:
+					return
 				veg_type = VegType.CACTUS
-			# Rocks (high spawn rate, mostly small)
+			# Rocks (can handle steeper slopes)
 			elif rand > (1.0 - rock_density * 0.70):
+				if slope > 1.2:
+					return
 				var rock_rand = randf()
 				if rock_rand > 0.90:  # 10% boulders
 					veg_type = VegType.BOULDER
@@ -391,8 +492,10 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.MOUNTAIN:
-			# Boulders and rocks (more boulders)
+			# Mountains: only rocks, can handle very steep slopes
 			if rand > (1.0 - rock_density * 0.60):
+				if slope > 1.5:  # More tolerant for mountain rocks
+					return
 				var rock_rand = randf()
 				if rock_rand > 0.5:  # 50% boulders
 					veg_type = VegType.BOULDER
@@ -404,11 +507,16 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.SNOW:
-			# Pine trees
+			# Snow: pine trees and rocks
 			if rand > (1.0 - tree_density * 0.35):
+				# Pine trees shouldn't spawn on steep slopes
+				if slope > 0.8:
+					return
 				veg_type = VegType.PINE_TREE
-			# Rocks (high spawn rate, mostly small)
+			# Rocks (can handle steeper slopes)
 			elif rand > (1.0 - rock_density * 0.55):
+				if slope > 1.2:
+					return
 				var rock_rand = randf()
 				if rock_rand > 0.88:  # 12% boulders
 					veg_type = VegType.BOULDER
@@ -420,11 +528,20 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.BEACH:
+			# BIOME VALIDATION: Don't spawn beach vegetation if desert conditions detected
+			if is_desert_conditions:
+				return
+			
 			# Palm trees
 			if rand > (1.0 - tree_density * 0.25):
+				# Palm trees shouldn't spawn on steep slopes
+				if slope > 0.8:
+					return
 				veg_type = VegType.PALM_TREE
-			# Rocks (high spawn rate, mostly small)
+			# Rocks (can handle moderate slopes)
 			elif rand > (1.0 - rock_density * 0.50):
+				if slope > 1.0:  # Beach rocks more limited than mountain rocks
+					return
 				var rock_rand = randf()
 				if rock_rand > 0.75:  # Only 25% regular rocks
 					veg_type = VegType.ROCK

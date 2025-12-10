@@ -4,16 +4,16 @@ class_name ChunkManager
 # Chunk settings
 @export var chunk_size: int = 16  # Size of each chunk in units
 @export var chunk_height: int = 64  # Maximum height of terrain
-@export var view_distance: int = 3  # Number of chunks to load in each direction
+@export var view_distance: int = 4  # Number of chunks to load in each direction (increased from 3 for large biomes)
 
 # Noise settings
-@export var noise_scale: float = 0.03  # Lower = smoother, larger features
+@export var noise_scale: float = 0.01  # Lower = smoother, larger features (was 0.03, now 67% larger - LARGE BIOMES)
 @export var height_multiplier: float = 10.0  # Maximum terrain height (reduced for gentler terrain)
 
 # Biome settings
 @export var biome_scale: float = 0.01  # Lower = larger biomes (easier to find)
-@export var temperature_scale: float = 0.008  # Temperature variation (larger regions)
-@export var moisture_scale: float = 0.01  # Moisture variation (larger regions)
+@export var temperature_scale: float = 0.003  # Temperature variation (was 0.008, now 63% larger - LARGE BIOMES)
+@export var moisture_scale: float = 0.004  # Moisture variation (was 0.01, now 60% larger - LARGE BIOMES)
 
 # Internal variables
 var chunks: Dictionary = {}  # Dictionary to store loaded chunks
@@ -94,7 +94,7 @@ func update_chunks():
 	var chunks_to_unload = []
 	for chunk_pos in chunks.keys():
 		var distance = (chunk_pos - player_chunk_pos).length()
-		if distance > view_distance + 2:  # Extra buffer prevents pop-in
+		if distance > view_distance + 3:  # Extra buffer prevents pop-in (increased from +2 for large biomes)
 			chunks_to_unload.append(chunk_pos)
 	
 	for chunk_pos in chunks_to_unload:
