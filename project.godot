@@ -28,10 +28,6 @@ window/size/viewport_height=1152
 
 project/assembly_name="Crimson Veil"
 
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/ai_assistant_hub/plugin.cfg")
-
 [input]
 
 ui_focus_next={
