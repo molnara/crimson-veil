@@ -1,0 +1,104 @@
+CRIMSON VEIL - FEATURE ROADMAP
+================================
+
+CURRENT SPRINT (Next 1-2 weeks)
+--------------------------------
+[ ] Tool system - Add basic tools (axe, pickaxe) required for harvesting
+[ ] Crafting system - Simple crafting recipes to convert resources into tools/items
+[ ] Inventory UI - Visual display of collected resources and equipped tools
+
+
+IN PROGRESS
+-----------
+[X] Harvesting system - Trees, strawberries, mushrooms with particles and UI feedback (COMPLETE)
+[X] Day/night cycle - Time-based lighting with sun/moon visuals (COMPLETE)
+[X] Settings system - Graphics, display, performance options (COMPLETE)
+
+
+NEXT UP (This Month)
+--------------------
+[ ] Combat system - Basic enemy encounters with simple weapons
+[ ] Health/hunger mechanics - Survival needs that create resource loops
+[ ] Storage containers - Chests/boxes to organize gathered materials
+[ ] Building upgrades - Workbenches unlock advanced crafting recipes
+
+
+BACKLOG (Prioritized)
+---------------------
+HIGH PRIORITY:
+[ ] Biome-specific resources - Unique materials in each biome (desert cacti, snow ice, etc)
+[ ] Boss progression system - Valheim-style boss encounters that gate biome access
+[ ] Advanced building - Walls, roofs, furniture for proper base construction
+[ ] Save/load system - Persistent world state and player progress
+
+MEDIUM PRIORITY:
+[ ] Animal AI improvements - More realistic critter behaviors (feeding, fleeing, nesting)
+[ ] Weather system - Rain, snow, storms that affect gameplay
+[ ] Farming system - Plant crops, tend gardens for renewable food
+[ ] NPC traders - Buy/sell resources, discover rare items
+[ ] Character customization - Appearance options for player model
+
+LOW PRIORITY:
+[ ] Multi-material terrain rendering - Replace vertex color tinting (see chunk.gd:231)
+[ ] Seasonal changes - Visual and gameplay shifts throughout the year
+[ ] Fishing system - Coastal/river fishing for food variety
+[ ] Mounts/vehicles - Faster travel options for exploring large biomes
+[ ] Music system - Ambient tracks that match biome/time of day
+
+
+SOMEDAY/MAYBE (Ideas to explore)
+---------------------------------
+- Multiplayer co-op - Shared world building with friends
+- Magic/enchanting system - Mystical progression path
+- Underground/cave generation - Deeper exploration with mining
+- Pet system - Tamed critters that follow and help
+- Treasure hunting - Buried loot and rare discoveries
+- Photography mode - Capture and share scenic moments
+
+
+COMPLETED (Recent)
+------------------
+[X] Procedural world generation - Chunk-based terrain with FastNoiseLite
+[X] Day/night cycle with pixelated sun/moon - Time-based sky colors and celestial bodies
+[X] Harvestable resources - Trees, strawberries, mushrooms with proper collision
+[X] Harvest particles - Minecraft-style pixel "poof" effects when gathering
+[X] Harvest UI feedback - Progress bar and resource name display
+[X] Tree falling physics - Trees tip over when chopped down (Valheim-style)
+[X] Resource night glow - Mushrooms and strawberries emit light at night
+[X] Critter spawning - Rabbits, deer, birds, lizards, crabs with procedural placement
+[X] Settings menu - Resolution, fullscreen, vsync, MSAA, quality presets
+[X] Water plane - Infinite ocean with collision for walking
+
+
+DESIGN QUESTIONS / DECISIONS NEEDED
+------------------------------------
+? Should tools degrade/break or have infinite durability? (affects resource loops)
+? What should unlock new biomes - boss kills or tool upgrades? (progression pacing)
+? Should building have structural integrity like Valheim or free placement like Minecraft?
+? How rare should character trees be? (currently 5% - too common or too rare?)
+? Should critters be harvestable for food/materials or purely ambient?
+
+
+TECHNICAL DEBT / REFACTORING
+-----------------------------
+[ ] Multi-material terrain system - Replace vertex color tinting with proper material blending (chunk.gd)
+[ ] Collision edge-case handling - Sometimes trees fall through terrain on slopes
+[ ] Settings preset detection - "Custom" preset detection could be more robust
+[ ] Resource spawning optimization - Could batch-spawn resources instead of one-at-a-time
+[ ] Chunk unloading delay - Add graceful fade-out before unloading distant chunks
+
+
+BUGS / FIXES
+------------
+[ ] Fullscreen only works in exported builds, not in editor (limitation - document in UI)
+[ ] Trees occasionally clip through terrain when falling on steep slopes
+[ ] Settings window can be manually resized, snaps back (add prevent-resize flag?)
+[ ] Harvest UI sometimes shows for split second after completion (timing issue)
+
+
+---
+Notes:
+- Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
+- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
+- Tone: Cozy loneliness with meditative gathering and discovery moments
+- All features should support "one more trip" addictive gathering loop
