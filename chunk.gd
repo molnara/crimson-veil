@@ -12,6 +12,7 @@ var temperature_noise: FastNoiseLite
 var moisture_noise: FastNoiseLite
 var detail_noise: FastNoiseLite  # Small bumps/hills
 var ridge_noise: FastNoiseLite   # Mountain ridges
+var edge_heights: Dictionary      # Shared edge heights from ChunkManager
 var mesh_instance: MeshInstance3D
 
 # Biome types
@@ -27,7 +28,8 @@ enum Biome {
 
 func _init(pos: Vector2i, size: int, height: int, noise_generator: FastNoiseLite, height_mult: float,
 		   temp_noise: FastNoiseLite, moist_noise: FastNoiseLite, 
-		   detail_noise_gen: FastNoiseLite, ridge_noise_gen: FastNoiseLite):
+		   detail_noise_gen: FastNoiseLite, ridge_noise_gen: FastNoiseLite,
+		   shared_edge_heights: Dictionary):
 	chunk_position = pos
 	chunk_size = size
 	chunk_height = height
@@ -37,6 +39,7 @@ func _init(pos: Vector2i, size: int, height: int, noise_generator: FastNoiseLite
 	moisture_noise = moist_noise
 	detail_noise = detail_noise_gen
 	ridge_noise = ridge_noise_gen
+	edge_heights = shared_edge_heights  # Reference to shared cache
 	
 	# Set collision layers - layer 1 for terrain
 	collision_layer = 1
@@ -71,63 +74,96 @@ func generate_mesh():
 	var center_noise = noise.get_noise_2d(center_x, center_z)
 	var chunk_biome = get_biome(center_x, center_z, center_noise)
 	
+	# SEAM FIX: Check for neighbor edges that we should reuse
+	var left_edge_key = "%d,%d,right" % [chunk_position.x - 1, chunk_position.y]
+	var bottom_edge_key = "%d,%d,top" % [chunk_position.x, chunk_position.y - 1]
+	var has_left_neighbor = edge_heights.has(left_edge_key)
+	var has_bottom_neighbor = edge_heights.has(bottom_edge_key)
+	
+	# Prepare to store our right and top edges for future neighbors
+	var right_edge_heights = []
+	var top_edge_heights = []
+	
 	# Generate vertices
 	var vertices = []
 	
 	for z in range(chunk_size + 1):
 		for x in range(chunk_size + 1):
-			var world_x = chunk_position.x * chunk_size + x
-			var world_z = chunk_position.y * chunk_size + z
-			
-			# LAYERED NOISE: Combine base + detail + ridge for varied terrain
-			var base_height = noise.get_noise_2d(world_x, world_z)
-			var detail = detail_noise.get_noise_2d(world_x, world_z)
-			var ridge = ridge_noise.get_noise_2d(world_x, world_z)
-			
-			# Determine primary biome based on base noise value (not final height)
-			var biome = get_biome(world_x, world_z, base_height)
-			
-			# IMPROVEMENT #5: Calculate smooth beach transition blend factor
-			# Returns 0.0 (pure ocean) to 1.0 (pure land) in beach zones
-			var beach_blend = calculate_beach_blend(base_height)
-			
-			# Apply biome-specific height modifier
-			var height_mod = get_biome_height_modifier(biome)
-			var roughness_mod = get_biome_roughness(biome)
-			
-			# Modify the noise based on biome characteristics
-			var modified_height = base_height * roughness_mod
-			
-			# Add detail noise (small bumps everywhere)
-			modified_height += detail * 0.2
-			
-			# Mountains get exponential height + ridge features
 			var height: float
-			if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
-				# Exponential makes tall peaks dramatically taller (sharp mountains)
-				var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
-				
-				# Add ridge noise for mountain peaks and valleys
-				height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
-			else:
-				# Normal terrain uses standard calculation
-				height = modified_height * height_multiplier * height_mod
 			
-			# IMPROVEMENT #5: Smooth beach transition (blend between ocean and land height)
-			# Apply baseline offsets with smooth blending
-			if biome == Biome.OCEAN:
-				height = height - (height_multiplier * 0.6)  # Deep ocean
-			elif biome == Biome.BEACH:
-				# BEACH BLENDING: Smoothly transition from ocean depth to land height
-				var ocean_height = height - (height_multiplier * 0.6)
-				var land_height = height + (height_multiplier * 0.2)
-				height = lerp(ocean_height, land_height, beach_blend)
+			# SEAM FIX: Reuse edge heights from neighbors when available
+			var is_left_edge = (x == 0)
+			var is_bottom_edge = (z == 0)
+			
+			if is_left_edge and has_left_neighbor:
+				# Reuse left neighbor's right edge
+				height = edge_heights[left_edge_key][z]
+			elif is_bottom_edge and has_bottom_neighbor:
+				# Reuse bottom neighbor's top edge
+				height = edge_heights[bottom_edge_key][x]
 			else:
-				height = height + (height_multiplier * 0.5)  # Normal baseline
+				# Calculate height normally
+				var world_x = chunk_position.x * chunk_size + x
+				var world_z = chunk_position.y * chunk_size + z
+				
+				# LAYERED NOISE: Combine base + detail + ridge for varied terrain
+				var base_height = noise.get_noise_2d(world_x, world_z)
+				var detail = detail_noise.get_noise_2d(world_x, world_z)
+				var ridge = ridge_noise.get_noise_2d(world_x, world_z)
+				
+				# Determine primary biome based on base noise value (not final height)
+				var biome = get_biome(world_x, world_z, base_height)
+				
+				# Calculate smooth beach transition blend factor
+				var beach_blend = calculate_beach_blend(base_height)
+				
+				# Apply biome-specific height modifier
+				var height_mod = get_biome_height_modifier(biome)
+				var roughness_mod = get_biome_roughness(biome)
+				
+				# Modify the noise based on biome characteristics
+				var modified_height = base_height * roughness_mod
+				
+				# Add detail noise (small bumps everywhere)
+				modified_height += detail * 0.2
+				
+				# Mountains get exponential height + ridge features
+				if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
+					# Exponential makes tall peaks dramatically taller (sharp mountains)
+					var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
+					
+					# Add ridge noise for mountain peaks and valleys
+					height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
+				else:
+					# Normal terrain uses standard calculation
+					height = modified_height * height_multiplier * height_mod
+				
+				# Smooth beach transition (blend between ocean and land height)
+				if biome == Biome.OCEAN:
+					height = height - (height_multiplier * 0.6)  # Deep ocean
+				elif biome == Biome.BEACH:
+					# BEACH BLENDING: Smoothly transition from ocean depth to land height
+					var ocean_height = height - (height_multiplier * 0.6)
+					var land_height = height + (height_multiplier * 0.2)
+					height = lerp(ocean_height, land_height, beach_blend)
+				else:
+					height = height + (height_multiplier * 0.5)  # Normal baseline
 			
 			# Store vertex
 			var vertex = Vector3(x, height, z)
 			vertices.append(vertex)
+			
+			# SEAM FIX: Cache edge heights for neighbors
+			if x == chunk_size:  # Right edge
+				right_edge_heights.append(height)
+			if z == chunk_size:  # Top edge
+				top_edge_heights.append(height)
+	
+	# SEAM FIX: Store our edges in the shared cache for future neighbors
+	var right_edge_key = "%d,%d,right" % [chunk_position.x, chunk_position.y]
+	var top_edge_key = "%d,%d,top" % [chunk_position.x, chunk_position.y]
+	edge_heights[right_edge_key] = right_edge_heights
+	edge_heights[top_edge_key] = top_edge_heights
 	
 	# Generate triangles WITHOUT vertex colors
 	for z in range(chunk_size):
@@ -243,49 +279,67 @@ func create_collision():
 	# We need to offset it to match the mesh
 	collision_shape.position = Vector3(chunk_size / 2.0, 0, chunk_size / 2.0)
 	
+	# SEAM FIX: Check for neighbor edges in collision too
+	var left_edge_key = "%d,%d,right" % [chunk_position.x - 1, chunk_position.y]
+	var bottom_edge_key = "%d,%d,top" % [chunk_position.x, chunk_position.y - 1]
+	var has_left_neighbor = edge_heights.has(left_edge_key)
+	var has_bottom_neighbor = edge_heights.has(bottom_edge_key)
+	
 	# Create heightmap data - must match the mesh generation exactly
 	var height_data = []
 	for z in range(chunk_size + 1):
 		for x in range(chunk_size + 1):
-			var world_x = chunk_position.x * chunk_size + x
-			var world_z = chunk_position.y * chunk_size + z
-			
-			# MUST MATCH generate_mesh() exactly
-			var base_height = noise.get_noise_2d(world_x, world_z)
-			var detail = detail_noise.get_noise_2d(world_x, world_z)
-			var ridge = ridge_noise.get_noise_2d(world_x, world_z)
-			
-			# Determine biome based on base noise (same as mesh generation)
-			var biome = get_biome(world_x, world_z, base_height)
-			
-			# Calculate beach blend (same as mesh generation)
-			var beach_blend = calculate_beach_blend(base_height)
-			
-			# Apply biome modifiers (same as mesh generation)
-			var height_mod = get_biome_height_modifier(biome)
-			var roughness_mod = get_biome_roughness(biome)
-			
-			var modified_height = base_height * roughness_mod
-			modified_height += detail * 0.2  # Detail layer
-			
-			# Mountains get exponential + ridge (same as mesh generation)
 			var height: float
-			if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
-				var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
-				height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
-			else:
-				height = modified_height * height_multiplier * height_mod
 			
-			# Apply same baseline offset with beach blending (MUST MATCH!)
-			if biome == Biome.OCEAN:
-				height = height - (height_multiplier * 0.6)  # Deep ocean
-			elif biome == Biome.BEACH:
-				# Smooth beach transition
-				var ocean_height = height - (height_multiplier * 0.6)
-				var land_height = height + (height_multiplier * 0.2)
-				height = lerp(ocean_height, land_height, beach_blend)
+			# SEAM FIX: Reuse edge heights from neighbors (same as mesh)
+			var is_left_edge = (x == 0)
+			var is_bottom_edge = (z == 0)
+			
+			if is_left_edge and has_left_neighbor:
+				# Reuse left neighbor's right edge
+				height = edge_heights[left_edge_key][z]
+			elif is_bottom_edge and has_bottom_neighbor:
+				# Reuse bottom neighbor's top edge
+				height = edge_heights[bottom_edge_key][x]
 			else:
-				height = height + (height_multiplier * 0.5)  # Normal baseline
+				# Calculate height normally (MUST MATCH generate_mesh)
+				var world_x = chunk_position.x * chunk_size + x
+				var world_z = chunk_position.y * chunk_size + z
+				
+				var base_height = noise.get_noise_2d(world_x, world_z)
+				var detail = detail_noise.get_noise_2d(world_x, world_z)
+				var ridge = ridge_noise.get_noise_2d(world_x, world_z)
+				
+				# Determine biome based on base noise (same as mesh generation)
+				var biome = get_biome(world_x, world_z, base_height)
+				
+				# Calculate beach blend (same as mesh generation)
+				var beach_blend = calculate_beach_blend(base_height)
+				
+				# Apply biome modifiers (same as mesh generation)
+				var height_mod = get_biome_height_modifier(biome)
+				var roughness_mod = get_biome_roughness(biome)
+				
+				var modified_height = base_height * roughness_mod
+				modified_height += detail * 0.2  # Detail layer
+				
+				# Mountains get exponential + ridge (same as mesh generation)
+				if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
+					var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
+					height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
+				else:
+					height = modified_height * height_multiplier * height_mod
+				
+				# Apply same baseline offset with beach blending (MUST MATCH!)
+				if biome == Biome.OCEAN:
+					height = height - (height_multiplier * 0.6)  # Deep ocean
+				elif biome == Biome.BEACH:
+					# Smooth beach transition
+					var ocean_height = height - (height_multiplier * 0.6)
+					var land_height = height + (height_multiplier * 0.2)
+					height = lerp(ocean_height, land_height, beach_blend)
+				else:
+					height = height + (height_multiplier * 0.5)  # Normal baseline
 			
 			# Don't clamp - allow negative heights for ocean underwater terrain
 			

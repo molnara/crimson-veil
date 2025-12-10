@@ -17,6 +17,7 @@ class_name ChunkManager
 
 # Internal variables
 var chunks: Dictionary = {}  # Dictionary to store loaded chunks
+var chunk_edge_heights: Dictionary = {}  # Cache edge heights to prevent seams: "x,z,edge" -> heights_array
 var noise: FastNoiseLite
 var detail_noise: FastNoiseLite  # Small hills/bumps
 var ridge_noise: FastNoiseLite   # Mountain ridges/sharp features
@@ -107,8 +108,10 @@ func world_to_chunk(world_pos: Vector3) -> Vector2i:
 
 func load_chunk(chunk_pos: Vector2i):
 	# INTEGRATION: Pass detail_noise and ridge_noise to Chunk for layered terrain
+	# Pass edge height cache to prevent seams between chunks
 	var chunk = Chunk.new(chunk_pos, chunk_size, chunk_height, noise, height_multiplier, 
-						   temperature_noise, moisture_noise, detail_noise, ridge_noise)
+						   temperature_noise, moisture_noise, detail_noise, ridge_noise, 
+						   chunk_edge_heights)
 	add_child(chunk)
 	chunks[chunk_pos] = chunk
 
