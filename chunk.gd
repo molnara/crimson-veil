@@ -87,6 +87,10 @@ func generate_mesh():
 			# Determine primary biome based on base noise value (not final height)
 			var biome = get_biome(world_x, world_z, base_height)
 			
+			# IMPROVEMENT #5: Calculate smooth beach transition blend factor
+			# Returns 0.0 (pure ocean) to 1.0 (pure land) in beach zones
+			var beach_blend = calculate_beach_blend(base_height)
+			
 			# Apply biome-specific height modifier
 			var height_mod = get_biome_height_modifier(biome)
 			var roughness_mod = get_biome_roughness(biome)
@@ -94,39 +98,38 @@ func generate_mesh():
 			# Modify the noise based on biome characteristics
 			var modified_height = base_height * roughness_mod
 			
-			# IMPROVEMENT #2: Add detail noise (small bumps everywhere)
-			# Scale down detail contribution (0.2x) to avoid overwhelming base terrain
+			# Add detail noise (small bumps everywhere)
 			modified_height += detail * 0.2
 			
-			# IMPROVEMENT #3: Mountains get exponential height + ridge features
+			# Mountains get exponential height + ridge features
 			var height: float
 			if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
 				# Exponential makes tall peaks dramatically taller (sharp mountains)
-				# pow(x, 1.4) means: small values stay small, large values get much larger
 				var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
 				
 				# Add ridge noise for mountain peaks and valleys
-				# Ridge only applies to mountains, scaled by 0.15 to add drama without chaos
 				height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
 			else:
 				# Normal terrain uses standard calculation
 				height = modified_height * height_multiplier * height_mod
 			
-			# IMPROVEMENT #1: Much deeper oceans (0.15 modifier down from 0.3)
-			# Baseline offsets for biomes
+			# IMPROVEMENT #5: Smooth beach transition (blend between ocean and land height)
+			# Apply baseline offsets with smooth blending
 			if biome == Biome.OCEAN:
-				height = height - (height_multiplier * 0.6)  # Deep ocean (was 0.3)
+				height = height - (height_multiplier * 0.6)  # Deep ocean
 			elif biome == Biome.BEACH:
-				height = height + (height_multiplier * 0.2)  # Beach at sea level
+				# BEACH BLENDING: Smoothly transition from ocean depth to land height
+				var ocean_height = height - (height_multiplier * 0.6)
+				var land_height = height + (height_multiplier * 0.2)
+				height = lerp(ocean_height, land_height, beach_blend)
 			else:
 				height = height + (height_multiplier * 0.5)  # Normal baseline
 			
-			# Don't clamp to 0 - allow ocean to go negative (underwater)
-			
+			# Store vertex
 			var vertex = Vector3(x, height, z)
 			vertices.append(vertex)
 	
-	# Generate triangles with proper winding order
+	# Generate triangles WITHOUT vertex colors
 	for z in range(chunk_size):
 		for x in range(chunk_size):
 			var i = z * (chunk_size + 1) + x
@@ -154,10 +157,65 @@ func generate_mesh():
 	material.roughness = 0.9  # Slightly matte
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED  # Render both sides
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	# Vertex color blending disabled - was darkening terrain
+	# material.vertex_color_use_as_albedo = true
 	final_mesh.surface_set_material(0, material)
 	
 	# Set the mesh on the mesh instance
 	mesh_instance.mesh = final_mesh
+
+func calculate_beach_blend(base_noise: float) -> float:
+	"""Calculate smooth blend factor for beach transitions
+	
+	IMPROVEMENT #5: Beach Transition Blending
+	Returns 0.0 to 1.0 based on position in beach zone:
+	- base_noise < -0.35: 0.0 (deep ocean, no blend)
+	- base_noise -0.35 to -0.2: 0.0→1.0 (beach zone, smooth gradient)
+	- base_noise > -0.2: 1.0 (land, no blend)
+	
+	INTEGRATION: Used in height calculation to smoothly lerp between ocean and land elevation
+	"""
+	if base_noise < -0.35:
+		return 0.0  # Pure ocean
+	elif base_noise > -0.2:
+		return 1.0  # Pure land
+	else:
+		# Beach zone: smooth transition
+		# Normalize -0.35→-0.2 range to 0.0→1.0
+		var blend = (base_noise + 0.35) / 0.15
+		# Apply smoothstep for even smoother transition
+		return blend * blend * (3.0 - 2.0 * blend)
+
+func calculate_biome_blend_color(world_x: float, world_z: float, base_noise: float, primary_biome: Biome) -> Color:
+	"""Calculate vertex color for biome blending
+	
+	IMPROVEMENT #4: Biome Transition Blending
+	Currently disabled - returning white to preserve base textures.
+	Vertex color tinting was darkening terrain too much.
+	TODO: Implement via multi-material system instead of vertex colors
+	"""
+	# Return pure white (no tinting) - preserves original texture brightness
+	return Color(1.0, 1.0, 1.0)
+
+func get_biome_tint_color(biome: Biome) -> Color:
+	"""Get the tint color for a specific biome - subtle tints preserve texture detail"""
+	match biome:
+		Biome.OCEAN:
+			return Color(0.92, 0.94, 1.0)      # Very subtle blue
+		Biome.BEACH:
+			return Color(1.0, 0.99, 0.96)      # Very subtle sand
+		Biome.GRASSLAND:
+			return Color(0.96, 1.0, 0.96)      # Very subtle green
+		Biome.FOREST:
+			return Color(0.92, 0.98, 0.92)     # Subtle dark green
+		Biome.DESERT:
+			return Color(1.0, 0.98, 0.94)      # Subtle yellow-brown
+		Biome.MOUNTAIN:
+			return Color(0.98, 0.98, 0.98)     # Almost white
+		Biome.SNOW:
+			return Color(1.0, 1.0, 1.0)        # Pure white
+	
+	return Color(1.0, 1.0, 1.0)  # Default white (no tint)
 
 func add_triangle(surface_tool: SurfaceTool, v1: Vector3, v2: Vector3, v3: Vector3):
 	"""Add a triangle to the surface tool (no vertex colors, uses texture instead)"""
@@ -200,6 +258,9 @@ func create_collision():
 			# Determine biome based on base noise (same as mesh generation)
 			var biome = get_biome(world_x, world_z, base_height)
 			
+			# Calculate beach blend (same as mesh generation)
+			var beach_blend = calculate_beach_blend(base_height)
+			
 			# Apply biome modifiers (same as mesh generation)
 			var height_mod = get_biome_height_modifier(biome)
 			var roughness_mod = get_biome_roughness(biome)
@@ -215,11 +276,14 @@ func create_collision():
 			else:
 				height = modified_height * height_multiplier * height_mod
 			
-			# Apply same baseline offset as mesh generation (MUST MATCH!)
+			# Apply same baseline offset with beach blending (MUST MATCH!)
 			if biome == Biome.OCEAN:
 				height = height - (height_multiplier * 0.6)  # Deep ocean
 			elif biome == Biome.BEACH:
-				height = height + (height_multiplier * 0.2)  # Beach at sea level
+				# Smooth beach transition
+				var ocean_height = height - (height_multiplier * 0.6)
+				var land_height = height + (height_multiplier * 0.2)
+				height = lerp(ocean_height, land_height, beach_blend)
 			else:
 				height = height + (height_multiplier * 0.5)  # Normal baseline
 			
