@@ -772,8 +772,8 @@ func create_lizard_visual(mesh_instance: MeshInstance3D, collision: CollisionSha
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	
-	var body_color = Color(0.4, 0.6, 0.3)
-	var stripe_color = Color(0.5, 0.7, 0.4)
+	var body_color = Color(0.15, 0.45, 0.2)  # Deep emerald green
+	var stripe_color = Color(0.25, 0.55, 0.3)  # Rich forest green stripe
 	
 	# Scale down by 60% for realistic lizard size
 	var s = 0.4
