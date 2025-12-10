@@ -5,9 +5,11 @@ extends Control
 @onready var target_label = $CenterContainer/VBoxContainer/TargetLabel
 @onready var inventory_display = $InventoryDisplay/ItemList
 @onready var time_label = $TimeDisplay/TimeLabel
+@onready var tool_label = $ToolDisplay/ToolLabel
 
 var inventory: Inventory = null
 var day_night_cycle: DayNightCycle = null
+var tool_system: ToolSystem = null
 
 func _ready():
 	# Hide progress elements initially
@@ -75,6 +77,19 @@ func set_inventory(inv: Inventory):
 	if inventory:
 		inventory.inventory_changed.connect(_on_inventory_changed)
 		_on_inventory_changed()
+
+func set_tool_system(tools: ToolSystem):
+	"""Connect to tool system to display equipped tool"""
+	tool_system = tools
+	if tool_system:
+		tool_system.tool_equipped.connect(_on_tool_equipped)
+		_on_tool_equipped(tool_system.get_equipped_tool())
+
+func _on_tool_equipped(tool: int):
+	"""Update tool display when tool is equipped"""
+	if tool_label and tool_system:
+		var tool_name = tool_system.get_tool_name(tool)
+		tool_label.text = "Tool: " + tool_name
 
 func _on_inventory_changed():
 	"""Update the inventory display"""

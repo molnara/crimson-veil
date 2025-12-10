@@ -16,6 +16,7 @@ var is_flying: bool = false  # Fly/noclip mode toggle
 # Systems
 var harvesting_system: HarvestingSystem
 var building_system: BuildingSystem
+var tool_system: ToolSystem
 var inventory: Inventory
 var harvest_ui: Control
 
@@ -50,10 +51,14 @@ func _ready():
 	inventory = Inventory.new()
 	add_child(inventory)
 	
+	# Initialize tool system
+	tool_system = ToolSystem.new()
+	add_child(tool_system)
+	
 	# Initialize harvesting system
 	harvesting_system = HarvestingSystem.new()
 	add_child(harvesting_system)
-	harvesting_system.initialize(self, camera, inventory)
+	harvesting_system.initialize(self, camera, inventory, tool_system)
 	
 	# Initialize building system
 	building_system = BuildingSystem.new()
@@ -84,6 +89,11 @@ func _input(event):
 	if event.is_action_pressed("toggle_fly"):
 		is_flying = !is_flying
 		print("Fly mode: ", "ON" if is_flying else "OFF")
+	
+	# Cycle tools with T key
+	if event.is_action_pressed("cycle_tool"):
+		if tool_system:
+			tool_system.cycle_tool()
 	
 	# Toggle building mode with B key
 	if event.is_action_pressed("toggle_building"):
@@ -146,6 +156,10 @@ func setup_ui():
 		if harvest_ui.has_method("set_inventory"):
 			harvest_ui.set_inventory(inventory)
 			print("Inventory connected to UI")
+		
+		if harvest_ui.has_method("set_tool_system"):
+			harvest_ui.set_tool_system(tool_system)
+			print("Tool system connected to UI")
 		
 		if harvest_ui.has_method("get_progress_bar"):
 			harvesting_system.progress_bar = harvest_ui.get_progress_bar()

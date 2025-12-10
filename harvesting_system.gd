@@ -6,6 +6,7 @@ class_name HarvestingSystem
 var player: CharacterBody3D
 var camera: Camera3D
 var inventory: Inventory
+var tool_system: ToolSystem
 
 # Raycasting
 var raycast_distance: float = 5.0
@@ -26,11 +27,17 @@ func _ready():
 	# Will be initialized by the player
 	pass
 
-func initialize(player_node: CharacterBody3D, player_camera: Camera3D, player_inventory: Inventory):
+func initialize(player_node: CharacterBody3D, player_camera: Camera3D, player_inventory: Inventory, player_tool_system: ToolSystem):
 	"""Initialize the harvesting system with player references"""
 	player = player_node
 	camera = player_camera
 	inventory = player_inventory
+	tool_system = player_tool_system
+	
+	# Connect to tool changes to update UI
+	if tool_system:
+		tool_system.tool_equipped.connect(_on_tool_equipped)
+	
 	print("HarvestingSystem initialized")
 
 func _process(delta):
@@ -82,6 +89,16 @@ func start_harvest():
 	"""Start harvesting the current target"""
 	if current_target == null:
 		return
+	
+	# Check if we have the required tool
+	if tool_system:
+		var resource_info = current_target.get_info()
+		var resource_type = resource_info.get("type", "generic")
+		
+		if not tool_system.can_harvest(resource_type):
+			var required_tool = tool_system.get_required_tool_name(resource_type)
+			print("Cannot harvest ", current_target.resource_name, " - requires ", required_tool)
+			return
 	
 	if current_target.start_harvest(player):
 		is_harvesting = true
@@ -138,6 +155,11 @@ func _on_resource_harvested(drops: Dictionary):
 	print("HarvestingSystem: Resource harvested with drops: ", drops)
 	emit_signal("harvest_completed", current_target, drops)
 
+func _on_tool_equipped(_tool):
+	"""Called when the player equips a different tool"""
+	# Update UI to reflect new tool (changes color if wrong tool)
+	update_ui()
+
 func cancel_harvest():
 	"""Cancel the current harvest"""
 	if not is_harvesting:
@@ -168,6 +190,21 @@ func update_ui():
 			var info = current_target.get_info()
 			target_label.text = info["name"]
 			target_label.visible = true
+			
+			# Check if we have the right tool - color label red if not
+			if tool_system:
+				var resource_type = info.get("type", "generic")
+				var has_correct_tool = tool_system.can_harvest(resource_type)
+				
+				if has_correct_tool:
+					# White for correct tool
+					target_label.add_theme_color_override("font_color", Color.WHITE)
+				else:
+					# Red for wrong tool
+					target_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+					# Show required tool in the label
+					var required_tool = tool_system.get_required_tool_name(resource_type)
+					target_label.text = info["name"] + " (Requires " + required_tool + ")"
 		else:
 			target_label.visible = false
 	

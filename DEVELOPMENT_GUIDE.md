@@ -4,7 +4,7 @@
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
   - Progression through biome exploration and resource gathering
-  - Satisfying crafting loops (gather → craft → unlock new areas/tools)
+  - Satisfying crafting loops (gather â†’ craft â†’ unlock new areas/tools)
   - Environmental storytelling through procedural world generation
   - Cozy base-building with functional purpose
 - **Visual Style**: 
@@ -67,7 +67,7 @@
 ### Core Architecture
 - **Chunk-based world**: ChunkManager orchestrates terrain generation, VegetationSpawner populates
 - **Component systems**: Player has child nodes for HarvestingSystem, BuildingSystem, Inventory
-- **Resource inheritance**: HarvestableResource base class → HarvestableTree/Mushroom/Strawberry
+- **Resource inheritance**: HarvestableResource base class â†’ HarvestableTree/Mushroom/Strawberry
 - **Signal-driven communication**: Harvest completion signals trigger inventory updates and particle spawning
 
 ### Naming Conventions
@@ -183,7 +183,7 @@ LIFECYCLE/STATE MACHINE:
 - **Player feedback hooks**: Mark where UX/juice happens
 
 ### What NOT to Comment
-- Self-explanatory code (`var player: Player  # The player` ← bad)
+- Self-explanatory code (`var player: Player  # The player` â† bad)
 - Obvious getters/setters
 - Standard Godot patterns everyone knows
 
@@ -223,22 +223,22 @@ apply_hit_shake()
 ### Scene Structure
 ```
 World (Node3D)
-├── ChunkManager (Node3D)
-├── Player (CharacterBody3D)
-│   ├── SpringArm3D
-│   │   └── Camera3D
-│   ├── HarvestingSystem (Node)
-│   ├── BuildingSystem (Node3D)
-│   └── Inventory (Node)
-├── VegetationSpawner (Node3D)
-├── CritterSpawner (Node3D)
-├── DayNightCycle (Node3D)
-└── SettingsMenu (Control)
+â”œâ”€â”€ ChunkManager (Node3D)
+â”œâ”€â”€ Player (CharacterBody3D)
+â”‚   â”œâ”€â”€ SpringArm3D
+â”‚   â”‚   â””â”€â”€ Camera3D
+â”‚   â”œâ”€â”€ HarvestingSystem (Node)
+â”‚   â”œâ”€â”€ BuildingSystem (Node3D)
+â”‚   â””â”€â”€ Inventory (Node)
+â”œâ”€â”€ VegetationSpawner (Node3D)
+â”œâ”€â”€ CritterSpawner (Node3D)
+â”œâ”€â”€ DayNightCycle (Node3D)
+â””â”€â”€ SettingsMenu (Control)
 
 Harvestable Resource Structure (spawned at runtime):
 HarvestableTree/Mushroom/Strawberry (StaticBody3D)
-├── MeshInstance3D (visual)
-└── CollisionShape3D (interaction)
+â”œâ”€â”€ MeshInstance3D (visual)
+â””â”€â”€ CollisionShape3D (interaction)
 ```
 
 ### Common Godot Gotchas in This Project
@@ -297,7 +297,7 @@ HarvestableTree/Mushroom/Strawberry (StaticBody3D)
 - **Fly mode**: Press F to toggle noclip (flies at 15 m/s)
 - **Inventory print**: Press I to dump inventory contents to console
 - **Settings menu**: ESC to access runtime graphics adjustments
-- **Collision visualization**: Enable in Godot editor → Debug → Visible Collision Shapes
+- **Collision visualization**: Enable in Godot editor â†’ Debug â†’ Visible Collision Shapes
 
 ### Quick Testing Workflows
 1. **Test specific biome**: Modify player spawn position in world.gd
@@ -306,7 +306,7 @@ HarvestableTree/Mushroom/Strawberry (StaticBody3D)
 4. **Test building costs**: Modify block_types dictionary in BuildingSystem
 
 ### Performance Profiling
-- Enable Godot profiler: Debug → Profiler
+- Enable Godot profiler: Debug â†’ Profiler
 - Watch for: Vegetation spawning spikes, material duplication warnings, chunk load stutters
 - Target frame time: ~16.67ms (60 FPS)
 
@@ -365,7 +365,7 @@ When requesting new features, provide:
 "Add stone walls for base building. Players want protection from future threats (base-building pillar). Like Valheim's walls but snapped to grid. Medium scope - needs collision, placement validation, cost balancing. Should require significant stone investment to prevent trivializing defense."
 
 ### Bad Example
-"Add walls" ← Missing motivation, scope, balance considerations
+"Add walls" â† Missing motivation, scope, balance considerations
 
 ## Quick Reference
 
@@ -477,12 +477,40 @@ IMPACT levels:
 [2024-01-16 10:00] [CRITICAL] Refactored chunk loading system - old saves incompatible
 ```
 
-### Workflow
-1. Maintain CHANGELOG.txt throughout conversation
-2. Add entry for each significant change
-3. At end of session, save CHANGELOG.txt to /mnt/user-data/outputs/
-4. At start of new sessions, check for existing CHANGELOG.txt and continue appending
-5. Include changelog summary in commit messages when requested
+### Session Workflow
+1. **During development**: Track changes mentally (no file updates yet)
+2. **When user says "ready to commit" / "prepare commit" / "push to GitHub"**:
+   - Read current CHANGELOG.txt from /mnt/project/
+   - Add new entries at top under "Recent Changes" for ALL changes made this session
+   - Also add to v0.X.0 feature list if it's a new feature
+   - Copy updated CHANGELOG.txt to /mnt/user-data/outputs/
+   - Copy all modified files to /mnt/user-data/outputs/
+   - Provide suggested commit message based on changes
+3. **At start of new sessions**: Read CHANGELOG.txt to see what's been done previously
+
+**Important**: CHANGELOG.txt is only modified when preparing a commit, not during development. This keeps the file clean and only shows "official" committed changes.
+
+### Commit Preparation Checklist
+When user says they want to commit:
+- [ ] Read /mnt/project/CHANGELOG.txt
+- [ ] Add entries for all changes this session (newest first)
+- [ ] Copy CHANGELOG.txt to outputs
+- [ ] Copy all modified .gd files to outputs
+- [ ] Copy all modified .tscn files to outputs
+- [ ] Copy project.godot if modified
+- [ ] Provide git commit message suggestion
+- [ ] List all files that need to be committed
+
+### Commit Message Format
+```
+Brief summary (50 chars or less)
+
+- Bullet point of change 1
+- Bullet point of change 2
+- Bullet point of change 3
+
+Closes #issue_number (if applicable)
+```
 
 ## Design Philosophy Reminders
 
@@ -505,11 +533,11 @@ IMPACT levels:
 - Atmospheric without being oppressive
 
 ### Avoid These Anti-Patterns
-- ❌ Punishing difficulty (not Dark Souls, not survival horror)
-- ❌ Overwhelming UI/systems (keep it simple and clean)
-- ❌ Tedious grinding (gathering should feel satisfying, not repetitive)
-- ❌ Complex crafting trees (Valheim-simple, not Factorio-complex)
-- ❌ Time pressure mechanics (let player explore at their own pace)
+- âŒ Punishing difficulty (not Dark Souls, not survival horror)
+- âŒ Overwhelming UI/systems (keep it simple and clean)
+- âŒ Tedious grinding (gathering should feel satisfying, not repetitive)
+- âŒ Complex crafting trees (Valheim-simple, not Factorio-complex)
+- âŒ Time pressure mechanics (let player explore at their own pace)
 
 ## Version Control Notes
 

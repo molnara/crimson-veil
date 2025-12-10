@@ -6,6 +6,10 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-10 17:15] [MINOR] Updated DEVELOPMENT_GUIDE.md - clarified commit workflow
+[2024-12-10 16:45] [MINOR] Added real-time tool indicator updates when cycling tools
+[2024-12-10 16:30] [MINOR] Added visual indicator (red text) when wrong tool equipped
+[2024-12-10 16:00] [MAJOR] Added minimal tool system - Axe/Pickaxe with requirement checking
 [2024-12-10 15:30] - Created ROADMAP.txt with current features and planned work
 [2024-12-10 15:35] - Created CHANGELOG.txt to track session changes
 
@@ -26,6 +30,7 @@ v0.3.0 (Current Release)
 - Inventory system
 - Settings menu with quality presets
 - Water plane with collision
+- Tool system (Axe/Pickaxe) with requirement checking and visual feedback
 
 ---
 
