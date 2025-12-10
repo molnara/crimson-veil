@@ -1,0 +1,36 @@
+CRIMSON VEIL - CHANGELOG
+=========================
+
+This file tracks all changes made to the project.
+Format: [YYYY-MM-DD HH:MM] - Brief description of change
+
+Recent Changes (v0.3.0+):
+-------------------------
+[2024-12-10 15:30] - Created ROADMAP.txt with current features and planned work
+[2024-12-10 15:35] - Created CHANGELOG.txt to track session changes
+
+---
+
+Version History:
+----------------
+
+v0.3.0 (Current Release)
+- Procedural world generation with 7 biomes
+- Day/night cycle with pixelated sun/moon
+- Harvestable resources (trees, strawberries, mushrooms)
+- Harvesting system with UI feedback
+- Tree falling physics
+- Resource night glow effects
+- Wildlife spawning (8 critter types)
+- Basic building system
+- Inventory system
+- Settings menu with quality presets
+- Water plane with collision
+
+---
+
+Instructions:
+- Add new entries at the top under "Recent Changes"
+- Use format: [YYYY-MM-DD HH:MM] - What changed
+- At release, move "Recent Changes" to new version section
+- Keep entries brief but descriptive
