@@ -12,6 +12,21 @@
    - Recent changes (last 3-5 CHANGELOG entries)
    - Known issues (from ROADMAP.txt "BUGS / FIXES" section)
    - Brief reminder of next priorities
+5. **Show the quick commands list below**
+
+---
+
+## Quick Commands
+
+### ROADMAP Management
+```
+Add [feature] to roadmap under [priority/section]
+Move [feature] from backlog to current sprint
+Mark [feature] as completed
+Add design question: [question]
+Show roadmap priorities
+What should I work on next?
+```
 
 **Example Session Start Output:**
 ```
