@@ -201,10 +201,56 @@ func populate_chunk(chunk_pos: Vector2i):
 		var world_z = world_offset.y + local_z
 		
 		var base_noise = noise.get_noise_2d(world_x, world_z)
+		
+		# EARLY REJECTION: Check base_noise first - reject obvious mountains/oceans
+		# base_noise > 0.4 = mountains, < -0.2 = ocean/beach
+		# Use tighter thresholds to catch edge cases
+		if base_noise > 0.30 or base_noise < -0.25:  # Tightened from 0.35
+			continue
+		
+		# DESERT CHECK: Reject desert conditions explicitly with buffer zone
+		# Desert = hot (temp > 0.2) and dry (moisture < 0.0)
+		# Check center point AND nearby points to avoid spawning on desert boundaries
+		var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
+		var moisture = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z)
+		
+		# Check if center point or any nearby point is in desert conditions
+		var is_desert = (temperature > 0.15 and moisture < 0.05)
+		
+		# Also check 4 nearby points to catch boundary transitions
+		if not is_desert:
+			var check_dist = 2.0  # Check 2 meters in each direction
+			var temp_n = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z + check_dist)
+			var moist_n = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z + check_dist)
+			if temp_n > 0.15 and moist_n < 0.05:
+				is_desert = true
+			
+			if not is_desert:
+				var temp_s = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z - check_dist)
+				var moist_s = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z - check_dist)
+				if temp_s > 0.15 and moist_s < 0.05:
+					is_desert = true
+			
+			if not is_desert:
+				var temp_e = chunk_manager.temperature_noise.get_noise_2d(world_x + check_dist, world_z)
+				var moist_e = chunk_manager.moisture_noise.get_noise_2d(world_x + check_dist, world_z)
+				if temp_e > 0.15 and moist_e < 0.05:
+					is_desert = true
+			
+			if not is_desert:
+				var temp_w = chunk_manager.temperature_noise.get_noise_2d(world_x - check_dist, world_z)
+				var moist_w = chunk_manager.moisture_noise.get_noise_2d(world_x - check_dist, world_z)
+				if temp_w > 0.15 and moist_w < 0.05:
+					is_desert = true
+		
+		if is_desert:
+			continue  # Skip desert and near-desert areas
+		
 		var biome = get_biome_at_position(world_x, world_z, base_noise)
 		
-		# Only spawn ground cover in certain biomes
-		if biome == Chunk.Biome.OCEAN:
+		# Only spawn ground cover in biomes that support it
+		# CRITICAL: Grass only in Grassland, Forest, Beach
+		if biome != Chunk.Biome.GRASSLAND and biome != Chunk.Biome.FOREST and biome != Chunk.Biome.BEACH:
 			continue
 		
 		# Use cluster noise to create patches
@@ -216,8 +262,29 @@ func populate_chunk(chunk_pos: Vector2i):
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		
-		# Don't spawn ground cover underwater (water level is at y=0.0)
-		if height < 0.3:  # Give some margin above water
+		# ABSOLUTE HEIGHT CHECK: Reject based on actual world height
+		# Water level is at y=0, so anything below 0.3m is too close to water
+		# Anything above 10m is mountain terrain (lowered from 12m)
+		if height < 0.3 or height > 10.0:
+			continue
+		
+		# STRICT SLOPE CHECK: Sample 4 points very close together
+		var sample_dist = 0.3  # Tighter sample distance
+		var h_n = get_terrain_height_at_position(world_x, world_z + sample_dist, 
+			noise.get_noise_2d(world_x, world_z + sample_dist), biome)
+		var h_s = get_terrain_height_at_position(world_x, world_z - sample_dist,
+			noise.get_noise_2d(world_x, world_z - sample_dist), biome)
+		var h_e = get_terrain_height_at_position(world_x + sample_dist, world_z,
+			noise.get_noise_2d(world_x + sample_dist, world_z), biome)
+		var h_w = get_terrain_height_at_position(world_x - sample_dist, world_z,
+			noise.get_noise_2d(world_x - sample_dist, world_z), biome)
+		
+		# Calculate slope - reject if ANY direction has steep change
+		var slope_ns = abs(h_n - h_s) / (sample_dist * 2.0)
+		var slope_ew = abs(h_e - h_w) / (sample_dist * 2.0)
+		var max_slope = max(slope_ns, slope_ew)
+		
+		if max_slope > 0.6:  # Stricter: 0.6 instead of 0.7 (~31 degrees)
 			continue
 		
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
@@ -479,46 +546,85 @@ func get_biome_at_position(world_x: float, world_z: float, base_noise: float) ->
 	
 	return Chunk.Biome.GRASSLAND
 
-func get_terrain_height_at_position(_world_x: float, _world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
+func get_terrain_height_at_position(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
+	"""Calculate terrain height - MUST MATCH chunk.gd generation exactly
+	
+	CRITICAL: This calculation must be identical to chunk.gd or vegetation spawns at wrong heights
+	Uses: base_noise, detail_noise, ridge_noise, biome-specific modifiers
+	"""
 	var height_multiplier = chunk_manager.height_multiplier
 	
+	# Get detail and ridge noise (same as chunk generation)
+	var detail = chunk_manager.detail_noise.get_noise_2d(world_x, world_z)
+	var ridge = chunk_manager.ridge_noise.get_noise_2d(world_x, world_z)
+	
+	# Get biome-specific modifiers (MUST MATCH chunk.gd values exactly)
 	var height_mod = 1.0
 	var roughness_mod = 1.0
 	
 	match biome:
 		Chunk.Biome.OCEAN:
-			height_mod = 0.3
+			height_mod = 0.15  # MUST MATCH chunk.gd
 			roughness_mod = 0.7
 		Chunk.Biome.BEACH:
 			height_mod = 0.7
 			roughness_mod = 0.7
-		Chunk.Biome.MOUNTAIN:
-			height_mod = 1.3
-			roughness_mod = 1.1
-		Chunk.Biome.SNOW:
-			height_mod = 1.4
-			roughness_mod = 1.05
-		Chunk.Biome.DESERT:
-			height_mod = 0.9
-			roughness_mod = 0.8
-		Chunk.Biome.FOREST:
-			height_mod = 1.05
-			roughness_mod = 0.95
 		Chunk.Biome.GRASSLAND:
 			height_mod = 1.0
 			roughness_mod = 0.85
+		Chunk.Biome.FOREST:
+			height_mod = 1.05
+			roughness_mod = 0.95
+		Chunk.Biome.DESERT:
+			height_mod = 0.9
+			roughness_mod = 0.8
+		Chunk.Biome.MOUNTAIN:
+			height_mod = 1.5  # MUST MATCH chunk.gd
+			roughness_mod = 1.2
+		Chunk.Biome.SNOW:
+			height_mod = 1.6  # MUST MATCH chunk.gd
+			roughness_mod = 1.15
 	
+	# Apply roughness modifier
 	var modified_height = base_noise * roughness_mod
-	var height = modified_height * height_multiplier * height_mod
 	
+	# Add detail noise (small bumps)
+	modified_height += detail * 0.2
+	
+	var height: float
+	
+	# Mountains get exponential height + ridge features (MUST MATCH chunk.gd)
+	if biome == Chunk.Biome.MOUNTAIN or biome == Chunk.Biome.SNOW:
+		var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
+		height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
+	else:
+		height = modified_height * height_multiplier * height_mod
+	
+	# Calculate beach blend for smooth transitions
+	var beach_blend = calculate_beach_blend_vegetation(base_noise)
+	
+	# Apply baseline offset with beach blending (MUST MATCH chunk.gd)
 	if biome == Chunk.Biome.OCEAN:
-		height = height - (height_multiplier * 0.3)
+		height = height - (height_multiplier * 0.6)
 	elif biome == Chunk.Biome.BEACH:
-		height = height + (height_multiplier * 0.2)
+		# Smooth beach transition
+		var ocean_height = height - (height_multiplier * 0.6)
+		var land_height = height + (height_multiplier * 0.2)
+		height = lerp(ocean_height, land_height, beach_blend)
 	else:
 		height = height + (height_multiplier * 0.5)
 	
 	return height
+
+func calculate_beach_blend_vegetation(base_noise: float) -> float:
+	"""Calculate beach blend factor - matches chunk.gd logic"""
+	if base_noise < -0.35:
+		return 0.0
+	elif base_noise > -0.2:
+		return 1.0
+	else:
+		var blend = (base_noise + 0.35) / 0.15
+		return blend * blend * (3.0 - 2.0 * blend)
 
 func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 	var mesh_instance = MeshInstance3D.new()
