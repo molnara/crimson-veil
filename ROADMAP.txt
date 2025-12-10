@@ -10,7 +10,7 @@ CURRENT SPRINT (Next 1-2 weeks)
 VISUAL POLISH
 -------------
 [ ] Make clouds less pixelated - Increase resolution to match sun/moon quality
-[ ] Add highlight around harvestable objects when in range - Green glow for correct tool, red for wrong tool
+[X] Add highlight around harvestable objects when in range - Green glow for correct tool, red for wrong tool (COMPLETE)
 
 
 IN PROGRESS

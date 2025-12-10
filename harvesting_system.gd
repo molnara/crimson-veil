@@ -18,14 +18,28 @@ var just_completed_harvest: bool = false  # Prevent cancel message after complet
 var progress_bar: ProgressBar = null
 var target_label: Label = null
 
+# Highlight system
+var outline_shader: Shader = null
+var outline_material: ShaderMaterial = null
+var highlighted_meshes: Array[MeshInstance3D] = []  # Track which meshes have outline
+const CORRECT_TOOL_COLOR = Color(0.2, 1.0, 0.3, 1.0)  # Bright green
+const WRONG_TOOL_COLOR = Color(1.0, 0.2, 0.2, 1.0)    # Bright red
+const OUTLINE_WIDTH = 0.025  # Outline thickness
+
 signal target_changed(resource: HarvestableResource)
 signal harvest_started(resource: HarvestableResource)
 signal harvest_completed(resource: HarvestableResource, drops: Dictionary)
 signal harvest_cancelled()
 
 func _ready():
-	# Will be initialized by the player
-	pass
+	# Load outline shader
+	outline_shader = load("res://resource_outline.gdshader")
+	if outline_shader:
+		outline_material = ShaderMaterial.new()
+		outline_material.shader = outline_shader
+		print("Outline shader loaded successfully")
+	else:
+		print("WARNING: Failed to load outline shader")
 
 func initialize(player_node: CharacterBody3D, player_camera: Camera3D, player_inventory: Inventory, player_tool_system: ToolSystem):
 	"""Initialize the harvesting system with player references"""
@@ -74,6 +88,10 @@ func update_raycast():
 	
 	# Update target if changed
 	if new_target != current_target:
+		# Remove highlight from old target
+		if current_target:
+			remove_highlight(current_target)
+		
 		# Don't cancel if we just completed a harvest
 		if just_completed_harvest:
 			just_completed_harvest = false
@@ -82,6 +100,11 @@ func update_raycast():
 			cancel_harvest()
 		
 		current_target = new_target
+		
+		# Add highlight to new target
+		if current_target:
+			add_highlight(current_target)
+		
 		emit_signal("target_changed", current_target)
 		update_ui()
 
@@ -129,8 +152,9 @@ func update_harvest_progress(delta: float):
 
 func finish_harvest():
 	"""Called when harvest completes successfully"""
-	# Explicitly complete the harvest on the resource
+	# Remove highlight before completing
 	if current_target:
+		remove_highlight(current_target)
 		current_target.complete_harvest()
 	
 	is_harvesting = false
@@ -159,6 +183,8 @@ func _on_tool_equipped(_tool):
 	"""Called when the player equips a different tool"""
 	# Update UI to reflect new tool (changes color if wrong tool)
 	update_ui()
+	# Update highlight color to match new tool
+	update_highlight_color()
 
 func cancel_harvest():
 	"""Cancel the current harvest"""
@@ -231,3 +257,82 @@ func is_looking_at_resource() -> bool:
 func get_current_target() -> HarvestableResource:
 	"""Get the resource the player is currently looking at"""
 	return current_target
+
+func add_highlight(resource: HarvestableResource):
+	"""Add outline highlight to a harvestable resource"""
+	if not outline_material or not resource:
+		return
+	
+	# Determine highlight color based on tool requirement
+	var has_correct_tool = true
+	if tool_system:
+		var info = resource.get_info()
+		var resource_type = info.get("type", "generic")
+		has_correct_tool = tool_system.can_harvest(resource_type)
+	
+	var highlight_color = CORRECT_TOOL_COLOR if has_correct_tool else WRONG_TOOL_COLOR
+	
+	# Find all mesh instances in the resource
+	var meshes = find_mesh_instances_recursive(resource)
+	
+	for mesh_instance in meshes:
+		if not mesh_instance or not mesh_instance.mesh:
+			continue
+		
+		# Create a duplicate outline material for this mesh
+		var outline_mat = outline_material.duplicate()
+		outline_mat.set_shader_parameter("outline_color", highlight_color)
+		outline_mat.set_shader_parameter("outline_width", OUTLINE_WIDTH)
+		
+		# Add outline as next pass (renders after main material)
+		var current_material = mesh_instance.get_surface_override_material(0)
+		if not current_material:
+			current_material = mesh_instance.mesh.surface_get_material(0)
+		
+		if current_material:
+			current_material.next_pass = outline_mat
+		
+		highlighted_meshes.append(mesh_instance)
+
+func remove_highlight(resource: HarvestableResource):
+	"""Remove outline highlight from a harvestable resource"""
+	if not resource:
+		return
+	
+	# Find all mesh instances in the resource
+	var meshes = find_mesh_instances_recursive(resource)
+	
+	for mesh_instance in meshes:
+		if not mesh_instance or not mesh_instance.mesh:
+			continue
+		
+		# Remove outline by clearing next_pass
+		var current_material = mesh_instance.get_surface_override_material(0)
+		if not current_material:
+			current_material = mesh_instance.mesh.surface_get_material(0)
+		
+		if current_material and current_material.next_pass:
+			current_material.next_pass = null
+		
+		# Remove from tracked list
+		if mesh_instance in highlighted_meshes:
+			highlighted_meshes.erase(mesh_instance)
+
+func find_mesh_instances_recursive(node: Node) -> Array[MeshInstance3D]:
+	"""Recursively find all MeshInstance3D children of a node"""
+	var meshes: Array[MeshInstance3D] = []
+	
+	if node is MeshInstance3D:
+		meshes.append(node)
+	
+	for child in node.get_children():
+		meshes.append_array(find_mesh_instances_recursive(child))
+	
+	return meshes
+
+func update_highlight_color():
+	"""Update the highlight color when tool changes (called by _on_tool_equipped)"""
+	if current_target:
+		# Remove and re-add highlight with new color
+		remove_highlight(current_target)
+		add_highlight(current_target)

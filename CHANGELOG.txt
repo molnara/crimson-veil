@@ -6,6 +6,7 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player
 [2024-12-10 20:15] [FIX] Fixed crab spawning bug - crabs now spawn on beach biomes with proper height threshold
 [2024-12-10 19:45] [FIX] Fixed rock nighttime glow - rocks now glow blue-gray at night like other resources
