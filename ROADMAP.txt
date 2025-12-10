@@ -3,13 +3,14 @@ CRIMSON VEIL - FEATURE ROADMAP
 
 CURRENT SPRINT (Next 1-2 weeks)
 --------------------------------
-[ ] Tool system - Add basic tools (axe, pickaxe) required for harvesting
+[ ] Biome-specific resources - Unique materials in each biome (desert cacti, snow ice, etc)
 [ ] Crafting system - Simple crafting recipes to convert resources into tools/items
 [ ] Inventory UI - Visual display of collected resources and equipped tools
 
 
 IN PROGRESS
 -----------
+[X] Tool system - Add basic tools (axe, pickaxe) required for harvesting (COMPLETE)
 [X] Harvesting system - Trees, strawberries, mushrooms with particles and UI feedback (COMPLETE)
 [X] Day/night cycle - Time-based lighting with sun/moon visuals (COMPLETE)
 [X] Settings system - Graphics, display, performance options (COMPLETE)
@@ -26,12 +27,12 @@ NEXT UP (This Month)
 BACKLOG (Prioritized)
 ---------------------
 HIGH PRIORITY:
-[ ] Biome-specific resources - Unique materials in each biome (desert cacti, snow ice, etc)
 [ ] Boss progression system - Valheim-style boss encounters that gate biome access
 [ ] Advanced building - Walls, roofs, furniture for proper base construction
 [ ] Save/load system - Persistent world state and player progress
 
 MEDIUM PRIORITY:
+[ ] Unique landmarks - Procedurally placed points of interest for discovery and exploration
 [ ] Animal AI improvements - More realistic critter behaviors (feeding, fleeing, nesting)
 [ ] Weather system - Rain, snow, storms that affect gameplay
 [ ] Farming system - Plant crops, tend gardens for renewable food
@@ -39,6 +40,9 @@ MEDIUM PRIORITY:
 [ ] Character customization - Appearance options for player model
 
 LOW PRIORITY:
+[ ] Performance stats UI - Display FPS, CPU, GPU, and memory usage in upper right corner
+[ ] Custom skybox - Replace ProceduralSkyMaterial with custom texture/cubemap for enhanced atmosphere
+[ ] Snow covered trees in snow biome - Visual enhancement for winter atmosphere
 [ ] Multi-material terrain rendering - Replace vertex color tinting (see chunk.gd:231)
 [ ] Seasonal changes - Visual and gameplay shifts throughout the year
 [ ] Fishing system - Coastal/river fishing for food variety
@@ -90,10 +94,9 @@ TECHNICAL DEBT / REFACTORING
 
 BUGS / FIXES
 ------------
-[ ] Fullscreen only works in exported builds, not in editor (limitation - document in UI)
-[ ] Trees occasionally clip through terrain when falling on steep slopes
-[ ] Settings window can be manually resized, snaps back (add prevent-resize flag?)
-[ ] Harvest UI sometimes shows for split second after completion (timing issue)
+[ ] Crabs still don't seem to spawn
+[ ] Sun/moon seem to change sizes as I explore
+[ ] Rocks are not glowing (blue-ish) at night (should behave just like mushrooms)
 
 
 ---
