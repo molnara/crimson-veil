@@ -21,7 +21,8 @@ var player: Node3D
 @export_range(1.0, 10.0) var rabbit_move_speed: float = 3.0  ## How fast rabbits move
 @export_range(0.5, 5.0) var idle_time_min: float = 1.0  ## Minimum idle time between moves
 @export_range(0.5, 5.0) var idle_time_max: float = 3.0  ## Maximum idle time between moves
-@export_range(5.0, 200.0) var despawn_distance: float = 80.0  ## Distance at which critters despawn (must be larger than spawn radius)
+@export_range(2, 6) var spawn_radius_chunks: int = 3  ## How many chunks around player to spawn critters
+@export_range(1.5, 3.0) var despawn_distance_multiplier: float = 2.0  ## Multiplier for despawn distance (spawn_radius * chunk_size * multiplier)
 
 # Track spawned critters
 var active_critters: Array = []
@@ -54,17 +55,16 @@ func _process(delta):
 	var player_pos = player.global_position
 	var player_chunk = chunk_manager.world_to_chunk(player_pos)
 	
-	var spawn_radius = 3  # 3 chunks around player (48 meters)
-	for x in range(player_chunk.x - spawn_radius, player_chunk.x + spawn_radius + 1):
-		for z in range(player_chunk.y - spawn_radius, player_chunk.y + spawn_radius + 1):
+	for x in range(player_chunk.x - spawn_radius_chunks, player_chunk.x + spawn_radius_chunks + 1):
+		for z in range(player_chunk.y - spawn_radius_chunks, player_chunk.y + spawn_radius_chunks + 1):
 			var chunk_pos = Vector2i(x, z)
 			# Check if chunk exists and hasn't been populated yet
 			if chunk_manager.chunks.has(chunk_pos) and not populated_chunks.has(chunk_pos):
 				# Delay spawn by one frame to ensure terrain is ready
 				call_deferred("populate_chunk", chunk_pos)
 	
-	# Cleanup distant chunks (keep critters in 6-chunk radius)
-	cleanup_distant_chunks(player_chunk, 6)
+	# Cleanup distant chunks (keep critters within reasonable range)
+	cleanup_distant_chunks(player_chunk, spawn_radius_chunks * 2)
 	
 	# Despawn critters far from player
 	cleanup_distant_critters(delta)
@@ -392,11 +392,14 @@ func add_critter_behavior(critter: CharacterBody3D):
 
 func cleanup_distant_critters(delta: float):
 	"""Remove critters that are too far from player"""
-	if not player:
+	if not player or not chunk_manager:
 		return
 	
 	var player_pos = player.global_position
 	var critters_to_remove = []
+	
+	# Calculate despawn distance based on spawn settings
+	var despawn_distance = spawn_radius_chunks * chunk_manager.chunk_size * despawn_distance_multiplier
 	
 	for critter in active_critters:
 		if not is_instance_valid(critter):

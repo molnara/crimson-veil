@@ -77,7 +77,7 @@ func update_chunks():
 	var chunks_to_unload = []
 	for chunk_pos in chunks.keys():
 		var distance = (chunk_pos - player_chunk_pos).length()
-		if distance > view_distance + 1:
+		if distance > view_distance + 2:  # Extra buffer prevents pop-in
 			chunks_to_unload.append(chunk_pos)
 	
 	for chunk_pos in chunks_to_unload:

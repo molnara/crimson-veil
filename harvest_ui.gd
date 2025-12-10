@@ -18,16 +18,18 @@ func _ready():
 	call_deferred("find_day_night_cycle")
 
 func find_day_night_cycle():
-	"""Find the DayNightCycle node in the scene"""
+	"""Find the DayNightCycle node using groups (efficient)"""
+	var cycles = get_tree().get_nodes_in_group("day_night_cycle")
+	if cycles.size() > 0:
+		day_night_cycle = cycles[0]
+		return
+	
+	# Fallback: direct search if not in group
 	var root = get_tree().root
 	for child in root.get_children():
-		var cycle = find_node_by_type(child, "DayNightCycle")
-		if cycle:
-			day_night_cycle = cycle
-			print("Found DayNightCycle for UI")
+		if child.get_script() and child.get_script().get_global_name() == "DayNightCycle":
+			day_night_cycle = child
 			return
-	
-	print("Warning: DayNightCycle not found for time display")
 
 func find_node_by_type(node: Node, type_name: String) -> Node:
 	"""Recursively search for a node by class name"""

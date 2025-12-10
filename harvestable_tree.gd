@@ -28,8 +28,7 @@ var physics_collision: CollisionShape3D = null
 # Stump reference
 var stump_mesh: MeshInstance3D = null
 
-# Original mesh reference for fading
-var original_materials: Array = []
+# Mesh references for effects
 var tree_meshes: Array = []  # All MeshInstance3D children
 
 func _ready():
@@ -75,16 +74,6 @@ func cache_mesh_instances(node: Node):
 	"""Recursively find and cache all MeshInstance3D children"""
 	if node is MeshInstance3D:
 		tree_meshes.append(node)
-		# Store original materials for fading
-		if node.mesh:
-			for i in range(node.mesh.get_surface_count()):
-				var mat = node.get_surface_override_material(i)
-				if not mat:
-					mat = node.mesh.surface_get_material(i)
-				if mat:
-					original_materials.append(mat.duplicate())
-				else:
-					original_materials.append(null)
 	
 	for child in node.get_children():
 		cache_mesh_instances(child)

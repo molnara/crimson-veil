@@ -5,6 +5,7 @@ class_name HarvestableResource
 const HarvestParticles = preload("res://harvest_particles.gd")
 
 # Resource properties
+@export_group("Resource Properties")
 @export var resource_name: String = "Resource"
 @export var resource_type: String = "generic"  # wood, stone, ore, etc.
 @export var max_health: float = 100.0
@@ -20,6 +21,7 @@ const HarvestParticles = preload("res://harvest_particles.gd")
 @export_range(0.0, 0.3) var glow_fade_delay: float = 0.18  ## Delay glow transitions (positive = glow only when darker, starts later at night)
 
 # Drops
+@export_group("Drops")
 @export var drop_item: String = "stone"
 @export var drop_amount_min: int = 1
 @export var drop_amount_max: int = 3
@@ -61,8 +63,9 @@ func _ready():
 		if mesh_instance.get_surface_override_material_count() > 0:
 			original_material = mesh_instance.get_surface_override_material(0)
 	
-	# Find the DayNightCycle node
+	# Prepare materials for glow effect (do once, not every frame)
 	if enable_nighttime_glow:
+		prepare_materials_for_glow()
 		call_deferred("find_day_night_cycle")
 
 func find_mesh_instances(node: Node):
@@ -73,18 +76,35 @@ func find_mesh_instances(node: Node):
 	for child in node.get_children():
 		find_mesh_instances(child)
 
+func prepare_materials_for_glow():
+	"""Duplicate and setup materials once for glow effect"""
+	for mesh_instance in mesh_instances:
+		if not mesh_instance or not mesh_instance.mesh:
+			continue
+		
+		for surface_idx in range(mesh_instance.mesh.get_surface_count()):
+			var material = mesh_instance.get_surface_override_material(surface_idx)
+			
+			# If no override material, get from mesh and duplicate it
+			if not material:
+				material = mesh_instance.mesh.surface_get_material(surface_idx)
+				if material and material is StandardMaterial3D:
+					material = material.duplicate()
+					mesh_instance.set_surface_override_material(surface_idx, material)
+
 func find_day_night_cycle():
-	"""Find the DayNightCycle node in the scene"""
-	# Look for DayNightCycle in the scene tree
+	"""Find the DayNightCycle node using groups (cached, no recursion)"""
+	var cycles = get_tree().get_nodes_in_group("day_night_cycle")
+	if cycles.size() > 0:
+		day_night_cycle = cycles[0]
+		return
+	
+	# Fallback: search if not in group (backwards compatibility)
 	var root = get_tree().root
 	for child in root.get_children():
-		var cycle = find_node_by_type(child, "DayNightCycle")
-		if cycle:
-			day_night_cycle = cycle
-			print("Found DayNightCycle for ", resource_name)
+		if child.get_script() and child.get_script().get_global_name() == "DayNightCycle":
+			day_night_cycle = child
 			return
-	
-	print("Warning: DayNightCycle not found for ", resource_name)
 
 func find_node_by_type(node: Node, type_name: String) -> Node:
 	"""Recursively search for a node by class name"""
@@ -142,16 +162,9 @@ func apply_emission_to_mesh(mesh_instance: MeshInstance3D, intensity: float):
 	if not mesh_instance or not mesh_instance.mesh:
 		return
 	
-	# Process each surface
+	# Process each surface - materials already duplicated in _ready
 	for surface_idx in range(mesh_instance.mesh.get_surface_count()):
 		var material = mesh_instance.get_surface_override_material(surface_idx)
-		
-		# If no override material, get from mesh and duplicate it
-		if not material:
-			material = mesh_instance.mesh.surface_get_material(surface_idx)
-			if material and material is StandardMaterial3D:
-				material = material.duplicate()
-				mesh_instance.set_surface_override_material(surface_idx, material)
 		
 		if material and material is StandardMaterial3D:
 			var std_mat = material as StandardMaterial3D

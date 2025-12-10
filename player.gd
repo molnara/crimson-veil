@@ -27,24 +27,17 @@ func _ready():
 	# Human: 1.75m tall, eyes at ~1.65m (94% of height)
 	if spring_arm:
 		spring_arm.position.y = 1.65  # Realistic human eye height
-		print("SpringArm position set to: ", spring_arm.position)
-		print("SpringArm spring_length: ", spring_arm.spring_length)
 	
 	# Adjust camera near clip to prevent clipping into nearby objects
 	if camera:
 		camera.near = 0.05  # Reduced from default 0.1 to see objects closer
-		print("Camera near clip set to: ", camera.near)
 	
 	# Capture the mouse
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
-	print("Player ready at position: ", global_position)
-	print("Camera found: ", camera != null)
-	if camera:
-		print("Camera global position: ", camera.global_position)
 	
 	# Set collision layers - player only collides with terrain, not critters
 	collision_layer = 1  # Player is on layer 1
-	collision_mask = 1 + 2  # Detect layers 1 (terrain) and 2 (resources), but NOT layer 8 (critters)
+	collision_mask = 1  # Only detect layer 1 (terrain) - resources use raycasts, not physics
 	# Layer 8 (critters) is intentionally excluded so player passes through them
 	
 	# Enable floor snapping and sliding for smooth terrain following

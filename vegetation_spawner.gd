@@ -140,8 +140,6 @@ func populate_chunk(chunk_pos: Vector2i):
 			continue
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
-		if height == -999.0:  # Raycast failed
-			continue
 		
 		# Don't spawn vegetation underwater (water level is at y=0.0)
 		if height < 0.5:  # Need more margin for larger vegetation
@@ -174,8 +172,6 @@ func populate_chunk(chunk_pos: Vector2i):
 			continue
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
-		if height == -999.0:
-			continue
 		
 		# Don't spawn ground cover underwater (water level is at y=0.0)
 		if height < 0.3:  # Give some margin above water
@@ -184,13 +180,13 @@ func populate_chunk(chunk_pos: Vector2i):
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
 
 func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
-	"""Get terrain height with raycast validation"""
+	"""Get terrain height with raycast validation - uses calculated height efficiently"""
 	var calculated_height = get_terrain_height_at_position(world_x, world_z, base_noise, biome)
 	
-	# Raycast to find actual terrain
+	# Use calculated height to guide raycast window (narrower = faster)
 	var space_state = get_world_3d().direct_space_state
-	var ray_start = Vector3(world_x, calculated_height + 10.0, world_z)
-	var ray_end = Vector3(world_x, calculated_height - 2.0, world_z)
+	var ray_start = Vector3(world_x, calculated_height + 5.0, world_z)  # Reduced from 10.0
+	var ray_end = Vector3(world_x, calculated_height - 5.0, world_z)  # Tighter window
 	
 	var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
 	query.collision_mask = 1
@@ -199,7 +195,8 @@ func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise:
 	if result:
 		return result.position.y
 	
-	return -999.0  # Signal that raycast failed
+	# If raycast fails, use calculated height (terrain might not be loaded yet)
+	return calculated_height
 
 func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float):
 	"""Spawn trees, rocks, and other large vegetation"""
@@ -1181,22 +1178,6 @@ func create_cactus(mesh_instance: MeshInstance3D):
 		# Apply same material to arms
 		arm.set_surface_override_material(0, material)
 		connector.set_surface_override_material(0, material)
-
-func create_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bool):
-	if is_cluster:
-		var cluster_count = 3 + randi() % 3
-		for i in range(cluster_count):
-			var small_mushroom = MeshInstance3D.new()
-			mesh_instance.add_child(small_mushroom)
-			
-			var offset_x = (randf() - 0.5) * 0.3
-			var offset_z = (randf() - 0.5) * 0.3
-			small_mushroom.position = Vector3(offset_x, 0, offset_z)
-			
-			create_single_mushroom(small_mushroom, false, 0.15 + randf() * 0.1)
-	else:
-		var size = 0.2 + randf() * 0.15
-		create_single_mushroom(mesh_instance, is_red, size)
 
 func create_harvestable_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is_cluster: bool):
 	"""Create a harvestable mushroom that can be harvested for items"""

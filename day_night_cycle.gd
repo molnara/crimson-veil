@@ -72,6 +72,9 @@ var sunset_light_color = Color(1.0, 0.7, 0.5)
 var moon_light_color = Color(0.5, 0.6, 0.8)
 
 func _ready():
+	# Add to group for efficient lookup by resources
+	add_to_group("day_night_cycle")
+	
 	# Convert start_hour and start_minute to time_of_day (0.0 to 1.0)
 	time_of_day = (start_hour + start_minute / 60.0) / 24.0
 	setup_environment()

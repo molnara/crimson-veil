@@ -62,29 +62,3 @@ func create_water_plane():
 	
 	# Set render layer for mesh
 	layers = 2  # Put mesh on layer 2 (doesn't block raycasts for building)
-
-func create_water_texture() -> ImageTexture:
-	"""Create a simple pixelated water texture"""
-	var size = 16
-	var image = Image.create(size, size, false, Image.FORMAT_RGB8)
-	
-	# Water colors (blue variations)
-	var water_colors = [
-		Color(0.15, 0.35, 0.65),  # Dark blue
-		Color(0.2, 0.4, 0.7),     # Medium blue
-		Color(0.25, 0.45, 0.75),  # Light blue
-		Color(0.18, 0.38, 0.68)   # Mid blue
-	]
-	
-	# Fill with random water pixels
-	for x in range(size):
-		for y in range(size):
-			var color = water_colors[randi() % water_colors.size()]
-			# Add slight variation
-			color.r += (randf() - 0.5) * 0.05
-			color.g += (randf() - 0.5) * 0.05
-			color.b += (randf() - 0.5) * 0.05
-			image.set_pixel(x, y, color)
-	
-	var texture = ImageTexture.create_from_image(image)
-	return texture
