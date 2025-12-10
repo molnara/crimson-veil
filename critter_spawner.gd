@@ -60,6 +60,7 @@ var active_critters: Array = []
 var populated_chunks: Dictionary = {}
 var initialized: bool = false
 var last_firefly_check_time: float = -1.0  # Track when we last checked firefly spawning
+var last_butterfly_check_time: float = -1.0  # Track when we last checked butterfly spawning
 
 # Critter types
 enum CritterType {
@@ -107,6 +108,11 @@ func _process(delta):
 		if abs(current_time - last_firefly_check_time) > 0.01 or last_firefly_check_time < 0:  # Check every ~14 seconds game time
 			last_firefly_check_time = current_time
 			update_firefly_spawning(player_chunk, current_time)
+		
+		# Check for time-based butterfly spawning every few seconds
+		if abs(current_time - last_butterfly_check_time) > 0.01 or last_butterfly_check_time < 0:
+			last_butterfly_check_time = current_time
+			update_butterfly_spawning(player_chunk, current_time)
 	
 	for x in range(player_chunk.x - spawn_radius_chunks, player_chunk.x + spawn_radius_chunks + 1):
 		for z in range(player_chunk.y - spawn_radius_chunks, player_chunk.y + spawn_radius_chunks + 1):
@@ -195,6 +201,65 @@ func update_firefly_spawning(player_chunk: Vector2i, current_time: float):
 			var critters_in_chunk = populated_chunks[chunk_pos]
 			var non_fireflies = critters_in_chunk.filter(func(c): return not (is_instance_valid(c) and c.get_meta("type") == "firefly"))
 			populated_chunks[chunk_pos] = non_fireflies
+
+func update_butterfly_spawning(player_chunk: Vector2i, current_time: float):
+	"""Dynamically spawn/despawn butterflies based on time of day"""
+	# Butterflies active from 6 AM (0.25) to 10 PM (0.9167)
+	var is_butterfly_time = current_time >= 0.25 and current_time < 0.9167
+	
+	if is_butterfly_time:
+		# Time for butterflies - spawn them in appropriate biome chunks
+		for x in range(player_chunk.x - spawn_radius_chunks, player_chunk.x + spawn_radius_chunks + 1):
+			for z in range(player_chunk.y - spawn_radius_chunks, player_chunk.y + spawn_radius_chunks + 1):
+				var chunk_pos = Vector2i(x, z)
+				if not populated_chunks.has(chunk_pos) or not chunk_manager.chunks.has(chunk_pos):
+					continue
+				
+				# Check if this chunk already has butterflies
+				if populated_chunks[chunk_pos].any(func(c): return is_instance_valid(c) and c.get_meta("type") == "butterfly"):
+					continue
+				
+				# Spawn butterflies in this chunk if appropriate biome
+				var chunk_size = chunk_manager.chunk_size
+				var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
+				
+				for i in range(2):  # Spawn up to 2 butterflies per appropriate chunk
+					var local_x = randf() * chunk_size
+					var local_z = randf() * chunk_size
+					var world_x = world_offset.x + local_x
+					var world_z = world_offset.y + local_z
+					
+					var base_noise = noise.get_noise_2d(world_x, world_z)
+					var biome = get_biome_at_position(world_x, world_z, base_noise)
+					
+					# Butterflies spawn in grassland and forest
+					if biome != Chunk.Biome.GRASSLAND and biome != Chunk.Biome.FOREST:
+						continue
+					
+					var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
+					if height < 2.0:
+						continue
+					
+					if randf() < butterfly_density:
+						var butterfly = create_butterfly(Vector3(world_x, height, world_z))
+						if butterfly and populated_chunks.has(chunk_pos):
+							populated_chunks[chunk_pos].append(butterfly)
+	else:
+		# Not butterfly time - remove all butterflies
+		var butterflies_to_remove = []
+		for critter in active_critters:
+			if is_instance_valid(critter) and critter.get_meta("type") == "butterfly":
+				butterflies_to_remove.append(critter)
+		
+		for butterfly in butterflies_to_remove:
+			active_critters.erase(butterfly)
+			butterfly.queue_free()
+		
+		# Clean up from populated_chunks tracking
+		for chunk_pos in populated_chunks.keys():
+			var critters_in_chunk = populated_chunks[chunk_pos]
+			var non_butterflies = critters_in_chunk.filter(func(c): return not (is_instance_valid(c) and c.get_meta("type") == "butterfly"))
+			populated_chunks[chunk_pos] = non_butterflies
 
 func _physics_process(delta):
 	if not initialized:
@@ -461,9 +526,7 @@ func spawn_critter_for_biome(biome: Chunk.Biome, spawn_pos: Vector3):
 		Chunk.Biome.GRASSLAND:
 			if rand < rabbit_density:
 				critter_type = CritterType.RABBIT
-			elif rand < rabbit_density + butterfly_density:
-				critter_type = CritterType.BUTTERFLY
-			elif rand < rabbit_density + butterfly_density + eagle_density:
+			elif rand < rabbit_density + eagle_density:
 				critter_type = CritterType.EAGLE
 			else:
 				return null
@@ -473,8 +536,6 @@ func spawn_critter_for_biome(biome: Chunk.Biome, spawn_pos: Vector3):
 				critter_type = CritterType.RABBIT
 			elif rand < rabbit_density * 0.5 + fox_density:
 				critter_type = CritterType.FOX
-			elif rand < rabbit_density * 0.5 + fox_density + butterfly_density * 0.5:
-				critter_type = CritterType.BUTTERFLY
 			else:
 				return null
 		
@@ -580,6 +641,43 @@ func create_critter(critter_type: CritterType, spawn_position: Vector3) -> Chara
 	critter.set_meta("state", "idle")
 	critter.set_meta("idle_timer", randf_range(idle_time_min, idle_time_max))
 	critter.set_meta("move_direction", Vector3.ZERO)
+	critter.set_meta("hop_timer", 0.0)
+	critter.set_meta("move_timer", 0.0)
+	
+	active_critters.append(critter)
+	critter.set_physics_process(true)
+	
+	return critter
+
+func create_butterfly(spawn_position: Vector3) -> CharacterBody3D:
+	"""Create a butterfly critter for time-based spawning"""
+	var critter = CharacterBody3D.new()
+	add_child(critter)
+	critter.global_position = spawn_position
+	
+	critter.collision_layer = 8
+	critter.collision_mask = 0
+	critter.floor_stop_on_slope = true
+	critter.floor_max_angle = deg_to_rad(46)
+	critter.floor_snap_length = 0.5
+	
+	var mesh_instance = MeshInstance3D.new()
+	critter.add_child(mesh_instance)
+	
+	var collision = CollisionShape3D.new()
+	critter.add_child(collision)
+	
+	critter.set_meta("type", "butterfly")
+	critter.set_meta("move_speed", flying_speed * 0.3)
+	var fly_height = spawn_position.y + 0.5 + randf() * 1.5  # Just 0.5-2m above ground
+	critter.global_position.y = fly_height
+	critter.set_meta("base_height", fly_height)
+	critter.set_meta("move_direction", Vector3(randf() - 0.5, 0, randf() - 0.5).normalized())
+	create_butterfly_visual(mesh_instance, collision)
+	
+	# Common behavior metadata
+	critter.set_meta("state", "idle")
+	critter.set_meta("idle_timer", randf_range(idle_time_min, idle_time_max))
 	critter.set_meta("hop_timer", 0.0)
 	critter.set_meta("move_timer", 0.0)
 	
@@ -772,8 +870,8 @@ func create_lizard_visual(mesh_instance: MeshInstance3D, collision: CollisionSha
 	var surface_tool = SurfaceTool.new()
 	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	
-	var body_color = Color(0.15, 0.45, 0.2)  # Deep emerald green
-	var stripe_color = Color(0.25, 0.55, 0.3)  # Rich forest green stripe
+	var body_color = Color(0.4, 0.6, 0.3)
+	var stripe_color = Color(0.5, 0.7, 0.4)
 	
 	# Scale down by 60% for realistic lizard size
 	var s = 0.4
