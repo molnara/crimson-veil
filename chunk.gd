@@ -10,6 +10,8 @@ var noise: FastNoiseLite
 var height_multiplier: float
 var temperature_noise: FastNoiseLite
 var moisture_noise: FastNoiseLite
+var detail_noise: FastNoiseLite  # Small bumps/hills
+var ridge_noise: FastNoiseLite   # Mountain ridges
 var mesh_instance: MeshInstance3D
 
 # Biome types
@@ -24,7 +26,8 @@ enum Biome {
 }
 
 func _init(pos: Vector2i, size: int, height: int, noise_generator: FastNoiseLite, height_mult: float,
-		   temp_noise: FastNoiseLite, moist_noise: FastNoiseLite):
+		   temp_noise: FastNoiseLite, moist_noise: FastNoiseLite, 
+		   detail_noise_gen: FastNoiseLite, ridge_noise_gen: FastNoiseLite):
 	chunk_position = pos
 	chunk_size = size
 	chunk_height = height
@@ -32,6 +35,8 @@ func _init(pos: Vector2i, size: int, height: int, noise_generator: FastNoiseLite
 	height_multiplier = height_mult
 	temperature_noise = temp_noise
 	moisture_noise = moist_noise
+	detail_noise = detail_noise_gen
+	ridge_noise = ridge_noise_gen
 	
 	# Set collision layers - layer 1 for terrain
 	collision_layer = 1
@@ -74,8 +79,10 @@ func generate_mesh():
 			var world_x = chunk_position.x * chunk_size + x
 			var world_z = chunk_position.y * chunk_size + z
 			
-			# Get base height from noise (-1 to 1)
+			# LAYERED NOISE: Combine base + detail + ridge for varied terrain
 			var base_height = noise.get_noise_2d(world_x, world_z)
+			var detail = detail_noise.get_noise_2d(world_x, world_z)
+			var ridge = ridge_noise.get_noise_2d(world_x, world_z)
 			
 			# Determine primary biome based on base noise value (not final height)
 			var biome = get_biome(world_x, world_z, base_height)
@@ -87,12 +94,28 @@ func generate_mesh():
 			# Modify the noise based on biome characteristics
 			var modified_height = base_height * roughness_mod
 			
-			# Apply height multiplier with biome modifier
-			var height = modified_height * height_multiplier * height_mod
+			# IMPROVEMENT #2: Add detail noise (small bumps everywhere)
+			# Scale down detail contribution (0.2x) to avoid overwhelming base terrain
+			modified_height += detail * 0.2
 			
-			# For ocean biomes, put them below sea level
+			# IMPROVEMENT #3: Mountains get exponential height + ridge features
+			var height: float
+			if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
+				# Exponential makes tall peaks dramatically taller (sharp mountains)
+				# pow(x, 1.4) means: small values stay small, large values get much larger
+				var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
+				
+				# Add ridge noise for mountain peaks and valleys
+				# Ridge only applies to mountains, scaled by 0.15 to add drama without chaos
+				height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
+			else:
+				# Normal terrain uses standard calculation
+				height = modified_height * height_multiplier * height_mod
+			
+			# IMPROVEMENT #1: Much deeper oceans (0.15 modifier down from 0.3)
+			# Baseline offsets for biomes
 			if biome == Biome.OCEAN:
-				height = height - (height_multiplier * 0.3)  # Ocean goes DOWN (negative offset)
+				height = height - (height_multiplier * 0.6)  # Deep ocean (was 0.3)
 			elif biome == Biome.BEACH:
 				height = height + (height_multiplier * 0.2)  # Beach at sea level
 			else:
@@ -169,8 +192,10 @@ func create_collision():
 			var world_x = chunk_position.x * chunk_size + x
 			var world_z = chunk_position.y * chunk_size + z
 			
-			# Get base height (-1 to 1)
+			# MUST MATCH generate_mesh() exactly
 			var base_height = noise.get_noise_2d(world_x, world_z)
+			var detail = detail_noise.get_noise_2d(world_x, world_z)
+			var ridge = ridge_noise.get_noise_2d(world_x, world_z)
 			
 			# Determine biome based on base noise (same as mesh generation)
 			var biome = get_biome(world_x, world_z, base_height)
@@ -180,11 +205,19 @@ func create_collision():
 			var roughness_mod = get_biome_roughness(biome)
 			
 			var modified_height = base_height * roughness_mod
-			var height = modified_height * height_multiplier * height_mod
+			modified_height += detail * 0.2  # Detail layer
+			
+			# Mountains get exponential + ridge (same as mesh generation)
+			var height: float
+			if biome == Biome.MOUNTAIN or biome == Biome.SNOW:
+				var exponential_height = sign(modified_height) * pow(abs(modified_height), 1.4)
+				height = (exponential_height + ridge * 0.15) * height_multiplier * height_mod
+			else:
+				height = modified_height * height_multiplier * height_mod
 			
 			# Apply same baseline offset as mesh generation (MUST MATCH!)
 			if biome == Biome.OCEAN:
-				height = height - (height_multiplier * 0.3)  # Ocean goes DOWN
+				height = height - (height_multiplier * 0.6)  # Deep ocean
 			elif biome == Biome.BEACH:
 				height = height + (height_multiplier * 0.2)  # Beach at sea level
 			else:
@@ -240,7 +273,7 @@ func get_biome_height_modifier(biome: Biome) -> float:
 	# Returns a multiplier for terrain height based on biome type
 	match biome:
 		Biome.OCEAN:
-			return 0.3  # Much lower - clear depressions
+			return 0.15  # MUCH lower for deeper oceans (was 0.3)
 		Biome.BEACH:
 			return 0.7  # Low - coastal transition
 		Biome.GRASSLAND:
@@ -250,9 +283,9 @@ func get_biome_height_modifier(biome: Biome) -> float:
 		Biome.DESERT:
 			return 0.9  # Flatter
 		Biome.MOUNTAIN:
-			return 1.3  # Moderately taller
+			return 1.5  # Taller for dramatic peaks (was 1.3)
 		Biome.SNOW:
-			return 1.4  # Tallest but not extreme
+			return 1.6  # Tallest for dramatic peaks (was 1.4)
 	
 	return 1.0
 
@@ -270,8 +303,8 @@ func get_biome_roughness(biome: Biome) -> float:
 		Biome.DESERT:
 			return 0.8  # Smooth - gentle dunes
 		Biome.MOUNTAIN:
-			return 1.1  # Slightly rough
+			return 1.2  # Rougher for varied peaks (was 1.1)
 		Biome.SNOW:
-			return 1.05  # Slightly rough
+			return 1.15  # Rougher for varied peaks (was 1.05)
 	
 	return 1.0

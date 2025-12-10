@@ -18,17 +18,33 @@ class_name ChunkManager
 # Internal variables
 var chunks: Dictionary = {}  # Dictionary to store loaded chunks
 var noise: FastNoiseLite
+var detail_noise: FastNoiseLite  # Small hills/bumps
+var ridge_noise: FastNoiseLite   # Mountain ridges/sharp features
 var biome_noise: FastNoiseLite
 var temperature_noise: FastNoiseLite
 var moisture_noise: FastNoiseLite
 var player: Node3D
 
 func _ready():
-	# Initialize noise generator for terrain height
+	# Initialize noise generator for terrain height (base terrain)
 	noise = FastNoiseLite.new()
 	noise.seed = randi()
 	noise.frequency = noise_scale
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	
+	# Initialize detail noise for small hills and bumps
+	# PERFORMANCE: Higher frequency = smaller features, adds variety without changing base shape
+	detail_noise = FastNoiseLite.new()
+	detail_noise.seed = noise.seed + 10
+	detail_noise.frequency = noise_scale * 4.0  # 4x frequency = smaller bumps
+	detail_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	
+	# Initialize ridge noise for mountain peaks and valleys
+	# INTEGRATION: Used only in mountain biomes for dramatic peaks
+	ridge_noise = FastNoiseLite.new()
+	ridge_noise.seed = noise.seed + 20
+	ridge_noise.frequency = noise_scale * 2.0  # 2x frequency = medium features
+	ridge_noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	
 	# Initialize biome noise for biome distribution
 	biome_noise = FastNoiseLite.new()
@@ -90,8 +106,9 @@ func world_to_chunk(world_pos: Vector3) -> Vector2i:
 	)
 
 func load_chunk(chunk_pos: Vector2i):
+	# INTEGRATION: Pass detail_noise and ridge_noise to Chunk for layered terrain
 	var chunk = Chunk.new(chunk_pos, chunk_size, chunk_height, noise, height_multiplier, 
-						   temperature_noise, moisture_noise)
+						   temperature_noise, moisture_noise, detail_noise, ridge_noise)
 	add_child(chunk)
 	chunks[chunk_pos] = chunk
 
