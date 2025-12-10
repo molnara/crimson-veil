@@ -121,12 +121,15 @@ func setup_environment():
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_energy = 0.4
 	
-	# Add subtle fog for atmosphere
+	# Add distance fog to hide far terrain/water edges
 	env.fog_enabled = true
+	env.fog_mode = Environment.FOG_MODE_DEPTH
 	env.fog_light_color = Color(0.7, 0.8, 0.9)
 	env.fog_light_energy = 0.2  # Reduced from 0.5 to make nights darker
-	env.fog_density = 0.001  # Very subtle
-	env.fog_aerial_perspective = 0.3
+	env.fog_depth_begin = 50.0  # Fog starts at 50 units
+	env.fog_depth_end = 150.0  # Fully opaque at 150 units
+	env.fog_aerial_perspective = 0.5  # Atmospheric scattering effect
+	env.fog_sky_affect = 0.0  # Don't apply fog to sky/celestial bodies
 
 func setup_moon():
 	# Configure moon light properties
@@ -158,6 +161,7 @@ func create_celestial_bodies():
 	sun_material.emission_enabled = true
 	sun_material.emission_texture = sun_texture
 	sun_material.emission_energy_multiplier = 1.0  # Reduced from 1.5
+	sun_material.disable_fog = true  # Don't apply fog to sun
 	sun_mesh.material_override = sun_material
 	
 	# Position far away
@@ -184,6 +188,7 @@ func create_celestial_bodies():
 	moon_material.emission_enabled = true
 	moon_material.emission_texture = moon_texture
 	moon_material.emission_energy_multiplier = 0.3  # Reduced from 0.8
+	moon_material.disable_fog = true  # Don't apply fog to moon
 	moon_mesh.material_override = moon_material
 	
 	# Position opposite sun
@@ -360,6 +365,7 @@ func create_stars():
 	star_material.emission_enabled = true
 	star_material.emission = Color(1, 1, 1)
 	star_material.emission_energy_multiplier = 2.0
+	star_material.disable_fog = true  # Don't apply fog to stars
 	stars_mesh.material_override = star_material
 	
 	# Start invisible
@@ -405,6 +411,7 @@ func create_clouds():
 		cloud_material.albedo_texture = cloud_texture
 		cloud_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST  # Crisp pixels
 		cloud_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		cloud_material.disable_fog = true  # Don't apply fog to clouds
 		cloud.material_override = cloud_material
 		
 		# Random position in sky using export variables

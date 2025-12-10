@@ -32,10 +32,10 @@ func create_water_plane():
 	material.albedo_color = Color(0.25, 0.5, 0.85, 0.98)  # 98% opaque
 	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	
-	# Make it slightly reflective
+	# Disable reflections for pixel art aesthetic
 	material.metallic = 0.0
-	material.roughness = 0.2  # A bit shiny for water
-	material.specular_mode = BaseMaterial3D.SPECULAR_SCHLICK_GGX
+	material.roughness = 1.0  # Fully rough (no specular highlights)
+	material.disable_receive_shadows = false  # Still receive shadows for depth
 	
 	# Cull back faces (only render from above)
 	material.cull_mode = BaseMaterial3D.CULL_BACK
