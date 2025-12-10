@@ -1,6 +1,33 @@
 extends Node3D
 class_name VegetationSpawner
 
+"""
+VegetationSpawner - Procedurally populates chunks with vegetation and resources
+
+ARCHITECTURE:
+- Spawns vegetation in 2-chunk radius around player as they explore
+- Two-pass system: large vegetation (trees/rocks) then ground cover (grass/flowers)
+- Creates HarvestableResource instances (trees, mushrooms, strawberries, rocks)
+- Uses noise for natural placement and biome-specific distributions
+
+INTEGRATION POINTS:
+- Requires ChunkManager reference for terrain data and chunk positions
+- Requires Player reference to know where to spawn around
+- Uses PixelTextureGenerator (global class) for all textures
+- Spawned resources must set collision_layer = 2 for player raycasts
+
+PERFORMANCE:
+- Tracks populated_chunks to avoid respawning same areas
+- Uses MultiMesh for grass blades (100+ instances per tuft)
+- Raycast validation uses calculated height for tighter window (+5/-5 meters)
+- Spawns happen over multiple frames via call_deferred
+
+BIOME SYSTEM:
+- 7 biomes: Ocean, Beach, Grassland, Forest, Desert, Mountain, Snow
+- Each biome has specific vegetation types and densities
+- Uses temperature and moisture noise for biome determination
+"""
+
 # Preload resource node classes
 const ResourceNodeClass = preload("res://resource_node.gd")
 const HarvestableTreeClass = preload("res://harvestable_tree.gd")
@@ -112,6 +139,21 @@ func _process(_delta):
 				populate_chunk(chunk_pos)
 
 func populate_chunk(chunk_pos: Vector2i):
+	"""Populate a chunk with vegetation using two-pass system
+	
+	ALGORITHM:
+	Pass 1: Large vegetation (trees, rocks, mushrooms, strawberries)
+	  - Sparse samples (15 per chunk default)
+	  - Creates harvestable resources with collision
+	  - More expensive but fewer instances
+	
+	Pass 2: Ground cover (grass, flowers)
+	  - Dense samples (60 per chunk default)
+	  - Uses MultiMesh for performance (100+ grass blades per tuft)
+	  - Clustered using cluster_noise for natural patches
+	
+	PERFORMANCE: This runs once per chunk, cached in populated_chunks dictionary
+	"""
 	if populated_chunks.has(chunk_pos):
 		return
 	
@@ -120,7 +162,7 @@ func populate_chunk(chunk_pos: Vector2i):
 	var chunk_size = chunk_manager.chunk_size
 	var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
 	
-	# First pass: Trees, rocks, and large vegetation
+	# PASS 1: Trees, rocks, and large vegetation
 	var samples_per_chunk = large_vegetation_samples_per_chunk
 	
 	for i in range(samples_per_chunk):
@@ -147,8 +189,8 @@ func populate_chunk(chunk_pos: Vector2i):
 		
 		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
 	
-	# Second pass: Dense ground cover (grass, flowers)
-	# Much higher sample count for ground cover
+	# PASS 2: Dense ground cover (grass, flowers)
+	# PERFORMANCE: Higher sample count but lightweight meshes (no collision, MultiMesh)
 	var ground_cover_samples = ground_cover_samples_per_chunk
 	
 	for i in range(ground_cover_samples):
@@ -180,7 +222,17 @@ func populate_chunk(chunk_pos: Vector2i):
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
 
 func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
-	"""Get terrain height with raycast validation - uses calculated height efficiently"""
+	"""Get terrain height with raycast validation - uses calculated height efficiently
+	
+	OPTIMIZATION: Previous version used wide raycast window (10m up, 2m down)
+	- Now uses calculated height to guide narrow window (5m up, 5m down)
+	- Faster raycasts = better spawning performance
+	- Fallback to calculated height if terrain not loaded yet (chunk streaming)
+	
+	WHY RAYCAST: Calculated height from noise is approximate
+	- Raycasting ensures vegetation sits exactly on terrain mesh
+	- Prevents floating or underground vegetation
+	"""
 	var calculated_height = get_terrain_height_at_position(world_x, world_z, base_noise, biome)
 	
 	# Use calculated height to guide raycast window (narrower = faster)
@@ -189,13 +241,13 @@ func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise:
 	var ray_end = Vector3(world_x, calculated_height - 5.0, world_z)  # Tighter window
 	
 	var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
-	query.collision_mask = 1
+	query.collision_mask = 1  # Only terrain layer
 	
 	var result = space_state.intersect_ray(query)
 	if result:
 		return result.position.y
 	
-	# If raycast fails, use calculated height (terrain might not be loaded yet)
+	# Fallback to calculated if raycast fails (terrain might not be loaded yet)
 	return calculated_height
 
 func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float):

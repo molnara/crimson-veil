@@ -1,35 +1,68 @@
 extends HarvestableResource
 class_name HarvestableTree
 
+"""
+HarvestableTree - Harvestable trees with realistic falling physics and log spawning
+
+TREE LIFECYCLE (State Machine):
+1. STANDING (StaticBody3D)
+   - Spawned by VegetationSpawner
+   - Player raycasts detect on layer 2
+   - Shakes when harvested (apply_hit_shake)
+
+2. FALLING (RigidBody3D)
+   - Triggered by complete_harvest() override
+   - Converts from StaticBody3D to RigidBody3D for physics
+   - Falls away from player (calculated in start_harvest)
+   - Spawns wood particles at base
+   - Creates stump (StaticBody3D remains at base)
+
+3. ON GROUND (RigidBody3D settled)
+   - Detects ground via low velocity check
+   - Waits 2 seconds after settling
+
+4. LOG PIECES (Multiple RigidBody3D)
+   - Tree breaks into 3-5 log segments
+   - Logs scatter with gentle physics impulse
+   - Each log despawns after 1.5-2.5 seconds with particles
+
+PERFORMANCE NOTES:
+- Physics body created only when falling (not pre-allocated)
+- Collision shape is capsule covering trunk only (not foliage)
+- Materials NOT cached (previous bug removed - was unused)
+
+INTEGRATION:
+- Spawned by VegetationSpawner.create_tree()
+- Uses PixelTextureGenerator for bark textures (oak, pine, palm variants)
+"""
+
 # Tree-specific properties
 enum TreeType {
-	NORMAL,    # Regular deciduous tree
-	PINE,      # Coniferous/evergreen
-	PALM       # Tropical palm tree
+	NORMAL,    # Regular deciduous tree - oak bark, layered disc foliage
+	PINE,      # Coniferous/evergreen - pine bark, cone-shaped foliage
+	PALM       # Tropical palm tree - palm bark with rings, frond leaves
 }
 
 @export var tree_type: TreeType = TreeType.NORMAL
 @export var tree_height: float = 6.0  # Total height of tree
 @export var leave_stump: bool = true
 
-# Physics-based falling
+# Physics-based falling state
 var is_falling: bool = false
-var fall_direction: Vector3 = Vector3.ZERO
-var fall_timer: float = 0.0
-var despawn_delay: float = 2.0  # Tree stays on ground for 2 seconds
-var fade_duration: float = 2.0  # Dissolve effect over 2 seconds
-var has_hit_ground: bool = false
-var ground_hit_time: float = 0.0
+var fall_direction: Vector3 = Vector3.ZERO  # Calculated from player position in start_harvest
+var fall_timer: float = 0.0  # Total time since falling started
+var despawn_delay: float = 2.0  # How long tree stays on ground before breaking into logs
+var fade_duration: float = 2.0  # Unused (logs despawn instantly with particles)
+var has_hit_ground: bool = false  # Detected via velocity < 0.8
+var ground_hit_time: float = 0.0  # When ground was detected
 
-# Physics components (created when falling)
+# Physics components (created dynamically when falling starts, not pre-allocated)
 var physics_body: RigidBody3D = null
 var physics_collision: CollisionShape3D = null
 
-# Stump reference
-var stump_mesh: MeshInstance3D = null
-
-# Mesh references for effects
-var tree_meshes: Array = []  # All MeshInstance3D children
+# Visual components
+var stump_mesh: MeshInstance3D = null  # Remains at base after tree falls
+var tree_meshes: Array = []  # All MeshInstance3D children (cached for effects)
 
 func _ready():
 	# Set properties based on tree type FIRST
@@ -121,11 +154,21 @@ func apply_harvest_visual_feedback():
 	pass
 
 func complete_harvest():
-	"""Override to trigger falling animation instead of immediate destruction"""
+	"""Override to trigger falling animation instead of immediate destruction
+	
+	STATE TRANSITION: Standing (StaticBody3D) -> Falling (RigidBody3D)
+	
+	Unlike base HarvestableResource which queue_free() immediately:
+	1. Emit drops signal (inventory system adds items)
+	2. Start falling animation via start_falling()
+	3. Tree converts to physics body and falls realistically
+	4. After settling -> breaks into log pieces
+	5. Logs despawn with particles after delay
+	"""
 	if not is_being_harvested:
 		return
 	
-	# Calculate drops
+	# Calculate drops (same as parent, but don't queue_free yet)
 	var drop_count = randi_range(drop_amount_min, drop_amount_max)
 	var drops = {
 		"item": drop_item,
@@ -143,7 +186,14 @@ func complete_harvest():
 	start_falling()
 
 func start_falling():
-	"""Begin the physics-based tree falling"""
+	"""Begin the physics-based tree falling
+	
+	CONVERSION PROCESS:
+	1. Spawn wood particles at base
+	2. Create stump (StaticBody3D remains at tree base)
+	3. Convert tree to RigidBody3D via convert_to_physics_body()
+	4. Apply gentle torque in fall_direction (away from player)
+	"""
 	is_falling = true
 	has_hit_ground = false
 	ground_hit_time = 0.0
@@ -159,7 +209,19 @@ func start_falling():
 	convert_to_physics_body()
 
 func spawn_log_pieces():
-	"""Break the tree into log pieces that scatter"""
+	"""Break the tree into log pieces that scatter
+	
+	FINAL STAGE: Tree on ground -> Multiple log RigidBodies
+	
+	PROCESS:
+	1. Destroy the physics_body tree
+	2. Spawn 3-5 log cylinders at tree position
+	3. Copy trunk material to logs (maintains tree type visual)
+	4. Apply gentle scatter impulse (2-5 force, very damped)
+	5. Each log auto-despawns after 1.5-2.5 seconds with particles
+	
+	PERFORMANCE: Logs have high damping (4.0) to settle quickly
+	"""
 	if not physics_body or not is_instance_valid(physics_body):
 		return
 	

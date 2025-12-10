@@ -1,6 +1,31 @@
 extends StaticBody3D
 class_name HarvestableResource
 
+"""
+HarvestableResource - Base class for all collectible resources in the world
+
+ARCHITECTURE:
+- Resources are StaticBody3D on collision layer 2 (player raycasts this layer)
+- Extends this for specific types: HarvestableTree, HarvestableMushroom, HarvestableStrawberry
+- VegetationSpawner creates instances during world generation
+
+DEPENDENCIES:
+- Requires DayNightCycle in "day_night_cycle" group for nighttime glow effect
+- HarvestingSystem (player component) handles interaction via raycasts
+- HarvestParticles spawned on destruction
+
+PERFORMANCE NOTES:
+- Materials are duplicated ONCE in prepare_materials_for_glow() during _ready()
+- Do NOT duplicate materials per-frame (previous bottleneck, now fixed)
+- Group lookup for DayNightCycle is O(1) vs recursive search O(n)
+
+LIFECYCLE:
+1. Spawned by VegetationSpawner -> _ready() initializes
+2. Player raycast detects (layer 2) -> HarvestingSystem shows UI
+3. Harvesting begins -> update_harvest() called per frame
+4. Complete -> spawn particles, emit signal, queue_free()
+"""
+
 # Preload particle system
 const HarvestParticles = preload("res://harvest_particles.gd")
 
@@ -31,14 +56,15 @@ var current_health: float
 var is_being_harvested: bool = false
 var harvester: Node3D = null
 
-# Visual feedback
+# Visual feedback during harvesting
 var original_material: Material
-var harvest_progress: float = 0.0
+var harvest_progress: float = 0.0  # 0.0 to 1.0
 var original_rotation: Vector3 = Vector3.ZERO
 
-# Nighttime glow
+# Nighttime glow system
+# INTEGRATION: DayNightCycle must be in "day_night_cycle" group
 var day_night_cycle: DayNightCycle = null
-var mesh_instances: Array[MeshInstance3D] = []
+var mesh_instances: Array[MeshInstance3D] = []  # Cached in _ready()
 var glow_pulse_time: float = 0.0
 
 signal harvested(drops: Dictionary)
@@ -50,20 +76,22 @@ func _ready():
 	current_health = max_health
 	original_rotation = rotation
 	
-	# Set collision layers - layer 2 for resources
+	# INTEGRATION: Must be on layer 2 so player raycasts can detect
+	# Player uses raycast on mask=2, not physics collision
 	collision_layer = 2
 	collision_mask = 0
 	
-	# Find all mesh instances for glow effect
+	# Cache all mesh instances for glow effect (avoid searching every frame)
 	find_mesh_instances(self)
 	
-	# Store original material for visual feedback
+	# Store original material for visual feedback during harvesting
 	if has_node("MeshInstance3D"):
 		var mesh_instance = get_node("MeshInstance3D")
 		if mesh_instance.get_surface_override_material_count() > 0:
 			original_material = mesh_instance.get_surface_override_material(0)
 	
-	# Prepare materials for glow effect (do once, not every frame)
+	# PERFORMANCE: Duplicate materials ONCE here, not per-frame in apply_emission_to_mesh()
+	# Previous bottleneck: was duplicating materials 60 times per second per resource
 	if enable_nighttime_glow:
 		prepare_materials_for_glow()
 		call_deferred("find_day_night_cycle")
@@ -77,7 +105,13 @@ func find_mesh_instances(node: Node):
 		find_mesh_instances(child)
 
 func prepare_materials_for_glow():
-	"""Duplicate and setup materials once for glow effect"""
+	"""Duplicate and setup materials once for glow effect
+	
+	PERFORMANCE CRITICAL: This runs ONCE in _ready()
+	- Materials must be duplicated to modify emission per-resource
+	- Previous bug: was duplicating in apply_emission_to_mesh() every frame
+	- With 100+ resources, this caused major FPS drops
+	"""
 	for mesh_instance in mesh_instances:
 		if not mesh_instance or not mesh_instance.mesh:
 			continue
@@ -93,13 +127,20 @@ func prepare_materials_for_glow():
 					mesh_instance.set_surface_override_material(surface_idx, material)
 
 func find_day_night_cycle():
-	"""Find the DayNightCycle node using groups (cached, no recursion)"""
+	"""Find the DayNightCycle node using groups (cached, no recursion)
+	
+	PERFORMANCE: Group lookup is O(1) constant time
+	- Previous implementation: recursive tree search O(n) where n = all nodes
+	- With 1000+ resources doing this, caused noticeable lag on spawn
+	
+	INTEGRATION: DayNightCycle must call add_to_group("day_night_cycle") in _ready()
+	"""
 	var cycles = get_tree().get_nodes_in_group("day_night_cycle")
 	if cycles.size() > 0:
 		day_night_cycle = cycles[0]
 		return
 	
-	# Fallback: search if not in group (backwards compatibility)
+	# Fallback: direct search if not in group (backwards compatibility)
 	var root = get_tree().root
 	for child in root.get_children():
 		if child.get_script() and child.get_script().get_global_name() == "DayNightCycle":
