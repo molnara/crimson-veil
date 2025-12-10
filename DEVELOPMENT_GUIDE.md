@@ -1,5 +1,40 @@
 # Crimson Veil - Development Guide
 
+## Session Start Checklist
+
+**At the beginning of EVERY development session, Claude should:**
+
+1. **Read this DEVELOPMENT_GUIDE.md** - Understand project vision and architecture
+2. **Read ROADMAP.txt** - Check current sprint and planned features
+3. **Read CHANGELOG.txt** - Review recent changes (last 5-10 entries)
+4. **Display a session summary** with:
+   - Current sprint items (from ROADMAP.txt "CURRENT SPRINT" section)
+   - Recent changes (last 3-5 CHANGELOG entries)
+   - Known issues (from ROADMAP.txt "BUGS / FIXES" section)
+   - Brief reminder of next priorities
+
+**Example Session Start Output:**
+```
+📋 CURRENT SPRINT:
+- Tool system ✓ (completed)
+- Crafting system (next up)
+- Inventory UI (planned)
+
+🔨 RECENT CHANGES:
+[2024-12-10 16:00] [MAJOR] Added minimal tool system
+[2024-12-10 16:30] [MINOR] Added visual tool feedback
+
+🐛 KNOWN ISSUES:
+- Trees occasionally clip through terrain on slopes
+- Fullscreen only works in exported builds
+
+Ready to continue development!
+```
+
+This ensures every session starts with full context.
+
+---
+
 ## Project Overview
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
@@ -288,7 +323,7 @@ HarvestableTree/Mushroom/Strawberry (StaticBody3D)
 6. **Signal connections**: Always check if callable exists
    ```gdscript
    if harvesting_system.has_signal("harvest_completed"):
-       harvesting_system.harvest_completed.connect(_on_harvest_completed)
+	   harvesting_system.harvest_completed.connect(_on_harvest_completed)
    ```
 
 ## Testing & Iteration
