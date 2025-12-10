@@ -87,6 +87,7 @@ enum VegType {
 	TREE,
 	PINE_TREE,
 	ROCK,
+	SMALL_ROCK,       # Smaller rocks (1/3 size, 1 stone)
 	BOULDER,
 	CACTUS,
 	GRASS_TUFT,
@@ -275,9 +276,15 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Strawberries
 			elif rand > (1.0 - strawberry_density * 0.25):
 				veg_type = VegType.STRAWBERRY_BUSH
-			# Rocks
-			elif rand > (1.0 - rock_density * 0.15):
-				veg_type = VegType.ROCK
+			# Rocks (high spawn rate, mostly small)
+			elif rand > (1.0 - rock_density * 0.50):
+				var rock_rand = randf()
+				if rock_rand > 0.95:  # 5% boulders
+					veg_type = VegType.BOULDER
+				elif rock_rand > 0.85:  # 10% regular rocks
+					veg_type = VegType.ROCK
+				else:  # 85% small rocks
+					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
@@ -288,9 +295,15 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Strawberries
 			elif rand > (1.0 - strawberry_density * 0.40):
 				veg_type = VegType.STRAWBERRY_BUSH
-			# Rocks
-			elif rand > (1.0 - rock_density * 0.25):
-				veg_type = VegType.ROCK
+			# Rocks (high spawn rate, mostly small)
+			elif rand > (1.0 - rock_density * 0.65):
+				var rock_rand = randf()
+				if rock_rand > 0.92:  # 8% boulders
+					veg_type = VegType.BOULDER
+				elif rock_rand > 0.80:  # 12% regular rocks
+					veg_type = VegType.ROCK
+				else:  # 80% small rocks
+					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
@@ -298,19 +311,28 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Cactus (uses tree density)
 			if rand > (1.0 - tree_density * 0.30):
 				veg_type = VegType.CACTUS
-			# Rocks
-			elif rand > (1.0 - rock_density * 0.35):
-				veg_type = VegType.ROCK
+			# Rocks (high spawn rate, mostly small)
+			elif rand > (1.0 - rock_density * 0.70):
+				var rock_rand = randf()
+				if rock_rand > 0.90:  # 10% boulders
+					veg_type = VegType.BOULDER
+				elif rock_rand > 0.80:  # 10% regular rocks
+					veg_type = VegType.ROCK
+				else:  # 80% small rocks
+					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
 		Chunk.Biome.MOUNTAIN:
-			# Boulders and rocks
+			# Boulders and rocks (more boulders)
 			if rand > (1.0 - rock_density * 0.60):
-				if randf() > 0.5:
+				var rock_rand = randf()
+				if rock_rand > 0.5:  # 50% boulders
 					veg_type = VegType.BOULDER
-				else:
+				elif rock_rand > 0.25:  # 25% regular rocks
 					veg_type = VegType.ROCK
+				else:  # 25% small rocks
+					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
@@ -318,9 +340,15 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Pine trees
 			if rand > (1.0 - tree_density * 0.35):
 				veg_type = VegType.PINE_TREE
-			# Rocks
-			elif rand > (1.0 - rock_density * 0.25):
-				veg_type = VegType.ROCK
+			# Rocks (high spawn rate, mostly small)
+			elif rand > (1.0 - rock_density * 0.55):
+				var rock_rand = randf()
+				if rock_rand > 0.88:  # 12% boulders
+					veg_type = VegType.BOULDER
+				elif rock_rand > 0.80:  # 8% regular rocks
+					veg_type = VegType.ROCK
+				else:  # 80% small rocks
+					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
@@ -328,9 +356,13 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			# Palm trees
 			if rand > (1.0 - tree_density * 0.25):
 				veg_type = VegType.PALM_TREE
-			# Rocks
-			elif rand > (1.0 - rock_density * 0.20):
-				veg_type = VegType.ROCK
+			# Rocks (high spawn rate, mostly small)
+			elif rand > (1.0 - rock_density * 0.50):
+				var rock_rand = randf()
+				if rock_rand > 0.75:  # Only 25% regular rocks
+					veg_type = VegType.ROCK
+				else:
+					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
@@ -338,6 +370,33 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			return
 	
 	create_vegetation_mesh(veg_type, spawn_pos)
+	
+	# Rock clustering: spawn 1-3 additional rocks nearby if we spawned a rock
+	if veg_type == VegType.ROCK or veg_type == VegType.SMALL_ROCK:
+		var cluster_count = randi() % 3  # 0-2 additional rocks
+		for i in range(cluster_count):
+			# Spawn nearby (within 1-3 meters)
+			var offset_angle = randf() * TAU
+			var offset_dist = 1.0 + randf() * 2.0  # 1-3 meters away
+			var cluster_pos = spawn_pos + Vector3(
+				cos(offset_angle) * offset_dist,
+				0,
+				sin(offset_angle) * offset_dist
+			)
+			
+			# Raycast to get actual terrain height at cluster position
+			var space_state = get_world_3d().direct_space_state
+			var ray_start = Vector3(cluster_pos.x, spawn_pos.y + 5.0, cluster_pos.z)
+			var ray_end = Vector3(cluster_pos.x, spawn_pos.y - 5.0, cluster_pos.z)
+			var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+			query.collision_mask = 1
+			var result = space_state.intersect_ray(query)
+			if result:
+				cluster_pos.y = result.position.y
+			
+			# Randomly choose rock size for cluster (mostly small)
+			var cluster_type = VegType.SMALL_ROCK if randf() > 0.20 else VegType.ROCK  # 80% small rocks
+			create_vegetation_mesh(cluster_type, cluster_pos)
 
 func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float, cluster_value: float):
 	"""Spawn grass, flowers, and ground cover - dense and varied"""
@@ -475,6 +534,8 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 			create_palm_tree(mesh_instance)
 		VegType.ROCK:
 			create_rock(mesh_instance, false)
+		VegType.SMALL_ROCK:
+			create_small_rock(mesh_instance)
 		VegType.BOULDER:
 			create_rock(mesh_instance, true)
 		VegType.CACTUS:
@@ -1114,18 +1175,27 @@ func create_palm_tree(mesh_instance: MeshInstance3D):
 	mesh_instance.queue_free()
 
 func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
-	var size = 0.6 + randf() * 0.4 if not is_boulder else 1.2 + randf() * 0.8
+	var size = 0.7 + randf() * 0.5 if not is_boulder else 1.4 + randf() * 1.0  # Regular: 0.7-1.2m (was 0.6-1.0m), Boulder: 1.4-2.4m (was 1.2-2.0m)
 	
 	var parent = mesh_instance.get_parent()
 	var rock_position = mesh_instance.global_position
 	
 	var resource_node = ResourceNodeClass.new()
+	
+	# Add to tree first (triggers _ready())
+	parent.remove_child(mesh_instance)
+	parent.add_child(resource_node)
+	resource_node.global_position = rock_position
+	
+	# NOW set properties after _ready() has been called
 	resource_node.resource_type = "stone"
 	resource_node.resource_name = "Boulder" if is_boulder else "Rock"
 	resource_node.harvest_time = 3.0 if is_boulder else 2.0
 	resource_node.drop_item = "stone"
 	resource_node.drop_amount_min = 6 if is_boulder else 2
 	resource_node.drop_amount_max = 10 if is_boulder else 4
+	resource_node.max_health = 100.0 if is_boulder else 50.0
+	resource_node.current_health = resource_node.max_health
 	
 	resource_node.collision_layer = 2
 	resource_node.collision_mask = 0
@@ -1157,9 +1227,63 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	collision.shape = shape
 	resource_node.add_child(collision)
 	
+	mesh_instance.queue_free()
+
+func create_small_rock(mesh_instance: MeshInstance3D):
+	"""Create a small harvestable rock (1/3 size of regular rock, gives 1 stone)"""
+	var size = 0.4 + randf() * 0.2  # 0.4-0.6m (knee-height sized rocks)
+	
+	var parent = mesh_instance.get_parent()
+	var rock_position = mesh_instance.global_position
+	
+	var resource_node = ResourceNodeClass.new()
+	
+	# Don't set properties yet - they'll be overwritten by _ready()
+	# Add to tree first
 	parent.remove_child(mesh_instance)
 	parent.add_child(resource_node)
 	resource_node.global_position = rock_position
+	
+	# NOW set properties after _ready() has been called
+	resource_node.resource_type = "stone"
+	resource_node.resource_name = "Small Rock"
+	resource_node.harvest_time = 1.0  # Faster to harvest
+	resource_node.drop_item = "stone"
+	resource_node.drop_amount_min = 1
+	resource_node.drop_amount_max = 1
+	resource_node.max_health = 30.0
+	resource_node.current_health = 30.0
+	
+	resource_node.collision_layer = 2
+	resource_node.collision_mask = 0
+	
+	var rock_mesh = MeshInstance3D.new()
+	resource_node.add_child(rock_mesh)
+	
+	var sphere_mesh = SphereMesh.new()
+	sphere_mesh.radius = size / 2
+	sphere_mesh.height = size
+	sphere_mesh.radial_segments = 8
+	sphere_mesh.rings = 6
+	
+	# Pixelated stone texture with color variation
+	var stone_texture = PixelTextureGenerator.create_stone_texture()
+	var stone_tint = Color(0.9 + randf() * 0.2, 0.9 + randf() * 0.2, 0.9 + randf() * 0.2)
+	var material = PixelTextureGenerator.create_pixel_material(stone_texture, stone_tint)
+	
+	sphere_mesh.material = material
+	rock_mesh.mesh = sphere_mesh
+	
+	rock_mesh.rotation.x = (randf() - 0.5) * 0.3
+	rock_mesh.rotation.z = (randf() - 0.5) * 0.3
+	rock_mesh.scale = Vector3(1.0, 0.6, 0.9)
+	
+	var collision = CollisionShape3D.new()
+	var shape = SphereShape3D.new()
+	shape.radius = size / 2
+	collision.shape = shape
+	resource_node.add_child(collision)
+	
 	mesh_instance.queue_free()
 
 func create_cactus(mesh_instance: MeshInstance3D):
