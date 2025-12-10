@@ -500,7 +500,13 @@ func populate_chunk(chunk_pos: Vector2i):
 		
 		var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
 		
-		if height < 2.0:
+		# Use biome-specific height thresholds
+		# Beach/coastal areas are lower elevation, so crabs need lower threshold
+		var min_height = 2.0  # Default for most biomes
+		if biome == Chunk.Biome.BEACH:
+			min_height = 0.3  # Beaches are ~0.5-1.5m high, allow spawning just above water
+		
+		if height < min_height:
 			continue
 		
 		var critter = spawn_critter_for_biome(biome, Vector3(world_x, height, world_z))
@@ -541,6 +547,8 @@ func spawn_critter_for_biome(biome: Chunk.Biome, spawn_pos: Vector3):
 		
 		Chunk.Biome.BEACH:
 			if rand < crab_density:
+				# TODO: Add shoreline proximity check back once basic spawning works
+				# For now, spawn anywhere on beach for testing
 				critter_type = CritterType.CRAB
 			else:
 				return null
