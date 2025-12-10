@@ -37,6 +37,7 @@ near = 0.3
 [node name="DayNightCycle" type="Node3D" parent="."]
 script = ExtResource("4_aqk2v")
 day_length_minutes = 2.0
+start_hour = 10
 
 [node name="SunLight" type="DirectionalLight3D" parent="DayNightCycle"]
 

@@ -16,6 +16,9 @@ func _ready():
 	progress_bar.visible = false
 	target_label.visible = false
 	
+	# Setup enhanced crosshair
+	setup_crosshair()
+	
 	# Find DayNightCycle for time display
 	call_deferred("find_day_night_cycle")
 
@@ -32,6 +35,71 @@ func find_day_night_cycle():
 		if child.get_script() and child.get_script().get_global_name() == "DayNightCycle":
 			day_night_cycle = child
 			return
+
+func setup_crosshair():
+	"""Create an enhanced, visible crosshair with black outline and white center"""
+	var crosshair_container = $CrosshairContainer
+	
+	# Clear existing crosshair
+	for child in crosshair_container.get_children():
+		child.queue_free()
+	
+	# Crosshair dimensions
+	var thickness = 2  # Thickness of crosshair lines
+	var length = 8     # Length of each arm from center
+	var gap = 2        # Gap in center
+	var outline = 1    # Outline thickness
+	
+	# Create black outline (bottom layer)
+	# Horizontal outline
+	var h_outline = ColorRect.new()
+	h_outline.color = Color.BLACK
+	h_outline.custom_minimum_size = Vector2((length + gap) * 2 + outline * 2, thickness + outline * 2)
+	h_outline.position = Vector2(-length - gap - outline, -thickness/2.0 - outline)
+	crosshair_container.add_child(h_outline)
+	
+	# Vertical outline
+	var v_outline = ColorRect.new()
+	v_outline.color = Color.BLACK
+	v_outline.custom_minimum_size = Vector2(thickness + outline * 2, (length + gap) * 2 + outline * 2)
+	v_outline.position = Vector2(-thickness/2.0 - outline, -length - gap - outline)
+	crosshair_container.add_child(v_outline)
+	
+	# Create white crosshair (top layer)
+	# Left arm
+	var left_arm = ColorRect.new()
+	left_arm.color = Color.WHITE
+	left_arm.custom_minimum_size = Vector2(length, thickness)
+	left_arm.position = Vector2(-length - gap, -thickness/2.0)
+	crosshair_container.add_child(left_arm)
+	
+	# Right arm
+	var right_arm = ColorRect.new()
+	right_arm.color = Color.WHITE
+	right_arm.custom_minimum_size = Vector2(length, thickness)
+	right_arm.position = Vector2(gap, -thickness/2.0)
+	crosshair_container.add_child(right_arm)
+	
+	# Top arm
+	var top_arm = ColorRect.new()
+	top_arm.color = Color.WHITE
+	top_arm.custom_minimum_size = Vector2(thickness, length)
+	top_arm.position = Vector2(-thickness/2.0, -length - gap)
+	crosshair_container.add_child(top_arm)
+	
+	# Bottom arm
+	var bottom_arm = ColorRect.new()
+	bottom_arm.color = Color.WHITE
+	bottom_arm.custom_minimum_size = Vector2(thickness, length)
+	bottom_arm.position = Vector2(-thickness/2.0, gap)
+	crosshair_container.add_child(bottom_arm)
+	
+	# Center dot for precision
+	var center_dot = ColorRect.new()
+	center_dot.color = Color.WHITE
+	center_dot.custom_minimum_size = Vector2(1, 1)
+	center_dot.position = Vector2(-0.5, -0.5)
+	crosshair_container.add_child(center_dot)
 
 func find_node_by_type(node: Node, type_name: String) -> Node:
 	"""Recursively search for a node by class name"""

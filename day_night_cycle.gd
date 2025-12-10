@@ -39,6 +39,13 @@ class_name DayNightCycle
 @export_range(0.1, 1.0) var large_cloud_min_aspect: float = 0.5  ## Minimum height/width ratio (lower = flatter/wider)
 @export_range(0.1, 1.0) var large_cloud_max_aspect: float = 0.9  ## Maximum height/width ratio (higher = taller/rounder)
 
+@export_group("Cloud Noise Generation")
+@export_range(0.01, 0.1) var base_noise_frequency: float = 0.02  ## Base cloud shape frequency (lower = bigger, smoother clouds)
+@export_range(0.01, 0.2) var detail_noise_frequency: float = 0.08  ## Edge detail frequency (higher = more bumpy edges)
+@export_range(0.0, 0.5) var detail_noise_strength: float = 0.15  ## How much edge detail affects the shape
+@export_range(0.0, 2.0) var cloud_threshold: float = 0.5  ## Noise threshold for cloud formation (lower = larger clouds)
+@export_range(0.5, 2.0) var center_falloff_strength: float = 1.2  ## How strongly clouds fade at edges
+
 # References
 @onready var sun: DirectionalLight3D = $SunLight
 @onready var moon: DirectionalLight3D = $MoonLight
@@ -169,10 +176,11 @@ func create_celestial_bodies():
 	sun_material.emission_texture = sun_texture
 	sun_material.emission_energy_multiplier = 1.0  # Reduced from 1.5
 	sun_material.disable_fog = true  # Don't apply fog to sun
+	# Let depth sorting handle render order naturally
 	sun_mesh.material_override = sun_material
 	
 	# Position far away
-	sun_mesh.position = Vector3(0, 100, -200)
+	sun_mesh.position = Vector3(0, 100, -500)  # Much farther back so clouds are always in front
 	
 	# Create Moon with pixelated texture
 	moon_mesh = MeshInstance3D.new()
@@ -196,10 +204,11 @@ func create_celestial_bodies():
 	moon_material.emission_texture = moon_texture
 	moon_material.emission_energy_multiplier = 0.3  # Reduced from 0.8
 	moon_material.disable_fog = true  # Don't apply fog to moon
+	# Let depth sorting handle render order naturally
 	moon_mesh.material_override = moon_material
 	
 	# Position opposite sun
-	moon_mesh.position = Vector3(0, 100, 200)
+	moon_mesh.position = Vector3(0, 100, 500)  # Much farther back so clouds are always in front
 	
 	# Create Stars
 	create_stars()
@@ -433,9 +442,11 @@ func create_clouds():
 		cloud_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		cloud_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		cloud_material.albedo_texture = cloud_texture
+		cloud_material.albedo_color = Color(1.0, 1.0, 1.0, 0.75)  # 75% opacity - more transparent
 		cloud_material.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST  # Crisp pixels
 		cloud_material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 		cloud_material.disable_fog = true  # Don't apply fog to clouds
+		# Sun/moon are at z=±500, clouds at z=±200, so depth sorting handles render order
 		cloud.material_override = cloud_material
 		
 		# Random position in sky using export variables
@@ -452,81 +463,181 @@ func create_clouds():
 		})
 
 func create_pixelated_cloud_texture() -> ImageTexture:
-	"""Create a Minecraft-style chunky blocky cloud texture"""
-	var width = 32 + randi() % 32  # 32-64 pixels
-	var height = 16 + randi() % 16  # 16-32 pixels
+	"""Create organic pixel-art clouds using Perlin noise"""
+	var width = 128
+	var height = 64
 	var image = Image.create(width, height, false, Image.FORMAT_RGBA8)
 	
-	# Fill with transparent
+	# Create noise generator
+	var noise = FastNoiseLite.new()
+	noise.seed = randi()  # Random seed for each cloud
+	noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	noise.frequency = base_noise_frequency  # Use exported parameter
+	noise.fractal_octaves = 2
+	noise.fractal_lacunarity = 2.0
+	noise.fractal_gain = 0.6
+	
+	# Secondary noise for edge detail
+	var detail_noise = FastNoiseLite.new()
+	detail_noise.seed = randi()
+	detail_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	detail_noise.frequency = detail_noise_frequency  # Use exported parameter
+	detail_noise.fractal_octaves = 2
+	
+	# Define cloud colors
+	var white = Color(1.0, 1.0, 1.0, 1.0)
+	var light_gray = Color(0.98, 0.98, 0.98, 1.0)
+	var edge_gray = Color(0.7, 0.7, 0.75, 0.9)
+	
+	# Generate cloud shape from noise
 	for x in range(width):
 		for y in range(height):
-			image.set_pixel(x, y, Color(0, 0, 0, 0))
+			# Get main cloud shape (large, smooth)
+			var base_noise = noise.get_noise_2d(x, y)
+			
+			# Get edge detail (small bumps)
+			var detail = detail_noise.get_noise_2d(x, y) * detail_noise_strength  # Use exported parameter
+			
+			# Add bias toward center (elliptical falloff)
+			var center_x = width / 2.0
+			var center_y = height / 2.0
+			var dx = (x - center_x) / (width * 0.45)  # Horizontal falloff
+			var dy = (y - center_y) / (height * 0.4)   # Vertical falloff (tighter)
+			var dist_squared = dx * dx + dy * dy
+			var center_falloff = 1.0 - clamp(dist_squared, 0.0, 1.0)  # Smooth elliptical gradient
+			
+			# Combine: base shape + edge detail + center falloff
+			var final_val = (base_noise * 0.7) + detail + (center_falloff * center_falloff_strength)  # Use exported parameter
+			
+			# Threshold for cloud
+			if final_val > cloud_threshold:  # Use exported parameter
+				# Vary color slightly for texture
+				var color = white if randf() > 0.3 else light_gray
+				image.set_pixel(x, y, color)
+			else:
+				# Transparent (sky)
+				image.set_pixel(x, y, Color(0, 0, 0, 0))
 	
-	# Create cloud using rectangular "blocks" like Minecraft
-	var num_blocks = 5 + randi() % 8  # 5-12 blocks
+	# Add gray outline/halo
+	var outline_image = Image.create(width, height, false, Image.FORMAT_RGBA8)
+	for x in range(width):
+		for y in range(height):
+			outline_image.set_pixel(x, y, Color(0, 0, 0, 0))
 	
-	# Start with a base horizontal strip
-	var base_y = height / 2 + (randi() % 4 - 2)
-	var base_x_start = 8 + randi() % (width / 4)
-	var base_width = width / 2 + randi() % (width / 3)
-	var base_height = 4 + randi() % 4  # 4-7 pixels tall
+	# Detect edges and add gray outline
+	for x in range(1, width - 1):
+		for y in range(1, height - 1):
+			var pixel = image.get_pixel(x, y)
+			if pixel.a > 0.3:
+				var is_edge = false
+				for dx in [-1, 0, 1]:
+					for dy in [-1, 0, 1]:
+						if dx == 0 and dy == 0:
+							continue
+						var neighbor = image.get_pixel(x + dx, y + dy)
+						if neighbor.a < 0.2:
+							is_edge = true
+							break
+					if is_edge:
+						break
+				
+				if is_edge:
+					outline_image.set_pixel(x, y, edge_gray)
 	
-	# Draw base block
-	draw_cloud_block(image, base_x_start, base_y, base_width, base_height)
+	# Composite outline under main cloud
+	for x in range(width):
+		for y in range(height):
+			var outline_pixel = outline_image.get_pixel(x, y)
+			var cloud_pixel = image.get_pixel(x, y)
+			
+			if outline_pixel.a > 0 and cloud_pixel.a < 0.5:
+				image.set_pixel(x, y, outline_pixel)
 	
-	# Add additional blocks on top and sides
-	for i in range(num_blocks):
-		# Random position relative to center
-		var block_x = base_x_start + randi() % int(base_width) - 4
-		var block_y = base_y - 6 + randi() % 10  # Can be above or below base
-		
-		# Random block size
-		var block_w = 6 + randi() % 10  # 6-15 pixels wide
-		var block_h = 4 + randi() % 6   # 4-9 pixels tall
-		
-		# Keep within bounds
-		block_x = clampi(block_x, 2, width - block_w - 2)
-		block_y = clampi(block_y, 2, height - block_h - 2)
-		
-		draw_cloud_block(image, block_x, block_y, block_w, block_h)
+	# Add subtle bottom shading
+	for x in range(width):
+		for y in range(height):
+			var pixel = image.get_pixel(x, y)
+			if pixel.a > 0.5 and y > height * 0.55:
+				var shadow_amount = (y - height * 0.55) / (height * 0.45) * 0.08
+				pixel.r = clamp(pixel.r - shadow_amount, 0.92, 1.0)
+				pixel.g = clamp(pixel.g - shadow_amount, 0.92, 1.0)
+				pixel.b = clamp(pixel.b - shadow_amount, 0.92, 1.0)
+				image.set_pixel(x, y, pixel)
 	
 	return ImageTexture.create_from_image(image)
 
-func draw_cloud_block(image: Image, start_x: int, start_y: int, w: int, h: int):
-	"""Draw a single cloud block with soft edges"""
-	for x in range(start_x, start_x + w):
-		for y in range(start_y, start_y + h):
-			if x < 0 or x >= image.get_width() or y < 0 or y >= image.get_height():
-				continue
+func draw_rounded_rect(image: Image, cx: float, cy: float, w: float, h: float, 
+					   corner_radius: int, white: Color, light_gray: Color):
+	"""Draw a rectangle with rounded corners"""
+	var img_width = image.get_width()
+	var img_height = image.get_height()
+	
+	var left = int(cx - w / 2)
+	var right = int(cx + w / 2)
+	var top = int(cy - h / 2)
+	var bottom = int(cy + h / 2)
+	
+	for x in range(max(0, left - corner_radius), min(img_width, right + corner_radius)):
+		for y in range(max(0, top - corner_radius), min(img_height, bottom + corner_radius)):
+			# Determine if pixel is inside the rounded rectangle
+			var in_main_rect = x >= left and x < right and y >= top and y < bottom
 			
-			# Distance from edge of block
-			var edge_dist_x = min(x - start_x, start_x + w - 1 - x)
-			var edge_dist_y = min(y - start_y, start_y + h - 1 - y)
-			var edge_dist = min(edge_dist_x, edge_dist_y)
+			# Check corners
+			var in_corner = false
+			var corner_dist = 0.0
 			
-			# Soft falloff at edges
-			var alpha = 1.0
-			var brightness = 0.95 + randf() * 0.05
+			# Top-left corner
+			if x < left and y < top:
+				var dx = left - x
+				var dy = top - y
+				corner_dist = sqrt(dx * dx + dy * dy)
+				in_corner = corner_dist <= corner_radius
+			# Top-right corner
+			elif x >= right and y < top:
+				var dx = x - right + 1
+				var dy = top - y
+				corner_dist = sqrt(dx * dx + dy * dy)
+				in_corner = corner_dist <= corner_radius
+			# Bottom-left corner
+			elif x < left and y >= bottom:
+				var dx = left - x
+				var dy = y - bottom + 1
+				corner_dist = sqrt(dx * dx + dy * dy)
+				in_corner = corner_dist <= corner_radius
+			# Bottom-right corner
+			elif x >= right and y >= bottom:
+				var dx = x - right + 1
+				var dy = y - bottom + 1
+				corner_dist = sqrt(dx * dx + dy * dy)
+				in_corner = corner_dist <= corner_radius
+			# Edges (not corners)
+			elif (x < left or x >= right) and y >= top and y < bottom:
+				in_corner = x >= left - corner_radius and x < right + corner_radius
+			elif (y < top or y >= bottom) and x >= left and x < right:
+				in_corner = y >= top - corner_radius and y < bottom + corner_radius
 			
-			if edge_dist == 0:
-				# Outer edge - soft
-				alpha = 0.3 + randf() * 0.3
-				brightness = 0.85
-			elif edge_dist == 1:
-				# Near edge - medium
-				alpha = 0.7 + randf() * 0.2
-				brightness = 0.90
-			else:
-				# Interior - solid
-				alpha = 1.0
-				brightness = 0.93 + randf() * 0.05
-			
-			# Blend with existing pixel (additive)
-			var existing = image.get_pixel(x, y)
-			var new_alpha = min(existing.a + alpha, 1.0)
-			var new_brightness = max(existing.r, brightness)
-			
-			image.set_pixel(x, y, Color(new_brightness, new_brightness, new_brightness, new_alpha))
+			if in_main_rect or in_corner:
+				# Determine color - slight variation
+				var color = white if randf() > 0.15 else light_gray
+				
+				# Edge softness
+				if in_corner and not in_main_rect:
+					var edge_fade = 1.0 - (corner_dist / corner_radius) * 0.3
+					color.a = clamp(color.a * edge_fade, 0.7, 1.0)
+				
+				# Blend with existing pixel
+				var existing = image.get_pixel(x, y)
+				var new_r = max(existing.r, color.r)
+				var new_g = max(existing.g, color.g)
+				var new_b = max(existing.b, color.b)
+				var new_a = clamp(existing.a + color.a, 0.0, 1.0)
+				
+				image.set_pixel(x, y, Color(new_r, new_g, new_b, new_a))
+
+func smoothstep(edge0: float, edge1: float, x: float) -> float:
+	"""Smooth interpolation function for gradual falloff"""
+	var t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0)
+	return t * t * (3.0 - 2.0 * t)
 
 func update_clouds(delta):
 	"""Animate clouds drifting"""

@@ -6,6 +6,10 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
+[2024-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
+[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=±500 for proper depth sorting
+[2024-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player
 [2024-12-10 20:15] [FIX] Fixed crab spawning bug - crabs now spawn on beach biomes with proper height threshold
@@ -26,8 +30,9 @@ Version History:
 v0.3.0 (Current Release)
 - Procedural world generation with 7 biomes
 - Day/night cycle with pixelated sun/moon
+- Perlin noise cloud system with organic shapes and Inspector-adjustable parameters
 - Harvestable resources (trees, strawberries, mushrooms)
-- Harvesting system with UI feedback
+- Harvesting system with UI feedback and enhanced crosshair
 - Tree falling physics
 - Resource night glow effects
 - Wildlife spawning (8 critter types)
