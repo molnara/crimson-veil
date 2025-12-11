@@ -5,16 +5,16 @@ CURRENT SPRINT: "Storage & Organization" (Next 1-2 weeks)
 ----------------------------------------------------------
 Sprint Goal: Enable players to organize and store resources beyond 32-slot inventory limit
 
-PRIORITY 1 - Storage Containers (Core Feature)
+PRIORITY 1 - Storage Containers (Core Feature) ✅ COMPLETE!
 [X] Container placement system - Place chests as building blocks
 [X] Container inventory management - Each chest has independent inventory
-[X] Container interaction - Click to open, transfer items (interaction working, UI pending)
-[ ] Container UI - Dual-panel interface (container left, player right) [IN PROGRESS - Phase 2]
+[X] Container interaction - Click to open, transfer items
+[X] Container UI - Dual-panel interface (player left, container right) ✅ Phase 2 COMPLETE!
 [X] Container collision and physics - Proper world placement
 [X] Container visual design - Low-poly chest mesh with 16x16 texture
-[X] Controller support - Open containers with gamepad
+[X] Controller support - Open containers with gamepad, B button closes
 
-PRIORITY 2 - Inventory Improvements (Quality of Life)
+PRIORITY 2 - Inventory Improvements (Quality of Life) ✅ COMPLETE!
 [X] Item stacking - Wood (100), Stone (50), Food (20) stack limits
 [X] Auto-stack on pickup - Merge with existing stacks automatically
 [X] Stack count display - Visual indication of stack size
@@ -31,15 +31,33 @@ DEFERRED TO NEXT SPRINT:
 [ ] New workbench recipes - Advanced crafting options (need design)
 [ ] Container animations - Open/close lid animations
 [ ] Drag-and-drop UI - Enhanced item transfer (start with click-to-move)
-[ ] Container destruction/harvesting - Get materials back
+
+CONTAINER UI FEATURES (Phase 2 - COMPLETE):
+--------------------------------------------
+✅ Dual-panel layout (player LEFT, container RIGHT)
+✅ Click to transfer 1 item
+✅ Shift+click to transfer full stack
+✅ Stack limit display (e.g., "50/100")
+✅ Visual "FULL" indicators (red text/border)
+✅ Error notifications ("Inventory full!", "Container full!")
+✅ Partial transfer feedback ("Transferred 15/20")
+✅ Perfectly centered on screen
+✅ ESC closes container
+✅ B button closes container (controller)
+✅ Auto-close at 5m distance
+✅ UI suppression (inventory/crafting hidden when container open)
+✅ Input blocking (I/C/Y/X disabled during container interaction)
+✅ Smart UI restoration (previous state restored on close)
+✅ Professional styling (borders, rounded corners, transparency)
+✅ Scene-based architecture (container_ui.tscn)
 
 
 DESIGN DECISIONS FOR THIS SPRINT:
 ----------------------------------
-Ã¢Å“â€¦ Container UI: Click-to-transfer (simple), defer drag-and-drop
-Ã¢Å“â€¦ Container scope: Harvestable chests (can break, get wood back, items drop)
-Ã¢Å“â€¦ Stacking: Full implementation this sprint (critical for storage value)
-Ã¢Å“â€¦ Workbench: Placement + proximity only, defer recipe gating to next sprint
+✅ Container UI: Click-to-transfer (simple), defer drag-and-drop
+✅ Container scope: Harvestable chests (can break, get wood back, items drop)
+✅ Stacking: Full implementation this sprint (critical for storage value)
+✅ Workbench: Placement + proximity only, defer recipe gating to next sprint
 
 
 NEXT UP (After Current Sprint)
@@ -57,7 +75,7 @@ HIGH PRIORITY:
 [ ] Save/load system - Persistent world state and player progress (NEXT after storage)
 [ ] Boss progression system - Valheim-style boss encounters that gate biome access
 [ ] Advanced building - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers - Stone Ã¢â€ â€™ Iron Ã¢â€ â€™ Steel progression path
+[ ] Tool tiers - Stone → Iron → Steel progression path
 [ ] Durability system - Tools degrade with use (creates resource sink)
 
 MEDIUM PRIORITY:
@@ -96,6 +114,10 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+[X] Container UI - Dual-panel interface with click/shift-click transfers (Phase 2 COMPLETE)
+[X] UI state management - Suppression/restoration when container opens/closes
+[X] B button container close - Controller quick exit
+[X] Scene-based container UI - container_ui.tscn for easier visual editing
 [X] Container placement system - Chests placeable as building blocks (10 wood cost)
 [X] Container interaction - E key or A button opens chest within 3m, context-sensitive A button
 [X] Container highlighting - Green outline when looking at chest (Layer 3 collision)
@@ -108,7 +130,7 @@ COMPLETED (Recent)
 [X] Inventory full notification - On-screen alert when trying to exceed stack limits
 [X] Inventory UI scene - Created inventory_ui.tscn for proper rendering
 [X] Xbox controller support - Full analog movement/camera, all buttons mapped, simultaneous keyboard+controller support
-[X] Tool cycling improvement - Removed "None" option, now only cycles Axe Ã¢â€ â€ Pickaxe
+[X] Tool cycling improvement - Removed "None" option, now only cycles Axe ↔ Pickaxe
 [X] Valheim-style log breaking physics - Trees break into 3-5 log pieces on impact with satisfying scatter
 [X] Impact-based tree shattering - Logs spawn when fallen tree collides with terrain/objects
 [X] Log despawn particles - Brown particle "poof" effects when logs disappear (1-4 second randomized lifetimes)
@@ -122,7 +144,7 @@ COMPLETED (Recent)
 [X] Crafting system - Recipe-based crafting with UI (Press R), 5 starter recipes (stone tools, campfire, torch, wood wall)
 [X] Perlin noise cloud system - Dual-layer noise for organic cloud shapes with Inspector parameters
 [X] Enhanced crosshair - Cross-shaped design with outline for visibility on all backgrounds
-[X] Sun/moon depth sorting fix - Repositioned celestial bodies to z=Ã‚Â±500 for proper rendering order
+[X] Sun/moon depth sorting fix - Repositioned celestial bodies to z=±500 for proper rendering order
 [X] Tool system - Axe/Pickaxe with requirement checking and visual feedback
 [X] Procedural world generation - Chunk-based terrain with FastNoiseLite
 [X] Day/night cycle with pixelated sun/moon - Time-based sky colors and celestial bodies
@@ -140,11 +162,11 @@ COMPLETED (Recent)
 DESIGN QUESTIONS / DECISIONS NEEDED
 ------------------------------------
 Sprint Planning Decisions (Made):
-Ã¢Å“â€¦ Storage scope: Core + Polish approach (1 week timeline)
-Ã¢Å“â€¦ Container UI: Click-to-transfer first, drag-and-drop later
-Ã¢Å“â€¦ Container destruction: Harvestable (break to get materials back)
-Ã¢Å“â€¦ Item stacking: Full implementation this sprint
-Ã¢Å“â€¦ Workbench scope: Placement + proximity, defer recipe gating
+✅ Storage scope: Core + Polish approach (1 week timeline)
+✅ Container UI: Click-to-transfer first, drag-and-drop later
+✅ Container destruction: Harvestable (break to get materials back)
+✅ Item stacking: Full implementation this sprint
+✅ Workbench scope: Placement + proximity, defer recipe gating
 
 Future Decisions (Still Open):
 ? Should tools degrade/break or have infinite durability? (affects resource loops)
@@ -165,7 +187,7 @@ TECHNICAL DEBT / REFACTORING
 [ ] Resource spawning optimization - Could batch-spawn resources instead of one-at-a-time
 [ ] Chunk unloading delay - Add graceful fade-out before unloading distant chunks
 [ ] Critter spawner refactoring - Could extract critter visual generators (same pattern as vegetation)
-[ ] Container persistence architecture - Design for future save/load system
+[ ] Container slot pooling - Reuse UI nodes instead of queue_free/recreate (performance optimization)
 
 
 BUGS / FIXES
@@ -175,28 +197,35 @@ BUGS / FIXES
 [X] Rocks are not glowing (blue-ish) at night (should behave just like mushrooms) - FIXED
 [X] Trees sometimes breaking too early before hitting ground - FIXED (improved collision timing)
 [X] Logs clipping through terrain - FIXED (spawn height adjustment, CylinderShape collision)
+[X] Panels not centered in container UI - FIXED (CenterContainer)
+[X] Wrong panel order in container UI - FIXED (player left, container right)
+[X] Other UIs visible when container open - FIXED (UI suppression system)
+[X] Inventory debug text showing during container interaction - FIXED (harvest_ui suppression)
 
 
 SPRINT RISK ASSESSMENT
 -----------------------
-Ã°Å¸â€Â´ HIGH RISK: Container UI complexity (dual-panel, transfer logic)
-   Mitigation: Start simple with click-to-transfer, add features incrementally
+✅ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
+   Resolution: Scene-based architecture + click-to-transfer simplicity
    
-Ã°Å¸Å¸Â¡ MEDIUM RISK: Save compatibility for stacking changes
-   Mitigation: Design inventory structure with future save system in mind
+🟢 LOW RISK: Save compatibility for stacking changes
+   Status: Design accommodates future save system
    
-Ã°Å¸Å¸Â¡ MEDIUM RISK: Controller UI navigation for containers
-   Mitigation: Mouse/keyboard first, controller support second pass
+🟢 LOW RISK: Controller UI navigation for containers
+   Status: Mouse/keyboard working, controller support deferred
    
-Ã°Å¸Å¸Â¢ LOW RISK: Feature creep
-   Mitigation: Stick to acceptance criteria, defer extras to backlog
+✅ LOW RISK: Feature creep - MITIGATED
+   Resolution: Stuck to acceptance criteria, deferred extras to backlog
 
 
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore Ã¢â€ â€™ Gather Ã¢â€ â€™ Craft Ã¢â€ â€™ Build Ã¢â€ â€™ Unlock new biomes Ã¢â€ â€™ Repeat
+- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
 - Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features over rushed completeness
+- Priority 1 (Storage Containers): 7/7 COMPLETE! ✅
+- Priority 2 (Inventory Improvements): 4/4 COMPLETE! ✅
+- Priority 3 (Workbench Foundation): 0/4 - NEXT UP

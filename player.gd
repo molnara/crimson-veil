@@ -17,6 +17,12 @@ const CONTAINER_INTERACTION_RANGE: float = 3.0  # Shorter range for containers v
 var is_flying: bool = false  # Fly/noclip mode toggle
 var current_container: Node = null  # Container player is looking at
 
+# UI state tracking (for container suppression)
+var ui_state_before_container = {
+	"inventory_was_visible": false,
+	"crafting_was_visible": false
+}
+
 # Camera
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var spring_arm: SpringArm3D = $SpringArm3D
@@ -32,6 +38,7 @@ var harvest_ui: Control
 var crafting_ui: Control
 var inventory_ui: Control
 var health_ui: Control
+var container_ui: Control  # Container UI
 
 # Get the gravity from the project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -108,6 +115,11 @@ func _input(event):
 	
 	# Toggle mouse capture (ESC/Start button)
 	if event.is_action_pressed("ui_cancel"):
+		# Close container if open (PRIORITY #1)
+		if container_ui and container_ui.visible:
+			close_container_ui()
+			return
+		
 		# Close inventory if open
 		if inventory_ui and inventory_ui.visible:
 			inventory_ui.visible = false
@@ -124,6 +136,16 @@ func _input(event):
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+	# B button (controller_sprint) also closes container
+	if event.is_action_pressed("controller_sprint"):
+		if container_ui and container_ui.visible:
+			close_container_ui()
+			return
+	
+	# Block inventory/crafting keys when container is open
+	if container_ui and container_ui.visible:
+		return  # Don't process I/C/Y/X keys
 	
 	# Toggle inventory with I key or Y button (Xbox)
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -291,6 +313,16 @@ func setup_ui():
 		print("Health UI loaded successfully")
 	else:
 		print("Warning: Could not load health_ui.tscn")
+	
+	# Load container UI (NEW: Load .tscn instead of .gd)
+	print("Loading container UI...")
+	var container_ui_scene = load("res://container_ui.tscn")
+	if container_ui_scene:
+		container_ui = container_ui_scene.instantiate()
+		get_tree().root.add_child(container_ui)
+		print("Container UI loaded successfully (scene-based)")
+	else:
+		print("ERROR: Could not load container_ui.tscn")
 
 func get_container_at_cursor() -> Node:
 	"""Raycast for containers on Layer 3 within 3m range"""
@@ -323,12 +355,60 @@ func open_container(container: Node):
 		print("ERROR: Invalid container")
 		return
 	
+	# Save current UI state BEFORE opening container
+	save_ui_state()
+	
+	# Hide other UIs
+	suppress_other_uis()
+	
+	# Open the container (sets is_open flag, emits signal)
 	container.open()
 	current_container = container
-	# TODO: Show container UI in next phase
-	print("✅ Container opened successfully! (UI not implemented yet)")
-	print("   Container has ", container.get_item_count(), " item types inside")
+	
+	# Show container UI
+	if container_ui:
+		container_ui.show_container(container, inventory, self)
+		print("✅ Container UI opened!")
+	else:
+		print("ERROR: Container UI not available")
+		print("   Container has ", container.get_item_count(), " item types inside")
 
+func close_container_ui():
+	"""Close the container UI and restore other UIs"""
+	if container_ui:
+		container_ui.close_container()
+	
+	# Restore other UIs
+	restore_ui_state()
+	
+	current_container = null
+	print("Container closed, UI state restored")
+
+func save_ui_state():
+	"""Save visibility state of other UIs before opening container"""
+	ui_state_before_container.inventory_was_visible = inventory_ui.visible if inventory_ui else false
+	ui_state_before_container.crafting_was_visible = crafting_ui.visible if crafting_ui else false
+
+func suppress_other_uis():
+	"""Hide other UIs when container opens"""
+	if inventory_ui:
+		inventory_ui.visible = false
+	if crafting_ui:
+		crafting_ui.visible = false
+	if harvest_ui:
+		# Hide harvest UI (includes inventory debug text)
+		harvest_ui.visible = false
+	# Note: health_ui stays visible (always-on)
+
+func restore_ui_state():
+	"""Restore previous UI visibility after container closes"""
+	if inventory_ui and ui_state_before_container.inventory_was_visible:
+		inventory_ui.visible = true
+	if crafting_ui and ui_state_before_container.crafting_was_visible:
+		crafting_ui.visible = true
+	if harvest_ui:
+		# Always restore harvest UI (needed for harvesting to work)
+		harvest_ui.visible = true
 
 func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""

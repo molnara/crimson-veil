@@ -30,16 +30,16 @@ What should I work on next?
 
 **Example Session Start Output:**
 ```
-Ã°Å¸Å¡â‚¬ CURRENT SPRINT:
-- Tool system Ã¢Å“â€œ (completed)
+ÃƒÂ°Ã…Â¸Ã…Â¡Ã¢â€šÂ¬ CURRENT SPRINT:
+- Tool system ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ (completed)
 - Crafting system (next up)
 - Inventory UI (planned)
 
-Ã°Å¸â€œÂ RECENT CHANGES:
+ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â RECENT CHANGES:
 [2024-12-10 16:00] [MAJOR] Added minimal tool system
 [2024-12-10 16:30] [MINOR] Added visual tool feedback
 
-Ã°Å¸Ââ€º KNOWN ISSUES:
+ÃƒÂ°Ã…Â¸Ã‚ÂÃ¢â‚¬Âº KNOWN ISSUES:
 - Trees occasionally clip through terrain on slopes
 - Fullscreen only works in exported builds
 
@@ -81,13 +81,13 @@ This ensures every session starts with full context.
 
 ### Examples:
 
-**Ã¢ÂÅ’ BAD - Suggesting code immediately:**
+**ÃƒÂ¢Ã‚ÂÃ…â€™ BAD - Suggesting code immediately:**
 ```
 User: "Add a sleep system"
 Claude: "Here's a sleep system implementation..."
 ```
 
-**Ã¢Å“â€¦ GOOD - Request files first:**
+**ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ GOOD - Request files first:**
 ```
 User: "Add a sleep system"
 Claude: "To implement a sleep system, I'll need to analyze:
@@ -105,7 +105,7 @@ Could you upload these three files so I can see how they're currently structured
 - Produces working code on first try
 - Keeps documentation up-to-date for future sessions
 
-**Ã¢Å“â€¦ GOOD - Including documentation update:**
+**ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ GOOD - Including documentation update:**
 ```
 User: "Add a sleep system"
 Claude: 
@@ -126,7 +126,7 @@ This ensures future development sessions can easily find and work with the sleep
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
   - Progression through biome exploration and resource gathering
-  - Satisfying crafting loops (gather Ã¢â€ â€™ craft Ã¢â€ â€™ unlock new areas/tools)
+  - Satisfying crafting loops (gather ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ craft ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ unlock new areas/tools)
   - Environmental storytelling through procedural world generation
   - Cozy base-building with functional purpose
 - **Visual Style**: 
@@ -168,10 +168,10 @@ This ensures future development sessions can easily find and work with the sleep
 - **Input**: Full Xbox controller support with analog stick movement/camera, button mappings for all actions, D-Pad dedicated to building
 - **Health/Hunger**: Stat management, regeneration when well-fed, movement penalties, eating system
 - **Storage Containers**: Placeable chests (10 wood) with independent 32-slot inventories, 3m interaction range, green highlight, removal warnings
+- **Container UI**: Dual-panel interface with click/shift-click transfers, centered layout, UI suppression, ESC/B button to close, auto-close at 5m
 
 ### Currently In Development (Storage & Organization Sprint)
-- **Container UI**: Dual-panel interface for transferring items between player and chest (Phase 2)
-- **Workbench System**: Crafting station with proximity detection for recipe gating
+- **Workbench System**: Crafting station with proximity detection for recipe gating (Priority 3 - next up)
 
 ### Planned/Incomplete
 - Boss encounters and progression milestones
@@ -199,7 +199,7 @@ This ensures future development sessions can easily find and work with the sleep
 ### Core Architecture
 - **Chunk-based world**: ChunkManager orchestrates terrain generation, VegetationSpawner populates
 - **Component systems**: Player has child nodes for HarvestingSystem, BuildingSystem, Inventory
-- **Resource inheritance**: HarvestableResource base class Ã¢â€ â€™ HarvestableTree/Mushroom/Strawberry
+- **Resource inheritance**: HarvestableResource base class ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ HarvestableTree/Mushroom/Strawberry
 - **Signal-driven communication**: Harvest completion signals trigger inventory updates and particle spawning
 - **Modular visual generators**: Tree creation delegated to separate visual generator classes (TreeVisual, PineTreeVisual, PalmTreeVisual)
 - **Container architecture**: StorageContainer extends Node3D, has own Inventory instance, emits interaction signals
@@ -345,7 +345,7 @@ When suggesting new features, always include:
 "Add stone walls for base building. Players want protection from future threats (base-building pillar). Like Valheim's walls but snapped to grid. Medium scope - needs collision, placement validation, cost balancing. Should require significant stone investment to prevent trivializing defense."
 
 ### Bad Example
-"Add walls" Ã¢Å“â€” Missing motivation, scope, balance considerations
+"Add walls" ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Missing motivation, scope, balance considerations
 
 ## Quick Reference
 
@@ -356,177 +356,178 @@ This index helps you find and upload the right files for your task. Files are or
 #### Core Systems (Always Needed)
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
-Ã¢â€Å“Ã¢â€â‚¬ ROADMAP.txt                    [Features, priorities, completed items]
-Ã¢â€Å“Ã¢â€â‚¬ CHANGELOG.txt                  [Session-by-session change history]
-Ã¢â€Å“Ã¢â€â‚¬ world.gd                       [Scene root, system initialization]
-Ã¢â€Å“Ã¢â€â‚¬ world.tscn                     [Main world scene]
-Ã¢â€Å“Ã¢â€â‚¬ player.gd                      [Input, movement, camera, Xbox controller support, system integration (380 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ player.tscn                    [Player scene with health system, camera, collision]
-Ã¢â€â€Ã¢â€â‚¬ project.godot                  [Godot project config]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ ROADMAP.txt                    [Features, priorities, completed items]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ CHANGELOG.txt                  [Session-by-session change history]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ world.gd                       [Scene root, system initialization]
+├─ player.gd                      [Input, movement, camera, Xbox controller support, system integration, UI state management (530 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ player.tscn                    [Player scene with health system, camera, collision]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ project.godot                  [Godot project config]
 ```
 
 **When to upload:**
-- Adding controller support Ã¢â€ â€™ project.godot (for input actions)
-- Modifying input mappings Ã¢â€ â€™ project.godot
-- Player input/movement Ã¢â€ â€™ player.gd
+- Adding controller support ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ project.godot (for input actions)
+- Modifying input mappings ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ project.godot
+- Player input/movement ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ player.gd
 
 #### World Generation
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ chunk_manager.gd               [Terrain generation, chunk loading (249 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ chunk.gd                       [Individual chunk meshes, biomes (428 lines)]
-Ã¢â€â€Ã¢â€â‚¬ water_plane.gd                 [Infinite ocean plane]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ chunk_manager.gd               [Terrain generation, chunk loading (249 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ chunk.gd                       [Individual chunk meshes, biomes (428 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ water_plane.gd                 [Infinite ocean plane]
 ```
 
 #### Vegetation System (Modular - Upload Only What You Need)
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ vegetation_spawner.gd          [Main spawner, delegates to visuals (1,457 lines)]
-Ã¢â€â€Ã¢â€â‚¬ vegetation/
-    Ã¢â€â€Ã¢â€â‚¬ visuals/
-        Ã¢â€Å“Ã¢â€â‚¬ tree_visual.gd         [Oak/deciduous trees (338 lines)]
-        Ã¢â€Å“Ã¢â€â‚¬ pine_tree_visual.gd    [Pine/conifer trees (181 lines)]
-        Ã¢â€â€Ã¢â€â‚¬ palm_tree_visual.gd    [Palm trees (188 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ vegetation_spawner.gd          [Main spawner, delegates to visuals (1,457 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ vegetation/
+    ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ visuals/
+        ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ tree_visual.gd         [Oak/deciduous trees (338 lines)]
+        ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ pine_tree_visual.gd    [Pine/conifer trees (181 lines)]
+        ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ palm_tree_visual.gd    [Palm trees (188 lines)]
 ```
 
 **When to upload:**
-- Modifying oak trees Ã¢â€ â€™ `tree_visual.gd` only
-- Adding new tree type Ã¢â€ â€™ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
-- Adjusting density Ã¢â€ â€™ `vegetation_spawner.gd` only
-- Understanding system Ã¢â€ â€™ `DEVELOPMENT_GUIDE.md` has full explanation
+- Modifying oak trees ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `tree_visual.gd` only
+- Adding new tree type ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
+- Adjusting density ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `vegetation_spawner.gd` only
+- Understanding system ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `DEVELOPMENT_GUIDE.md` has full explanation
 
 #### Harvestable Resources
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ harvestable_resource.gd        [Base class for all collectibles (324 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ harvestable_tree.gd            [Tree physics, falling, log spawning (577 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ harvestable_mushroom.gd        [Mushroom variants, glow effects]
-Ã¢â€Å“Ã¢â€â‚¬ harvestable_strawberry.gd      [Strawberry bushes, size variants]
-Ã¢â€Å“Ã¢â€â‚¬ log_piece.gd                   [Log physics debris, timed despawn, particles (99 lines)]
-Ã¢â€â€Ã¢â€â‚¬ resource_node.gd               [Generic resource node]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_resource.gd        [Base class for all collectibles (324 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_tree.gd            [Tree physics, falling, log spawning (577 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_mushroom.gd        [Mushroom variants, glow effects]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_strawberry.gd      [Strawberry bushes, size variants]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ log_piece.gd                   [Log physics debris, timed despawn, particles (99 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ resource_node.gd               [Generic resource node]
 ```
 
 **When to upload:**
-- Adding new resource type Ã¢â€ â€™ `harvestable_resource.gd` (base class)
-- Modifying tree behavior/physics Ã¢â€ â€™ `harvestable_tree.gd`
-- Changing log despawn/particles Ã¢â€ â€™ `log_piece.gd`
-- Bug with mushrooms Ã¢â€ â€™ `harvestable_mushroom.gd` only
+- Adding new resource type ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `harvestable_resource.gd` (base class)
+- Modifying tree behavior/physics ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `harvestable_tree.gd`
+- Changing log despawn/particles ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `log_piece.gd`
+- Bug with mushrooms ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `harvestable_mushroom.gd` only
 
 #### Player Systems
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ harvesting_system.gd           [Raycast, progress, harvesting (338 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ building_system.gd             [Block placement, preview (313 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ tool_system.gd                 [Tool management, requirements]
-Ã¢â€Å“Ã¢â€â‚¬ inventory.gd                   [Item storage, signals, stacking logic]
-Ã¢â€Å“Ã¢â€â‚¬ crafting_system.gd             [Recipe management (134 lines)]
-Ã¢â€â€Ã¢â€â‚¬ health_hunger_system.gd        [Stats, regeneration, hunger depletion, movement penalties (113 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvesting_system.gd           [Raycast, progress, harvesting (338 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ building_system.gd             [Block placement, preview (313 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ tool_system.gd                 [Tool management, requirements]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ inventory.gd                   [Item storage, signals, stacking logic]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ crafting_system.gd             [Recipe management (134 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_hunger_system.gd        [Stats, regeneration, hunger depletion, movement penalties (113 lines)]
 ```
 
 **When to upload:**
-- Adding new tool Ã¢â€ â€™ `tool_system.gd`
-- New building block Ã¢â€ â€™ `building_system.gd`
-- New recipe Ã¢â€ â€™ `crafting_system.gd`
-- Health/hunger mechanics Ã¢â€ â€™ `health_hunger_system.gd`
-- Food system Ã¢â€ â€™ `health_hunger_system.gd` + `inventory_ui.gd`
-- Item stacking Ã¢â€ â€™ `inventory.gd` + `inventory_ui.gd`
+- Adding new tool ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `tool_system.gd`
+- New building block ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `building_system.gd`
+- New recipe ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `crafting_system.gd`
+- Health/hunger mechanics ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd`
+- Food system ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd` + `inventory_ui.gd`
+- Item stacking ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `inventory.gd` + `inventory_ui.gd`
 
 #### Storage & Interaction Systems (NEW - Current Sprint)
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ storage_container.gd           [Container logic, inventory management, interaction (~250 lines est.)]
-Ã¢â€Å“Ã¢â€â‚¬ storage_container.tscn         [Container scene with collision and mesh]
-Ã¢â€Å“Ã¢â€â‚¬ workbench.gd                   [Workbench proximity detection, recipe gating (~150 lines est.)]
-Ã¢â€â€Ã¢â€â‚¬ workbench.tscn                 [Workbench scene]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ storage_container.gd           [Container logic, inventory management, interaction (~250 lines est.)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ storage_container.tscn         [Container scene with collision and mesh]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ workbench.gd                   [Workbench proximity detection, recipe gating (~150 lines est.)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ workbench.tscn                 [Workbench scene]
 ```
 
 **When to upload:**
-- Adding container features Ã¢â€ â€™ `storage_container.gd`
-- Container visuals Ã¢â€ â€™ `storage_container.gd` + `pixel_texture_generator.gd`
-- Workbench features Ã¢â€ â€™ `workbench.gd`
-- Proximity detection Ã¢â€ â€™ `workbench.gd` + `crafting_system.gd`
+- Adding container features ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `storage_container.gd`
+- Container visuals ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `storage_container.gd` + `pixel_texture_generator.gd`
+- Workbench features ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `workbench.gd`
+- Proximity detection ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `workbench.gd` + `crafting_system.gd`
 
 #### Storage & Interaction Systems (NEW - Current Sprint)
 ```
 res://
-├─ storage_container.gd           [Container logic, inventory management, interaction (~280 lines)]
-├─ storage_container.tscn         [Container scene with collision and mesh]
-├─ container_warning_ui.gd        [Destruction warning dialog (~130 lines)]
-├─ workbench.gd                   [Workbench proximity detection, recipe gating (~150 lines est.)]
-└─ workbench.tscn                 [Workbench scene]
+â”œâ”€ storage_container.gd           [Container logic, inventory management, interaction (~280 lines)]
+â”œâ”€ storage_container.tscn         [Container scene with collision and mesh]
+â”œâ”€ container_warning_ui.gd        [Destruction warning dialog (~130 lines)]
+├─ container_ui.gd                [Dual-panel container interface, scene-based (~420 lines)]
+├─ container_ui.tscn              [Container UI scene - centered layout, player left/container right]
+â"œâ"€ workbench.gd                   [Workbench proximity detection, recipe gating (~150 lines est.)]
+â""â"€ workbench.tscn                 [Workbench scene]
 ```
 
 **When to upload:**
-- Adding container features → `storage_container.gd`
-- Container visuals → `storage_container.gd` + `pixel_texture_generator.gd`
-- Workbench features → `workbench.gd`
-- Proximity detection → `workbench.gd` + `crafting_system.gd`
-- Container removal → `building_system.gd` + `container_warning_ui.gd`
+- Adding container features â†’ `storage_container.gd`
+- Container visuals â†’ `storage_container.gd` + `pixel_texture_generator.gd`
+- Workbench features â†’ `workbench.gd`
+- Proximity detection â†’ `workbench.gd` + `crafting_system.gd`
+- Container UI polish → `container_ui.gd` + `container_ui.tscn` + `inventory_ui.gd` (for reference)
+- Container UI modifications → `container_ui.gd` + `container_ui.tscn`
+- Container removal â†’ `building_system.gd` + `container_warning_ui.gd`
 
 #### UI Systems
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ harvest_ui.gd                  [Progress bar, target display (213 lines)]
-â”œâ”€ harvest_ui.tscn                [Harvest UI scene]
-â”œâ”€ inventory_ui.gd                [Grid inventory display, stacking UI, full notifications (~265 lines)]
-â”œâ”€ inventory_ui.tscn              [Inventory UI scene - proper rendering structure]
-Ã¢â€Å“Ã¢â€â‚¬ crafting_ui.gd                 [Recipe UI, crafting interface, workbench requirements (159 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ container_ui.gd                [Dual-panel container interface (~200 lines est.)]
-Ã¢â€Å“Ã¢â€â‚¬ container_ui.tscn              [Container UI scene]
-Ã¢â€Å“Ã¢â€â‚¬ health_ui.gd                   [Health/hunger bars, well-fed indicator (60 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ health_ui.tscn                 [UI scene for health display]
-Ã¢â€â€Ã¢â€â‚¬ settings_menu.gd               [Graphics/game settings (329 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvest_ui.gd                  [Progress bar, target display (213 lines)]
+Ã¢â€Å“Ã¢â€â‚¬ harvest_ui.tscn                [Harvest UI scene]
+Ã¢â€Å“Ã¢â€â‚¬ inventory_ui.gd                [Grid inventory display, stacking UI, full notifications (~265 lines)]
+Ã¢â€Å“Ã¢â€â‚¬ inventory_ui.tscn              [Inventory UI scene - proper rendering structure]
+├─ container_ui.gd                [Dual-panel container interface, scene-based (~420 lines)]
+├─ container_ui.tscn              [Container UI scene - centered layout, player left/container right]
+├─ crafting_ui.gd                 [Recipe UI, crafting interface, workbench requirements (159 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_ui.gd                   [Health/hunger bars, well-fed indicator (60 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_ui.tscn                 [UI scene for health display]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ settings_menu.gd               [Graphics/game settings (329 lines)]
 ```
 
 **When to upload:**
-- Inventory features/eating â†’ `inventory_ui.gd` + `inventory_ui.tscn`
-- Inventory features/eating Ã¢â€ â€™ `inventory_ui.gd`
-- Stack limit changes â†’ `inventory.gd`
-- Health bar customization Ã¢â€ â€™ `health_ui.gd` + `health_ui.tscn`
-- Container UI Ã¢â€ â€™ `container_ui.gd` + `inventory_ui.gd` (for reference)
-- Crafting UI changes Ã¢â€ â€™ `crafting_ui.gd`
+- Inventory features/eating Ã¢â€ â€™ `inventory_ui.gd` + `inventory_ui.tscn`
+- Container UI modifications → `container_ui.gd` + `container_ui.tscn`
+- Container UI polish → `container_ui.gd` + `container_ui.tscn` + `inventory_ui.gd` (for reference)
+- Crafting UI changes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `crafting_ui.gd`
 
 #### Health & Survival Systems
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ health_hunger_system.gd        [Stats, regeneration, hunger depletion, movement penalties (113 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ health_ui.gd                   [Health/hunger bars, well-fed indicator (60 lines)]
-Ã¢â€â€Ã¢â€â‚¬ health_ui.tscn                 [UI scene for health display]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_hunger_system.gd        [Stats, regeneration, hunger depletion, movement penalties (113 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_ui.gd                   [Health/hunger bars, well-fed indicator (60 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_ui.tscn                 [UI scene for health display]
 ```
 
 **When to upload:**
-- Modifying hunger/health mechanics Ã¢â€ â€™ `health_hunger_system.gd`
-- Changing food values Ã¢â€ â€™ `inventory_ui.gd` (has FOOD_VALUES dictionary)
-- Sleep/rest systems Ã¢â€ â€™ `health_hunger_system.gd` + `day_night_cycle.gd` + `player.gd`
-- Health UI changes Ã¢â€ â€™ `health_ui.gd` + `health_ui.tscn`
-- Integration with day/night Ã¢â€ â€™ `health_hunger_system.gd` + `day_night_cycle.gd`
+- Modifying hunger/health mechanics ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd`
+- Changing food values ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `inventory_ui.gd` (has FOOD_VALUES dictionary)
+- Sleep/rest systems ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd` + `day_night_cycle.gd` + `player.gd`
+- Health UI changes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_ui.gd` + `health_ui.tscn`
+- Integration with day/night ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd` + `day_night_cycle.gd`
 
 #### Environment & Visuals
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬ day_night_cycle.gd             [Time, sun/moon, clouds, lighting (828 lines)]
-Ã¢â€Å“Ã¢â€â‚¬ critter_spawner.gd             [Wildlife spawning, behavior (1,142 lines)]
-Ã¢â€â€Ã¢â€â‚¬ pixel_texture_generator.gd     [16x16 texture generation (392 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ day_night_cycle.gd             [Time, sun/moon, clouds, lighting (828 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ critter_spawner.gd             [Wildlife spawning, behavior (1,142 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ pixel_texture_generator.gd     [16x16 texture generation (392 lines)]
 ```
 
 **When to upload:**
-- Day/night adjustments Ã¢â€ â€™ `day_night_cycle.gd`
-- New critter type Ã¢â€ â€™ `critter_spawner.gd`
-- Texture changes Ã¢â€ â€™ `pixel_texture_generator.gd`
+- Day/night adjustments ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `day_night_cycle.gd`
+- New critter type ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `critter_spawner.gd`
+- Texture changes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `pixel_texture_generator.gd`
 
 #### Utilities & Shared Code
 ```
 res://
-Ã¢â€â€Ã¢â€â‚¬ core/
-    Ã¢â€Å“Ã¢â€â‚¬ mesh_builder.gd            [Shared mesh utilities (78 lines)]
-    Ã¢â€â€Ã¢â€â‚¬ settings_manager.gd        [Save/load settings (324 lines)]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ core/
+    ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ mesh_builder.gd            [Shared mesh utilities (78 lines)]
+    ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ settings_manager.gd        [Save/load settings (324 lines)]
 ```
 
 **When to upload:**
-- Creating procedural meshes Ã¢â€ â€™ `mesh_builder.gd`
-- New tree/critter visual Ã¢â€ â€™ `mesh_builder.gd` (for utilities)
-- Container/workbench meshes Ã¢â€ â€™ `mesh_builder.gd` + specific file
+- Creating procedural meshes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `mesh_builder.gd`
+- New tree/critter visual ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `mesh_builder.gd` (for utilities)
+- Container/workbench meshes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `mesh_builder.gd` + specific file
 
 ---
 
@@ -631,6 +632,7 @@ After refactoring, all files are easily uploadable:
 - pixel_texture_generator.gd: 392 lines (~14KB)
 - tree_visual.gd: 338 lines (~12KB)
 - harvesting_system.gd: 338 lines (~12KB)
+- container_ui.gd: 420 lines (~15KB)
 
 **Small Files (always easy):**
 - All other visual generators: <200 lines
@@ -692,7 +694,7 @@ After refactoring, all files are easily uploadable:
 - `pixel_texture_generator.gd` - Global class, generates all 16x16 textures
 - `settings_manager.gd` - Save/load settings, apply runtime changes
 
-### Common Tasks
+- container_ui.gd: 420 lines (~15KB)
 
 **Add new harvestable resource:**
 1. Create new script extending HarvestableResource
@@ -933,11 +935,11 @@ This allows easy copy-paste of each code block directly into the source file at 
 - Atmospheric without being oppressive
 
 ### Avoid These Anti-Patterns
-- Ã¢Å“â€” Punishing difficulty (not Dark Souls, not survival horror)
-- Ã¢Å“â€” Overwhelming UI/systems (keep it simple and clean)
-- Ã¢Å“â€” Tedious grinding (gathering should feel satisfying, not repetitive)
-- Ã¢Å“â€” Complex crafting trees (Valheim-simple, not Factorio-complex)
-- Ã¢Å“â€” Time pressure mechanics (let player explore at their own pace)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Punishing difficulty (not Dark Souls, not survival horror)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Overwhelming UI/systems (keep it simple and clean)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Tedious grinding (gathering should feel satisfying, not repetitive)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Complex crafting trees (Valheim-simple, not Factorio-complex)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Time pressure mechanics (let player explore at their own pace)
 
 ## Version Control Notes
 
@@ -953,7 +955,7 @@ This allows easy copy-paste of each code block directly into the source file at 
 - **Target**: Keep files under 500 lines when possible
 - **Warning threshold**: 800+ lines (consider refactoring)
 - **Critical threshold**: 1500+ lines (definitely refactor)
-- **Extraction pattern**: Large mesh generators (300+ lines) Ã¢â€ â€™ separate visual generator files
+- **Extraction pattern**: Large mesh generators (300+ lines) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ separate visual generator files
 
 ### Context Window Optimization
 - Prefer reading focused files over large monoliths

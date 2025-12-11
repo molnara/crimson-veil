@@ -6,6 +6,31 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-11 21:00] [MAJOR] Container UI - Phase 2 complete! (Priority 1 - 7/7 tasks COMPLETE!)
+[2024-12-11 21:00] [MAJOR] Created container_ui.tscn - scene-based dual-panel interface structure
+[2024-12-11 21:00] [MAJOR] Updated container_ui.gd - converted to scene-based architecture (~420 lines, -100 lines procedural code)
+[2024-12-11 21:00] [FEATURE] Centered UI layout - CenterContainer ensures perfect screen centering
+[2024-12-11 21:00] [FEATURE] Swapped panel order - player inventory on LEFT (Minecraft/Terraria convention), container on RIGHT
+[2024-12-11 21:00] [FEATURE] Click-to-transfer - single click transfers 1 item between inventories
+[2024-12-11 21:00] [FEATURE] Shift+click transfers all - transfers entire stack with visual feedback
+[2024-12-11 21:00] [FEATURE] Stack display integration - shows current/max (e.g., "50/100") with FULL indicators
+[2024-12-11 21:00] [FEATURE] UI suppression system - inventory/crafting/harvest UIs hidden when container open
+[2024-12-11 21:00] [FEATURE] Input blocking - I/C/Y/X keys disabled while container UI visible
+[2024-12-11 21:00] [FEATURE] Smart UI restoration - previous UI visibility state restored on container close
+[2024-12-11 21:00] [FEATURE] B button closes container - controller sprint button provides quick exit
+[2024-12-11 21:00] [FEATURE] ESC closes container - keyboard escape provides quick exit
+[2024-12-11 21:00] [FEATURE] Error notifications - displays "Inventory full!", "Container full!" with 2-second visibility
+[2024-12-11 21:00] [FEATURE] Partial transfer feedback - shows "Transferred 15/20" when destination fills up
+[2024-12-11 21:00] [FEATURE] Auto-close on distance - UI closes if player moves >5m from container
+[2024-12-11 21:00] [FEATURE] Hint label - displays "ESC TO CLOSE • CLICK TO TRANSFER 1 • SHIFT+CLICK TO TRANSFER ALL"
+[2024-12-11 21:00] [MINOR] Extended player.gd - UI state management, suppression/restoration functions (+85 lines)
+[2024-12-11 21:00] [MINOR] Applied professional styling - borders (3px), rounded corners (8px), semi-transparent backgrounds
+[2024-12-11 21:00] [MINOR] Scene-based architecture - follows project pattern (inventory_ui.tscn, harvest_ui.tscn, health_ui.tscn)
+[2024-12-11 21:00] [FIX] Fixed hint text cutoff - full instruction text now visible at top center
+[2024-12-11 21:00] [FIX] Fixed competing UI overlays - only one UI visible at a time (container takes priority)
+[2024-12-11 21:00] [FIX] Fixed inventory debug text visibility - harvest_ui properly hidden during container interaction
+[2024-12-11 21:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added container_ui.tscn to file index, updated line counts
+[2024-12-11 21:00] [MAJOR] Updated ROADMAP.txt - marked Container UI as complete, Priority 1 fully complete (7/7)
 [2024-12-11 10:54] [MAJOR] Container placement system - Phase 1 complete (Priority 1 - 6/7 tasks)
 [2024-12-11 10:54] [MAJOR] Created storage_container.gd - placeable chests with independent inventories (~280 lines)
 [2024-12-11 10:54] [FEATURE] Chest block type - costs 10 wood, placed via building mode (Tab/D-Pad to cycle)
@@ -43,7 +68,7 @@ Recent Changes (v0.3.0+):
 [2024-12-11 16:00] [MINOR] Added sprint risk assessment to ROADMAP.txt (UI complexity, save compatibility, feature creep)
 [2024-12-11 16:00] [MINOR] Documented sprint design decisions (click-to-transfer UI, harvestable containers, full stacking)
 [2024-12-11 16:00] [FEATURE] Defined storage container system architecture - placeable chests with independent inventories
-[2024-12-11 16:00] [FEATURE] Defined item stacking system - wood (100), stone (50), food (20) stack limits
+[2024-12-11 16:00] [FEATURE] Defined item stacking system - wood (100), stone: (50), food (20) stack limits
 [2024-12-11 16:00] [FEATURE] Defined workbench system - proximity-based recipe unlocking (5m radius)
 [2024-12-11 16:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added storage/workbench systems to file index
 [2024-12-11 16:00] [MINOR] Added new collision layer (Layer 3) for interactive objects to architecture
@@ -63,7 +88,7 @@ Recent Changes (v0.3.0+):
 [2024-12-11 14:30] [FEATURE] D-Pad mapped - Up=Building mode, Down=Cycle blocks
 [2024-12-11 14:30] [MINOR] Added apply_deadzone() function for smooth analog stick handling
 [2024-12-11 14:30] [MINOR] Controller and keyboard/mouse work simultaneously
-[2024-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe Ã¢â€ â€ Pickaxe
+[2024-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â Pickaxe
 [2024-12-11 14:30] [FEATURE] Updated project.godot with 16 new controller input actions
 [2024-12-11 14:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added controller support to file index and implemented features
 [2024-12-11 14:30] [FEATURE] Created XBOX_CONTROLLER_GUIDE.md - comprehensive setup and troubleshooting guide
@@ -110,7 +135,7 @@ Recent Changes (v0.3.0+):
 [2024-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
 [2024-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Ã‚Â±500 for proper depth sorting
+[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Ãƒâ€šÃ‚Â±500 for proper depth sorting
 [2024-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player
@@ -128,6 +153,17 @@ Recent Changes (v0.3.0+):
 
 Version History:
 ----------------
+
+v0.4.0 (In Progress - Storage & Organization Sprint)
+- Storage container system with placeable chests (10 wood cost)
+- Dual-panel container UI with click-to-transfer and shift+click for full stacks
+- Item stacking (wood: 100, stone: 50, food: 20) with visual feedback
+- UI state management (suppression/restoration when container opens/closes)
+- B button and ESC close containers
+- Auto-close on distance (5m)
+- Container removal warnings for full chests
+- Independent 32-slot inventories per chest
+- Layer 3 collision for interactive objects
 
 v0.3.0 (Current Release)
 - Procedural world generation with 7 biomes
@@ -148,13 +184,6 @@ v0.3.0 (Current Release)
 - Tool system (Axe/Pickaxe) with requirement checking and visual feedback
 - Modular vegetation system with extracted tree visual generators
 - Full Xbox controller support with analog movement/camera and button mappings
-
-v0.4.0 (Planned - Storage & Organization Sprint)
-- Storage container system with placeable chests
-- Item stacking (wood: 100, stone: 50, food: 20)
-- Container UI with dual-panel interface
-- Workbench system with proximity-based recipe unlocking
-- Improved inventory management
 
 ---
 
