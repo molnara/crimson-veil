@@ -588,8 +588,10 @@ IMPACT levels:
    - Update ROADMAP.txt if completing items or adding to technical debt section
    - Copy updated CHANGELOG.txt to /mnt/user-data/outputs/
    - Copy updated ROADMAP.txt to /mnt/user-data/outputs/ (if modified)
-   - Copy all modified .gd files to /mnt/user-data/outputs/
+   - **For large files (>1000 lines)**: Create separate `[filename]_patch_[number].gd` files for each code block change
+   - **For small/medium files (<1000 lines)**: Copy all modified .gd files to /mnt/user-data/outputs/
    - Copy all modified .tscn files to /mnt/user-data/outputs/
+   - Copy all new .gd files to /mnt/user-data/outputs/ (with proper folder structure)
    - Copy project.godot if modified
    - Provide suggested commit message based on changes
 3. **At start of new sessions**: Read CHANGELOG.txt to see what's been done previously
@@ -604,7 +606,8 @@ When user says they want to commit:
 - [ ] Update ROADMAP.txt (mark completions, add to technical debt if refactoring)
 - [ ] Copy CHANGELOG.txt to outputs
 - [ ] Copy ROADMAP.txt to outputs (if modified)
-- [ ] Copy all modified .gd files to outputs
+- [ ] **For large files (>1000 lines)**: Create separate `[filename]_patch_[number].gd` files for each change block
+- [ ] **For small/medium files (<1000 lines)**: Copy all modified .gd files to outputs
 - [ ] Copy all new .gd files to outputs (with proper folder structure)
 - [ ] Copy all modified .tscn files to outputs
 - [ ] Copy project.godot if modified
@@ -621,6 +624,41 @@ Brief summary (50 chars or less)
 
 Closes #issue_number (if applicable)
 ```
+
+### Patch File Format (for Large Files >1000 lines)
+When a large file is modified, create separate numbered files for each change block.
+
+**Naming convention**: `[filename]_patch_[number].gd`
+
+**File format**: Each file contains only the new code with a header showing the line range.
+
+Example files for changes to `vegetation_spawner.gd`:
+
+**File: `vegetation_spawner_patch_1.gd`**
+```
+# PATCH 1 for vegetation_spawner.gd
+# Lines 245-250: Added biome parameter to tree spawning
+
+func spawn_large_vegetation_for_biome(chunk_pos: Vector2i, biome: Chunk.Biome):
+    match biome:
+        Chunk.Biome.FOREST:
+            for i in range(tree_count):
+                var pos = get_random_position_in_chunk(chunk_pos)
+                spawn_tree(pos, TreeType.OAK, biome)  # Pass biome to tree
+```
+
+**File: `vegetation_spawner_patch_2.gd`**
+```
+# PATCH 2 for vegetation_spawner.gd
+# Lines 892-895: Updated tree density for mountains
+
+    # Mountain biome spawning
+    if biome == Chunk.Biome.MOUNTAIN:
+        var pine_density = 0.25  # Reduced for sparser feel
+        var rock_density = 0.45
+```
+
+This allows easy copy-paste of each code block directly into the source file at the specified line numbers.
 
 ## Design Philosophy Reminders
 
