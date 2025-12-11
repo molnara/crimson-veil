@@ -6,12 +6,19 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-10 21:59] [MAJOR] Biome-specific vegetation distributions - forests now oak-only with increased mushrooms, grasslands feature strawberries, mountains have sparse pines
+[2024-12-10 XX:XX] [MINOR] Removed pine trees from forests (forests now 100% oak trees for distinct identity)
+[2024-12-10 XX:XX] [MINOR] Removed strawberries from forests (now grassland-exclusive resource)
+[2024-12-10 XX:XX] [MINOR] Added sparse pine trees to mountains (25% density to reduce barren feel)
+[2024-12-10 XX:XX] [MINOR] Increased mushroom spawn in forests (0.50 vs 0.35 - signature forest resource)
+[2024-12-10 XX:XX] [MINOR] Increased strawberry spawn in grasslands (0.55 vs 0.40 - signature grassland resource)
+[2024-12-10 XX:XX] [MINOR] Updated ROADMAP.txt - added biome configuration options as high priority
 [2024-12-11 02:00] [MAJOR] Refactored vegetation_spawner.gd - extracted tree generators to separate files (reduced from 2,075 to 1,457 lines)
 [2024-12-10 20:00] [MAJOR] Added grid-based inventory UI - 8x4 visual slots, Tab to toggle
 [2024-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
 [2024-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=±500 for proper depth sorting
+[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Â±500 for proper depth sorting
 [2024-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player

@@ -280,14 +280,11 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 	
 	match biome:
 		Chunk.Biome.FOREST:
-			# Trees
-			if rand > (1.0 - tree_density * 0.65):
-				if randf() > 0.5:
-					veg_type = VegType.TREE
-				else:
-					veg_type = VegType.PINE_TREE
-			# Mushrooms
-			elif rand > (1.0 - mushroom_density * 0.35):
+			# Trees - Oak only (dense, dark forest)
+			if rand > (1.0 - tree_density * 0.70):
+				veg_type = VegType.TREE
+			# Mushrooms - Signature forest resource (increased spawn)
+			elif rand > (1.0 - mushroom_density * 0.50):
 				var mushroom_rand = randf()
 				if mushroom_rand > 0.6:
 					veg_type = VegType.MUSHROOM_RED
@@ -295,17 +292,8 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 					veg_type = VegType.MUSHROOM_BROWN
 				else:
 					veg_type = VegType.MUSHROOM_CLUSTER
-			# Strawberries (random size distribution)
-			elif rand > (1.0 - strawberry_density * 0.25):
-				var size_rand = randf()
-				if size_rand > 0.85:  # 15% large
-					veg_type = VegType.STRAWBERRY_BUSH_LARGE
-				elif size_rand > 0.30:  # 55% medium
-					veg_type = VegType.STRAWBERRY_BUSH_MEDIUM
-				else:  # 30% small
-					veg_type = VegType.STRAWBERRY_BUSH_SMALL
-			# Rocks (high spawn rate, mostly small)
-			elif rand > (1.0 - rock_density * 0.50):
+			# Rocks (reduced spawn for forest floor)
+			elif rand > (1.0 - rock_density * 0.30):
 				var rock_rand = randf()
 				if rock_rand > 0.95:  # 5% boulders
 					veg_type = VegType.BOULDER
@@ -317,11 +305,11 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.GRASSLAND:
-			# Trees
+			# Trees - Sparse oak trees (open pastoral feel)
 			if rand > (1.0 - tree_density * 0.20):
 				veg_type = VegType.TREE
-			# Strawberries (random size distribution)
-			elif rand > (1.0 - strawberry_density * 0.40):
+			# Strawberries - Signature grassland resource (increased spawn)
+			elif rand > (1.0 - strawberry_density * 0.55):
 				var size_rand = randf()
 				if size_rand > 0.85:  # 15% large
 					veg_type = VegType.STRAWBERRY_BUSH_LARGE
@@ -358,8 +346,11 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				return
 		
 		Chunk.Biome.MOUNTAIN:
-			# Boulders and rocks (more boulders)
-			if rand > (1.0 - rock_density * 0.60):
+			# Pine trees - Sparse, windswept conifers
+			if rand > (1.0 - tree_density * 0.25):
+				veg_type = VegType.PINE_TREE
+			# Boulders and rocks (abundant - mountain biome)
+			elif rand > (1.0 - rock_density * 0.70):
 				var rock_rand = randf()
 				if rock_rand > 0.5:  # 50% boulders
 					veg_type = VegType.BOULDER

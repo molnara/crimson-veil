@@ -34,6 +34,7 @@ NEXT UP (This Month)
 BACKLOG (Prioritized)
 ---------------------
 HIGH PRIORITY:
+[ ] Biome configuration options - Expose biome-specific vegetation densities and distributions in Inspector for easy tuning
 [ ] Boss progression system - Valheim-style boss encounters that gate biome access
 [ ] Advanced building - Walls, roofs, furniture for proper base construction
 [ ] Save/load system - Persistent world state and player progress
@@ -74,7 +75,7 @@ COMPLETED (Recent)
 [X] Crafting system - Recipe-based crafting with UI (Press R), 5 starter recipes (stone tools, campfire, torch, wood wall)
 [X] Perlin noise cloud system - Dual-layer noise for organic cloud shapes with Inspector parameters
 [X] Enhanced crosshair - Cross-shaped design with outline for visibility on all backgrounds
-[X] Sun/moon depth sorting fix - Repositioned celestial bodies to z=±500 for proper rendering order
+[X] Sun/moon depth sorting fix - Repositioned celestial bodies to z=Â±500 for proper rendering order
 [X] Tool system - Axe/Pickaxe with requirement checking and visual feedback
 [X] Procedural world generation - Chunk-based terrain with FastNoiseLite
 [X] Day/night cycle with pixelated sun/moon - Time-based sky colors and celestial bodies
@@ -118,6 +119,6 @@ BUGS / FIXES
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
+- Core loop: Explore â†’ Gather â†’ Craft â†’ Build â†’ Unlock new biomes â†’ Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
