@@ -1,36 +1,41 @@
 CRIMSON VEIL - FEATURE ROADMAP
 ================================
 
+AI MODEL GUIDE
+--------------
+[Sonnet] = Standard implementation work (45-55 sessions/week capacity)
+[Opus] = Complex architecture, code reviews, multi-system refactoring (3-4 sessions/week capacity)
+
 CURRENT SPRINT: "Storage & Organization" (Next 1-2 weeks)
 ----------------------------------------------------------
 Sprint Goal: Enable players to organize and store resources beyond 32-slot inventory limit
 
 PRIORITY 1 - Storage Containers (Core Feature) ✅ COMPLETE!
-[X] Container placement system - Place chests as building blocks
-[X] Container inventory management - Each chest has independent inventory
-[X] Container interaction - Click to open, transfer items
-[X] Container UI - Dual-panel interface (player left, container right) ✅ Phase 2 COMPLETE!
-[X] Container collision and physics - Proper world placement
-[X] Container visual design - Low-poly chest mesh with 16x16 texture
-[X] Controller support - Open containers with gamepad, B button closes
+[X] Container placement system [Sonnet] - Place chests as building blocks
+[X] Container inventory management [Sonnet] - Each chest has independent inventory
+[X] Container interaction [Sonnet] - Click to open, transfer items
+[X] Container UI [Sonnet] - Dual-panel interface (player left, container right) ✅ Phase 2 COMPLETE!
+[X] Container collision and physics [Sonnet] - Proper world placement
+[X] Container visual design [Sonnet] - Low-poly chest mesh with 16x16 texture
+[X] Controller support [Sonnet] - Open containers with gamepad, B button closes
 
 PRIORITY 2 - Inventory Improvements (Quality of Life) ✅ COMPLETE!
-[X] Item stacking - Wood (100), Stone (50), Food (20) stack limits
-[X] Auto-stack on pickup - Merge with existing stacks automatically
-[X] Stack count display - Visual indication of stack size
-[X] Inventory persistence - Stacks maintain across sessions (in-memory for now)
+[X] Item stacking [Sonnet] - Wood (100), Stone (50), Food (20) stack limits
+[X] Auto-stack on pickup [Sonnet] - Merge with existing stacks automatically
+[X] Stack count display [Sonnet] - Visual indication of stack size
+[X] Inventory persistence [Sonnet] - Stacks maintain across sessions (in-memory for now)
 
 PRIORITY 3 - Workbench Foundation (Progression Gate)
-[ ] Workbench placement - Craftable building block (10 wood + 5 stone)
-[ ] Workbench visual design - Low-poly table/bench model
-[ ] Proximity detection - Check player within 5m radius
-[ ] Crafting UI integration - Show "Requires Workbench" on locked recipes
+[ ] Workbench placement [Sonnet] - Craftable building block (10 wood + 5 stone)
+[ ] Workbench visual design [Sonnet] - Low-poly table/bench model
+[ ] Proximity detection [Sonnet] - Check player within 5m radius
+[ ] Crafting UI integration [Sonnet] - Show "Requires Workbench" on locked recipes
 
 DEFERRED TO NEXT SPRINT:
-[ ] Sort/Quick-stack buttons - Inventory organization helpers
-[ ] New workbench recipes - Advanced crafting options (need design)
-[ ] Container animations - Open/close lid animations
-[ ] Drag-and-drop UI - Enhanced item transfer (start with click-to-move)
+[ ] Sort/Quick-stack buttons [Sonnet] - Inventory organization helpers
+[ ] New workbench recipes [Sonnet] - Advanced crafting options (need design)
+[ ] Container animations [Sonnet] - Open/close lid animations
+[ ] Drag-and-drop UI [Sonnet] - Enhanced item transfer (start with click-to-move)
 
 CONTAINER UI FEATURES (Phase 2 - COMPLETE):
 --------------------------------------------
@@ -62,101 +67,102 @@ DESIGN DECISIONS FOR THIS SPRINT:
 
 NEXT UP (After Current Sprint)
 -------------------------------
-[ ] Workbench recipes - 5+ new recipes requiring workbench proximity
-[ ] Sort/Quick-stack buttons - Complete inventory QoL features
-[ ] Container visual polish - Animations, texture variations
-[ ] Combat system - Basic enemy encounters with simple weapons
-[ ] Save/load system - Persistent world state (HIGH PRIORITY after storage works)
+[ ] Workbench recipes [Sonnet] - 5+ new recipes requiring workbench proximity
+[ ] Sort/Quick-stack buttons [Sonnet] - Complete inventory QoL features
+[ ] Container visual polish [Sonnet] - Animations, texture variations
+[ ] Combat system [Opus] - Basic enemy encounters with simple weapons (new system)
+[ ] Save/load system [Opus] - Persistent world state (HIGH PRIORITY, complex serialization)
 
 
 BACKLOG (Prioritized)
 ---------------------
 HIGH PRIORITY:
-[ ] Save/load system - Persistent world state and player progress (NEXT after storage)
-[ ] Boss progression system - Valheim-style boss encounters that gate biome access
-[ ] Advanced building - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers - Stone → Iron → Steel progression path
-[ ] Durability system - Tools degrade with use (creates resource sink)
+[ ] Save/load system [Opus] - Persistent world state and player progress (complex serialization)
+[ ] Boss progression system [Opus] - Valheim-style boss encounters that gate biome access (new major system)
+[ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
+[ ] Tool tiers [Sonnet] - Stone → Iron → Steel progression path
+[ ] Durability system [Sonnet] - Tools degrade with use (creates resource sink)
 
 MEDIUM PRIORITY:
-[ ] Unique landmarks - Procedurally placed points of interest for discovery and exploration
-[ ] Animal AI improvements - More realistic critter behaviors (feeding, fleeing, nesting)
-[ ] Weather system - Rain, snow, storms that affect gameplay
-[ ] Farming system - Plant crops, tend gardens for renewable food
-[ ] NPC traders - Buy/sell resources, discover rare items
-[ ] Character customization - Appearance options for player model
-[ ] Controller UI navigation - D-Pad navigation through inventory/crafting menus with visual focus
+[ ] Unique landmarks [Opus] - Procedurally placed points of interest (new generation system)
+[ ] Animal AI improvements [Sonnet] - More realistic critter behaviors (feeding, fleeing, nesting)
+[ ] Weather system [Sonnet] - Rain, snow, storms that affect gameplay
+[ ] Farming system [Sonnet] - Plant crops, tend gardens for renewable food
+[ ] NPC traders [Opus] - Buy/sell resources, discover rare items (new AI system)
+[ ] Character customization [Sonnet] - Appearance options for player model
+[ ] Controller UI navigation [Sonnet] - D-Pad navigation through inventory/crafting menus with visual focus
 
 LOW PRIORITY:
-[ ] Performance stats UI - Display FPS, CPU, GPU, and memory usage in upper right corner
-[ ] Custom skybox - Replace ProceduralSkyMaterial with custom texture/cubemap for enhanced atmosphere
-[ ] Snow covered trees in snow biome - Visual enhancement for winter atmosphere
-[ ] Multi-material terrain rendering - Replace vertex color tinting (see chunk.gd:231)
-[ ] Seasonal changes - Visual and gameplay shifts throughout the year
-[ ] Fishing system - Coastal/river fishing for food variety
-[ ] Mounts/vehicles - Faster travel options for exploring large biomes
-[ ] Music system - Ambient tracks that match biome/time of day
-[ ] Controller rumble - Haptic feedback for harvesting, damage, and building
+[ ] Performance stats UI [Sonnet] - Display FPS, CPU, GPU, and memory usage in upper right corner
+[ ] Custom skybox [Sonnet] - Replace ProceduralSkyMaterial with custom texture/cubemap
+[ ] Snow covered trees in snow biome [Sonnet] - Visual enhancement for winter atmosphere
+[ ] Multi-material terrain rendering [Sonnet] - Replace vertex color tinting (see chunk.gd:231)
+[ ] Seasonal changes [Opus] - Visual and gameplay shifts throughout the year (complex system)
+[ ] Fishing system [Sonnet] - Coastal/river fishing for food variety
+[ ] Mounts/vehicles [Opus] - Faster travel options (new physics/control system)
+[ ] Music system [Sonnet] - Ambient tracks that match biome/time of day
+[ ] Controller rumble [Sonnet] - Haptic feedback for harvesting, damage, and building
 
 
 SOMEDAY/MAYBE (Ideas to explore)
 ---------------------------------
-- Multiplayer co-op - Shared world building with friends
-- Magic/enchanting system - Mystical progression path
-- Underground/cave generation - Deeper exploration with mining
-- Pet system - Tamed critters that follow and help
-- Treasure hunting - Buried loot and rare discoveries
-- Photography mode - Capture and share scenic moments
-- Container networks - Auto-sorting/piping systems
-- Named containers - Label chests for organization
-- Container security - Locks or ownership system
+- Multiplayer co-op [Opus] - Shared world building with friends (major architecture change)
+- Magic/enchanting system [Opus] - Mystical progression path (new system)
+- Underground/cave generation [Opus] - Deeper exploration with mining (major world gen change)
+- Pet system [Sonnet] - Tamed critters that follow and help
+- Treasure hunting [Sonnet] - Buried loot and rare discoveries
+- Photography mode [Sonnet] - Capture and share scenic moments
+- Container networks [Opus] - Auto-sorting/piping systems (complex logic)
+- Named containers [Sonnet] - Label chests for organization
+- Container security [Sonnet] - Locks or ownership system
 
 
 COMPLETED (Recent)
 ------------------
-[X] Container UI - Dual-panel interface with click/shift-click transfers (Phase 2 COMPLETE)
-[X] UI state management - Suppression/restoration when container opens/closes
-[X] B button container close - Controller quick exit
-[X] Scene-based container UI - container_ui.tscn for easier visual editing
-[X] Container placement system - Chests placeable as building blocks (10 wood cost)
-[X] Container interaction - E key or A button opens chest within 3m, context-sensitive A button
-[X] Container highlighting - Green outline when looking at chest (Layer 3 collision)
-[X] Container removal warning - Dialog confirms removal when chest has items
-[X] Independent container inventories - Each chest has own 32-slot Inventory instance
-[X] Low-poly chest visual - Procedural mesh with 16x16 wood/metal texture
-[X] D-Pad input conflict resolved - Removed D-Pad from movement, dedicated to building controls
-[X] Item stacking system - Stack limits enforced (wood: 100, stone: 50, food: 20, tools: 1) with visual feedback
-[X] Stack count display - Shows "current/max" format, red "FULL" indicator when maxed
-[X] Inventory full notification - On-screen alert when trying to exceed stack limits
-[X] Inventory UI scene - Created inventory_ui.tscn for proper rendering
-[X] Xbox controller support - Full analog movement/camera, all buttons mapped, simultaneous keyboard+controller support
-[X] Tool cycling improvement - Removed "None" option, now only cycles Axe ↔ Pickaxe
-[X] Valheim-style log breaking physics - Trees break into 3-5 log pieces on impact with satisfying scatter
-[X] Impact-based tree shattering - Logs spawn when fallen tree collides with terrain/objects
-[X] Log despawn particles - Brown particle "poof" effects when logs disappear (1-4 second randomized lifetimes)
-[X] Removed tree stumps - Clean world, better performance, avoids clutter issues
-[X] Health/hunger system - Stats management, regeneration when well-fed (hunger > 70), movement penalties when hungry, eating from inventory
-[X] Biome configuration system - Inspector controls for biome size, thresholds, and vegetation densities per biome
-[X] Guaranteed Grassland spawn zone - Valheim-style safe spawn with configurable radius
-[X] Biome-specific vegetation distributions - Each biome has unique tree types and signature resources
-[X] Code refactoring - Extracted tree generators from vegetation_spawner (reduced from 2,075 to 1,457 lines)
-[X] Inventory UI - Grid-based visual inventory (Tab to toggle), 32 slots with item icons and counts
-[X] Crafting system - Recipe-based crafting with UI (Press R), 5 starter recipes (stone tools, campfire, torch, wood wall)
-[X] Perlin noise cloud system - Dual-layer noise for organic cloud shapes with Inspector parameters
-[X] Enhanced crosshair - Cross-shaped design with outline for visibility on all backgrounds
-[X] Sun/moon depth sorting fix - Repositioned celestial bodies to z=±500 for proper rendering order
-[X] Tool system - Axe/Pickaxe with requirement checking and visual feedback
-[X] Procedural world generation - Chunk-based terrain with FastNoiseLite
-[X] Day/night cycle with pixelated sun/moon - Time-based sky colors and celestial bodies
-[X] Harvestable resources - Trees, strawberries, mushrooms with proper collision
-[X] Harvest particles - Minecraft-style pixel "poof" effects when gathering
-[X] Harvest UI feedback - Progress bar and resource name display
-[X] Tree falling physics - Trees tip over when chopped down (Valheim-style)
-[X] Resource night glow - Mushrooms and strawberries emit light at night
-[X] Critter spawning - Rabbits, deer, birds, lizards, crabs with procedural placement
-[X] Settings menu - Resolution, fullscreen, vsync, MSAA, quality presets
-[X] Water plane - Infinite ocean with collision for walking
-[X] Visual polish - Clouds, crosshair, harvest highlights, tree physics
+[X] Container UI [Sonnet] - Dual-panel interface with click/shift-click transfers (Phase 2 COMPLETE)
+[X] UI state management [Sonnet] - Suppression/restoration when container opens/closes
+[X] B button container close [Sonnet] - Controller quick exit
+[X] Scene-based container UI [Sonnet] - container_ui.tscn for easier visual editing
+[X] Container placement system [Sonnet] - Chests placeable as building blocks (10 wood cost)
+[X] Container interaction [Sonnet] - E key or A button opens chest within 3m, context-sensitive A button
+[X] Container highlighting [Sonnet] - Green outline when looking at chest (Layer 3 collision)
+[X] Container removal warning [Sonnet] - Dialog confirms removal when chest has items
+[X] Independent container inventories [Sonnet] - Each chest has own 32-slot Inventory instance
+[X] Low-poly chest visual [Sonnet] - Procedural mesh with 16x16 wood/metal texture
+[X] D-Pad input conflict resolved [Sonnet] - Removed D-Pad from movement, dedicated to building controls
+[X] Item stacking system [Sonnet] - Stack limits enforced (wood: 100, stone: 50, food: 20, tools: 1)
+[X] Stack count display [Sonnet] - Shows "current/max" format, red "FULL" indicator when maxed
+[X] Inventory full notification [Sonnet] - On-screen alert when trying to exceed stack limits
+[X] Inventory UI scene [Sonnet] - Created inventory_ui.tscn for proper rendering
+[X] Xbox controller support [Sonnet] - Full analog movement/camera, all buttons mapped
+[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe ↔ Pickaxe
+[X] Valheim-style log breaking physics [Sonnet] - Trees break into 3-5 log pieces on impact
+[X] Impact-based tree shattering [Sonnet] - Logs spawn when fallen tree collides with terrain
+[X] Log despawn particles [Sonnet] - Brown particle "poof" effects when logs disappear
+[X] Removed tree stumps [Sonnet] - Clean world, better performance, avoids clutter issues
+[X] Health/hunger system [Sonnet] - Stats management, regeneration when well-fed, eating from inventory
+[X] Biome configuration system [Sonnet] - Inspector controls for biome size and vegetation densities
+[X] Guaranteed Grassland spawn zone [Sonnet] - Valheim-style safe spawn with configurable radius
+[X] Biome-specific vegetation distributions [Sonnet] - Each biome has unique tree types
+[X] Code refactoring [Sonnet] - Extracted tree generators from vegetation_spawner
+[X] Inventory UI [Sonnet] - Grid-based visual inventory (Tab to toggle), 32 slots
+[X] Crafting system [Sonnet] - Recipe-based crafting with UI (Press R), 5 starter recipes
+[X] Perlin noise cloud system [Sonnet] - Dual-layer noise for organic cloud shapes
+[X] Enhanced crosshair [Sonnet] - Cross-shaped design with outline for visibility
+[X] Sun/moon depth sorting fix [Sonnet] - Repositioned celestial bodies to z=±500
+[X] Tool system [Sonnet] - Axe/Pickaxe with requirement checking and visual feedback
+[X] Procedural world generation [Sonnet] - Chunk-based terrain with FastNoiseLite
+[X] Day/night cycle [Sonnet] - Time-based sky colors and celestial bodies
+[X] Harvestable resources [Sonnet] - Trees, strawberries, mushrooms with proper collision
+[X] Harvest particles [Sonnet] - Minecraft-style pixel "poof" effects when gathering
+[X] Harvest UI feedback [Sonnet] - Progress bar and resource name display
+[X] Tree falling physics [Sonnet] - Trees tip over when chopped down (Valheim-style)
+[X] Resource night glow [Sonnet] - Mushrooms and strawberries emit light at night
+[X] Critter spawning [Sonnet] - Rabbits, deer, birds, lizards, crabs with procedural placement
+[X] Settings menu [Sonnet] - Resolution, fullscreen, vsync, MSAA, quality presets
+[X] Water plane [Sonnet] - Infinite ocean with collision for walking
+[X] Visual polish [Sonnet] - Clouds, crosshair, harvest highlights, tree physics
+[X] Code review [Opus] - Comprehensive codebase analysis (Grade: A)
 
 
 DESIGN QUESTIONS / DECISIONS NEEDED
@@ -168,56 +174,59 @@ Sprint Planning Decisions (Made):
 ✅ Item stacking: Full implementation this sprint
 ✅ Workbench scope: Placement + proximity, defer recipe gating
 
-Future Decisions (Still Open):
-? Should tools degrade/break or have infinite durability? (affects resource loops)
-? What should unlock new biomes - boss kills or tool upgrades? (progression pacing)
-? Should building have structural integrity like Valheim or free placement like Minecraft?
-? How rare should character trees be? (currently 5% - too common or too rare?)
-? Should critters be harvestable for food/materials or purely ambient?
-? Should controller vibration intensity be configurable in settings?
-? Container limits: How many containers can exist in world simultaneously?
-? Workbench limits: One per player or unlimited placement?
+Future Decisions (Still Open) - Use [Opus] for complex design decisions:
+? Should tools degrade/break or have infinite durability? (affects resource loops) [Opus]
+? What should unlock new biomes - boss kills or tool upgrades? (progression pacing) [Opus]
+? Should building have structural integrity like Valheim or free placement like Minecraft? [Opus]
+? How rare should character trees be? (currently 5% - too common or too rare?) [Sonnet]
+? Should critters be harvestable for food/materials or purely ambient? [Sonnet]
+? Should controller vibration intensity be configurable in settings? [Sonnet]
+? Container limits: How many containers can exist in world simultaneously? [Sonnet]
+? Workbench limits: One per player or unlimited placement? [Sonnet]
 
 
 TECHNICAL DEBT / REFACTORING
 -----------------------------
-[X] Code organization - Extracted large tree generators into modular files (COMPLETE)
+[X] Code organization [Sonnet] - Extracted large tree generators into modular files (COMPLETE)
 
-HIGH PRIORITY (from Opus 4.5 Code Review - 2024-12-11):
-[ ] Critter visual extraction - Extract critter visuals to separate files (rabbit_visual.gd, crab_visual.gd, etc.) following tree_visual.gd pattern. Reduces critter_spawner.gd from 1,143 lines.
-[ ] ITEM_COLORS consolidation - Move duplicated ITEM_COLORS dictionary from inventory_ui.gd and container_ui.gd to shared location (e.g., constants.gd or inventory.gd)
-[ ] Container null safety - Add container validity checks in container_ui.gd to prevent null reference if container is destroyed while UI is open
+HIGH PRIORITY (from Opus 4.5 Code Review - 2025-12-11):
+[ ] Critter visual extraction [Sonnet] - Extract critter visuals to separate files (rabbit_visual.gd, crab_visual.gd, etc.) following tree_visual.gd pattern. Reduces critter_spawner.gd from 1,143 lines.
+[ ] ITEM_COLORS consolidation [Sonnet] - Move duplicated ITEM_COLORS dictionary from inventory_ui.gd and container_ui.gd to shared location (e.g., constants.gd or inventory.gd)
+[ ] Container null safety [Sonnet] - Add container validity checks in container_ui.gd to prevent null reference if container is destroyed while UI is open
 
 MEDIUM PRIORITY (from Code Review):
-[ ] Input handling consolidation - Consolidate duplicate input handling in player.gd (uses both InputEventKey checks AND Input.is_action_pressed for same actions). Use only Input Actions for maintainability.
-[ ] Cloud system extraction - Extract cloud system from day_night_cycle.gd (829 lines) to separate cloud_manager.gd
-[ ] Debug output toggle - Add debug flag to control print() statements throughout codebase instead of commenting out
+[ ] Input handling consolidation [Sonnet] - Consolidate duplicate input handling in player.gd. Use only Input Actions for maintainability.
+[ ] Cloud system extraction [Sonnet] - Extract cloud system from day_night_cycle.gd (829 lines) to separate cloud_manager.gd
+[ ] Debug output toggle [Sonnet] - Add debug flag to control print() statements throughout codebase
 
 LOW PRIORITY:
-[ ] Multi-material terrain system - Replace vertex color tinting with proper material blending (chunk.gd)
-[ ] Settings preset detection - "Custom" preset detection could be more robust
-[ ] Resource spawning optimization - Could batch-spawn resources instead of one-at-a-time
-[ ] Chunk unloading delay - Add graceful fade-out before unloading distant chunks
-[ ] Container slot pooling - Reuse UI nodes instead of queue_free/recreate (performance optimization)
-[ ] Block rotation - Add ability to rotate walls/floors before placement in building system
-[ ] LOD for distant trees - Implement level-of-detail system for vegetation
+[ ] Multi-material terrain system [Sonnet] - Replace vertex color tinting with proper material blending (chunk.gd)
+[ ] Settings preset detection [Sonnet] - "Custom" preset detection could be more robust
+[ ] Resource spawning optimization [Sonnet] - Could batch-spawn resources instead of one-at-a-time
+[ ] Chunk unloading delay [Sonnet] - Add graceful fade-out before unloading distant chunks
+[ ] Container slot pooling [Sonnet] - Reuse UI nodes instead of queue_free/recreate (performance optimization)
+[ ] Block rotation [Sonnet] - Add ability to rotate walls/floors before placement in building system
+[ ] LOD for distant trees [Sonnet] - Implement level-of-detail system for vegetation
+
+QUARTERLY REVIEWS:
+[ ] Architecture review [Opus] - Scheduled codebase health check (next: after save/load implementation)
 
 
 BUGS / FIXES
 ------------
-[X] Sun/moon seem to change sizes as I explore - FIXED
-[X] Crabs still don't seem to spawn - FIXED
-[X] Rocks are not glowing (blue-ish) at night (should behave just like mushrooms) - FIXED
-[X] Trees sometimes breaking too early before hitting ground - FIXED (improved collision timing)
-[X] Logs clipping through terrain - FIXED (spawn height adjustment, CylinderShape collision)
-[X] Panels not centered in container UI - FIXED (CenterContainer)
-[X] Wrong panel order in container UI - FIXED (player left, container right)
-[X] Other UIs visible when container open - FIXED (UI suppression system)
-[X] Inventory debug text showing during container interaction - FIXED (harvest_ui suppression)
+[X] Sun/moon seem to change sizes as I explore - FIXED [Sonnet]
+[X] Crabs still don't seem to spawn - FIXED [Sonnet]
+[X] Rocks are not glowing (blue-ish) at night - FIXED [Sonnet]
+[X] Trees sometimes breaking too early before hitting ground - FIXED [Sonnet]
+[X] Logs clipping through terrain - FIXED [Sonnet]
+[X] Panels not centered in container UI - FIXED [Sonnet]
+[X] Wrong panel order in container UI - FIXED [Sonnet]
+[X] Other UIs visible when container open - FIXED [Sonnet]
+[X] Inventory debug text showing during container interaction - FIXED [Sonnet]
 
 POTENTIAL ISSUES (from Code Review - not yet confirmed):
-[ ] Race condition - Container destroyed while UI open could cause null reference (see container null safety above)
-[ ] Input blocking too broad - player.gd line 148 blocks ALL input when container open, should be more targeted
+[ ] Race condition [Sonnet] - Container destroyed while UI open could cause null reference
+[ ] Input blocking too broad [Sonnet] - player.gd line 148 blocks ALL input when container open
 
 
 SPRINT RISK ASSESSMENT
@@ -242,8 +251,14 @@ Notes:
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
-- Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features over rushed completeness
+- Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
 - Priority 1 (Storage Containers): 7/7 COMPLETE! ✅
 - Priority 2 (Inventory Improvements): 4/4 COMPLETE! ✅
 - Priority 3 (Workbench Foundation): 0/4 - NEXT UP
-- Code Review (Opus 4.5): Completed 2024-12-11 - Overall grade: A (Excellent)
+- Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
+
+AI MODEL USAGE SUMMARY:
+- Total Opus tasks in backlog: ~12 (complex systems, architecture)
+- Total Sonnet tasks in backlog: ~40+ (implementation, fixes, polish)
+- Recommended weekly balance: 1 Opus session + 10-15 Sonnet sessions
+- See AI_USAGE_ANALYSIS.md for detailed capacity planning

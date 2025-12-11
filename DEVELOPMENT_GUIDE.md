@@ -1,5 +1,18 @@
 # Crimson Veil - Development Guide
 
+## Project Statistics
+
+| Metric | Value |
+|--------|-------|
+| **Development Started** | December 7, 2025 |
+| **Total Commits** | 81+ |
+| **Current Version** | v0.4.0 (Storage & Organization Sprint) |
+| **Code Quality Grade** | A (Opus 4.5 review, Dec 11, 2025) |
+| **Primary Dev Model** | Claude Sonnet 4.5 |
+| **Architecture Style** | Modular, signal-based, component systems |
+
+---
+
 ## Session Start Checklist
 
 **At the beginning of EVERY development session, Claude should:**
@@ -13,6 +26,70 @@
    - Known issues (from ROADMAP.txt "BUGS / FIXES" section)
    - Brief reminder of next priorities
 5. **Show the quick commands list below**
+6. **Assess feature complexity** - Decide Sonnet vs Opus:
+   - Implementation work, bug fixes, single-file changes → **Sonnet**
+   - Architecture decisions, code reviews, multi-system refactoring → **Opus**
+
+---
+
+## AI Model Usage & Capacity Planning
+
+### Model Selection Strategy
+
+| Model | Best For | Weekly Capacity | Usage Per Session |
+|-------|----------|-----------------|-------------------|
+| **Sonnet** | Implementation, bug fixes, features | 45-55 sessions | ~2% |
+| **Opus** | Architecture, reviews, complex refactoring | 3-4 sessions | ~25% |
+
+### When to Use Each Model
+
+**Sonnet (Primary Workhorse):**
+- Single-file changes and bug fixes
+- New feature implementation
+- UI/UX modifications
+- Balance tweaks and tuning
+- Documentation updates
+- Most day-to-day development
+
+**Opus (Strategic Use Only):**
+- Comprehensive code reviews
+- Major architectural decisions
+- Multi-system refactoring
+- Complex debugging across many files
+- Design pattern recommendations
+
+### Feature Size Estimation
+
+| Feature Size | Sessions Needed | Sonnet Usage | Examples |
+|-------------|-----------------|--------------|----------|
+| **Small** | 1 | ~2% | Bug fix, tweak, small UI change |
+| **Medium** | 2 | ~4% | New system, new resource type |
+| **Large** | 3 | ~6% | Multi-file feature, UI overhaul |
+
+### Weekly Capacity Planning
+
+With a fresh weekly reset, you can complete approximately:
+- **25-30 small features** (bug fixes, tweaks)
+- **12-15 medium features** (new systems)
+- **8-10 large features** (multi-file implementations)
+
+### Session Efficiency Tips
+
+1. **Always upload DEVELOPMENT_GUIDE.md first** - Provides full context
+2. **Request specific files before suggesting code** - Prevents integration issues
+3. **One feature per session** - Clean commits, focused work
+4. **Use commit preparation checklist at session end** - Ensures nothing is missed
+5. **Track changes mentally during session** - Update docs only at commit time
+
+### Development Velocity (Actual Data)
+
+Based on project history (Dec 7-11, 2025):
+- **81 commits in 4 days** with 43% Sonnet usage
+- **~20 major features** implemented
+- **Average: 1-3 sessions per feature**
+- **Efficiency improved** as workflow was refined
+
+For detailed capacity calculations, feature-to-session mapping, and weekly tracking templates, see **AI_USAGE_ANALYSIS.md**.
 
 ---
 
@@ -30,18 +107,19 @@ What should I work on next?
 
 **Example Session Start Output:**
 ```
-🎯 CURRENT SPRINT:
-- Tool system ✓ (completed)
-- Crafting system (next up)
-- Inventory UI (planned)
+🎯 CURRENT SPRINT: Storage & Organization
+- Priority 1: Storage Containers ✓ (complete)
+- Priority 2: Inventory Improvements ✓ (complete)
+- Priority 3: Workbench Foundation (next up) [Sonnet]
 
 📝 RECENT CHANGES:
-[2024-12-10 16:00] [MAJOR] Added minimal tool system
-[2024-12-10 16:30] [MINOR] Added visual tool feedback
+[2025-12-12 05:50] [DOC] Added AI model annotations to ROADMAP.txt
+[2025-12-12 05:45] [DOC] Created AI_USAGE_ANALYSIS.md
+[2025-12-11 21:00] [MAJOR] Container UI Phase 2 complete
 
 🐛 KNOWN ISSUES:
-- Trees occasionally clip through terrain on slopes
-- Fullscreen only works in exported builds
+- Tree falling physics occasionally glitches on steep terrain
+- Potential: Race condition if container destroyed while UI open
 
 Ready to continue development!
 ```
@@ -173,7 +251,7 @@ This ensures future development sessions can easily find and work with the sleep
 ### Currently In Development (Storage & Organization Sprint)
 - **Workbench System**: Crafting station with proximity detection for recipe gating (Priority 3 - next up)
 
-### Technical Debt (From Code Review - 2024-12-11)
+### Technical Debt (From Code Review - 2025-12-11)
 HIGH PRIORITY:
 - **Critter visual extraction**: Extract critter visuals to separate files following tree_visual.gd pattern
 - **ITEM_COLORS consolidation**: Move duplicated dictionary from inventory_ui.gd and container_ui.gd to shared location
@@ -373,6 +451,7 @@ res://
 ├── ROADMAP.txt                   [Features, priorities, completed items]
 ├── CHANGELOG.txt                 [Session-by-session change history]
 ├── CODE_REVIEW.md                [Codebase analysis from Opus 4.5 review]
+├── AI_USAGE_ANALYSIS.md          [AI capacity planning & usage tracking]
 ├── world.gd                      [Scene root, system initialization]
 ├── player.gd                     [Input, movement, camera, controller support, UI state management]
 ├── player.tscn                   [Player scene with health system, camera, collision]
@@ -380,6 +459,11 @@ res://
 ```
 
 **When to upload:**
+- Starting any session → DEVELOPMENT_GUIDE.md (always)
+- Sprint planning → ROADMAP.txt + AI_USAGE_ANALYSIS.md
+- Checking recent work → CHANGELOG.txt
+- Capacity planning → AI_USAGE_ANALYSIS.md
+- Code quality concerns → CODE_REVIEW.md
 - Adding controller support → project.godot (for input actions)
 - Modifying input mappings → project.godot
 - Player input/movement → player.gd
@@ -751,6 +835,31 @@ IMPACT levels:
 
 **Important**: CHANGELOG.txt, ROADMAP.txt, and DEVELOPMENT_GUIDE.md are only modified when preparing a commit, not during development. This keeps files clean and only shows "official" committed changes.
 
+### CHANGELOG ↔ Git Sync
+
+Each commit should correspond to one development session. This keeps CHANGELOG and git history aligned.
+
+**Workflow:**
+1. During session: Track changes mentally
+2. At commit time: Add session entries to CHANGELOG.txt
+3. Use those same entries as commit message body:
+   ```
+   feat: [Brief summary - 50 chars max]
+
+   - [MAJOR] First significant change
+   - [MINOR] Second change
+   - [FIX] Bug that was fixed
+   ```
+4. After pushing: Note commit hash in Version History when creating releases
+
+**Release tagging:**
+```bash
+git tag -a v0.X.0 -m "Version 0.X.0 - Brief description"
+git push origin v0.X.0
+```
+
+Then update CHANGELOG.txt Version History with the commit hash.
+
 ### Commit Preparation Checklist
 When user says they want to commit:
 - [ ] Read /mnt/project/CHANGELOG.txt
@@ -768,6 +877,7 @@ When user says they want to commit:
 - [ ] Copy all new .gd files to outputs (with proper folder structure)
 - [ ] Copy all modified .tscn files to outputs
 - [ ] Copy project.godot if modified
+- [ ] **Use CHANGELOG entries as commit message body** (keeps git history in sync)
 - [ ] Provide git commit message suggestion
 - [ ] List all files that need to be committed
 
