@@ -16,9 +16,11 @@ var is_flying: bool = false  # Fly/noclip mode toggle
 # Systems
 var harvesting_system: HarvestingSystem
 var building_system: BuildingSystem
+var crafting_system: CraftingSystem
 var tool_system: ToolSystem
 var inventory: Inventory
 var harvest_ui: Control
+var crafting_ui: Control
 
 # Get the gravity from the project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -65,6 +67,11 @@ func _ready():
 	add_child(building_system)
 	building_system.initialize(self, camera, inventory)
 	
+	# Initialize crafting system
+	crafting_system = CraftingSystem.new()
+	add_child(crafting_system)
+	crafting_system.initialize(inventory)
+	
 	# Connect harvesting signals
 	harvesting_system.harvest_completed.connect(_on_harvest_completed)
 	
@@ -80,10 +87,23 @@ func _input(event):
 	
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel"):
+		# Close crafting menu if open
+		if crafting_ui and crafting_ui.visible:
+			crafting_ui.visible = false
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			return
+		
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+	# Toggle crafting menu with R key
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_R:
+			if crafting_ui:
+				crafting_ui.toggle_visibility()
+			print("R key pressed - Toggle crafting")
 	
 	# Toggle fly mode with F key
 	if event.is_action_pressed("toggle_fly"):
@@ -145,7 +165,7 @@ func _input(event):
 			inventory.print_inventory()
 
 func setup_ui():
-	"""Setup the harvest UI"""
+	"""Setup the harvest UI and crafting UI"""
 	print("Loading harvest UI...")
 	var ui_scene = load("res://harvest_ui.tscn")
 	if ui_scene:
@@ -172,6 +192,14 @@ func setup_ui():
 		print("Harvest UI loaded successfully")
 	else:
 		print("Warning: Could not load harvest_ui.tscn")
+	
+	# Load crafting UI
+	print("Creating crafting UI...")
+	crafting_ui = preload("res://crafting_ui.gd").new()
+	get_tree().root.add_child(crafting_ui)
+	crafting_ui.set_crafting_system(crafting_system)
+	crafting_ui.set_inventory(inventory)
+	print("Crafting UI loaded successfully")
 
 func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""
