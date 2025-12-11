@@ -21,6 +21,7 @@ var tool_system: ToolSystem
 var inventory: Inventory
 var harvest_ui: Control
 var crafting_ui: Control
+var inventory_ui: Control
 
 # Get the gravity from the project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -87,6 +88,12 @@ func _input(event):
 	
 	# Toggle mouse capture
 	if event.is_action_pressed("ui_cancel"):
+		# Close inventory if open
+		if inventory_ui and inventory_ui.visible:
+			inventory_ui.visible = false
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			return
+		
 		# Close crafting menu if open
 		if crafting_ui and crafting_ui.visible:
 			crafting_ui.visible = false
@@ -97,6 +104,13 @@ func _input(event):
 			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+	# Toggle inventory with Tab key
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_TAB:
+			if inventory_ui:
+				inventory_ui.toggle_visibility()
+			print("Tab key pressed - Toggle inventory")
 	
 	# Toggle crafting menu with R key
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -200,6 +214,13 @@ func setup_ui():
 	crafting_ui.set_crafting_system(crafting_system)
 	crafting_ui.set_inventory(inventory)
 	print("Crafting UI loaded successfully")
+	
+	# Load inventory UI
+	print("Creating inventory UI...")
+	inventory_ui = preload("res://inventory_ui.gd").new()
+	get_tree().root.add_child(inventory_ui)
+	inventory_ui.set_inventory(inventory)
+	print("Inventory UI loaded successfully")
 
 func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""

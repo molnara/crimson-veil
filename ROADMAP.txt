@@ -4,7 +4,6 @@ CRIMSON VEIL - FEATURE ROADMAP
 CURRENT SPRINT (Next 1-2 weeks)
 --------------------------------
 [ ] Biome-specific resources - Unique materials in each biome (desert cacti, snow ice, etc)
-[ ] Inventory UI - Visual display of collected resources and equipped tools
 
 VISUAL POLISH
 -------------
@@ -21,6 +20,7 @@ IN PROGRESS
 [X] Day/night cycle - Time-based lighting with sun/moon visuals (COMPLETE)
 [X] Settings system - Graphics, display, performance options (COMPLETE)
 [X] Crafting system - Simple crafting recipes to convert resources into tools/items (COMPLETE)
+[X] Inventory UI - Visual display of collected resources and equipped tools (COMPLETE)
 
 
 NEXT UP (This Month)
@@ -69,6 +69,7 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+[X] Inventory UI - Grid-based visual inventory (Tab to toggle), 32 slots with item icons and counts
 [X] Crafting system - Recipe-based crafting with UI (Press R), 5 starter recipes (stone tools, campfire, torch, wood wall)
 [X] Perlin noise cloud system - Dual-layer noise for organic cloud shapes with Inspector parameters
 [X] Enhanced crosshair - Cross-shaped design with outline for visibility on all backgrounds
