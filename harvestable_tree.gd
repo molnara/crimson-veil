@@ -17,19 +17,20 @@ TREE LIFECYCLE (State Machine):
    - Spawns wood particles at base
    - Creates stump (StaticBody3D remains at base)
 
-3. ON GROUND (RigidBody3D settled)
-   - Detects ground via low velocity check
-   - Waits 2 seconds after settling
+3. IMPACT (Ground collision detected)
+   - Detects ground via collision signal
+   - Spawns impact particles and crack sound effect
+   - Breaks trunk into 3-5 log segments at impact point
 
 4. LOG PIECES (Multiple RigidBody3D)
-   - Tree breaks into 3-5 log segments
-   - Logs scatter with gentle physics impulse
-   - Each log despawns after 1.5-2.5 seconds with particles
+   - Logs scatter with realistic physics based on impact angle
+   - Each log is harvestable (instant pickup when approached)
+   - Logs despawn after 45-60 seconds with particles
 
 PERFORMANCE NOTES:
 - Physics body created only when falling (not pre-allocated)
 - Collision shape is capsule covering trunk only (not foliage)
-- Materials NOT cached (previous bug removed - was unused)
+- Logs use simple cylinder collision for performance
 
 INTEGRATION:
 - Spawned by VegetationSpawner.create_tree()
@@ -45,24 +46,25 @@ enum TreeType {
 
 @export var tree_type: TreeType = TreeType.NORMAL
 @export var tree_height: float = 6.0  # Total height of tree
-@export var leave_stump: bool = true
 
 # Physics-based falling state
 var is_falling: bool = false
 var fall_direction: Vector3 = Vector3.ZERO  # Calculated from player position in start_harvest
 var fall_timer: float = 0.0  # Total time since falling started
-var despawn_delay: float = 2.0  # How long tree stays on ground before breaking into logs
-var fade_duration: float = 2.0  # Unused (logs despawn instantly with particles)
-var has_hit_ground: bool = false  # Detected via velocity < 0.8
-var ground_hit_time: float = 0.0  # When ground was detected
+var has_hit_ground: bool = false  # Detected via collision signal
+var ground_impact_position: Vector3 = Vector3.ZERO  # Where the tree hit the ground
+var ground_impact_normal: Vector3 = Vector3.UP  # Surface normal at impact
 
 # Physics components (created dynamically when falling starts, not pre-allocated)
 var physics_body: RigidBody3D = null
 var physics_collision: CollisionShape3D = null
 
 # Visual components
-var stump_mesh: MeshInstance3D = null  # Remains at base after tree falls
 var tree_meshes: Array = []  # All MeshInstance3D children (cached for effects)
+
+# Trunk dimensions (extracted from collision shape)
+var trunk_height: float = 5.0
+var trunk_radius: float = 0.3
 
 func _ready():
 	# Set properties based on tree type FIRST
@@ -162,8 +164,8 @@ func complete_harvest():
 	1. Emit drops signal (inventory system adds items)
 	2. Start falling animation via start_falling()
 	3. Tree converts to physics body and falls realistically
-	4. After settling -> breaks into log pieces
-	5. Logs despawn with particles after delay
+	4. On ground impact -> breaks into log pieces
+	5. Logs are harvestable and despawn after delay
 	"""
 	if not is_being_harvested:
 		return
@@ -190,20 +192,14 @@ func start_falling():
 	
 	CONVERSION PROCESS:
 	1. Spawn wood particles at base
-	2. Create stump (StaticBody3D remains at tree base)
-	3. Convert tree to RigidBody3D via convert_to_physics_body()
-	4. Apply gentle torque in fall_direction (away from player)
+	2. Convert tree to RigidBody3D via convert_to_physics_body()
+	3. Apply gentle torque in fall_direction (away from player)
 	"""
 	is_falling = true
 	has_hit_ground = false
-	ground_hit_time = 0.0
 	
 	# Spawn wood particles at the base
 	spawn_break_particles()
-	
-	# Create stump if enabled
-	if leave_stump:
-		create_stump()
 	
 	# Convert to physics body for realistic falling
 	convert_to_physics_body()
@@ -211,28 +207,169 @@ func start_falling():
 func spawn_log_pieces():
 	"""Break the tree into log pieces that scatter
 	
-	FINAL STAGE: Tree on ground -> Multiple log RigidBodies
+	IMPACT-BASED SHATTERING:
 	
 	PROCESS:
-	1. Destroy the physics_body tree
-	2. Spawn 3-5 log cylinders at tree position
-	3. Copy trunk material to logs (maintains tree type visual)
-	4. Apply gentle scatter impulse (2-5 force, very damped)
-	5. Each log auto-despawns after 1.5-2.5 seconds with particles
+	1. Calculate number of logs based on tree size (3-5 for normal trees)
+	2. Spawn log cylinders along the trunk at impact position
+	3. Each log gets realistic physics based on impact angle
+	4. Logs scatter in cone pattern away from impact
+	5. Each log is harvestable (gives 2-3 wood on pickup)
+	6. Logs despawn after 45-60 seconds if not harvested
 	
-	PERFORMANCE: Logs have high damping (4.0) to settle quickly
+	PHYSICS DETAILS:
+	- Logs inherit velocity from falling tree at impact
+	- Scatter direction based on impact normal
+	- Small bounce and roll for realism
+	- Higher damping than tree for quicker settling
 	"""
 	if not physics_body or not is_instance_valid(physics_body):
 		return
 	
-	var tree_position = physics_body.global_position
-	var num_logs = 3 + randi() % 3  # 3-5 log pieces
+	# Determine log count based on tree type
+	var num_logs = 3
+	match tree_type:
+		TreeType.NORMAL:
+			num_logs = 3 + randi() % 3  # 3-5 logs
+		TreeType.PINE:
+			num_logs = 4 + randi() % 3  # 4-6 logs (taller)
+		TreeType.PALM:
+			num_logs = 2 + randi() % 2  # 2-3 logs (shorter)
 	
-	# Get the tree parent to spawn logs in world
-	var world = get_tree().root
+	# Get trunk material for visual consistency
+	var trunk_material = get_trunk_material()
 	
-	# Find ANY mesh in the tree to get trunk material - try all meshes
-	var trunk_material = null
+	# Calculate log dimensions
+	var log_length = trunk_height / float(num_logs + 1)  # +1 to make logs slightly smaller
+	var log_radius = trunk_radius * 0.9  # Slightly smaller than trunk
+	
+	# Get impact velocity for scatter physics
+	var impact_velocity = physics_body.linear_velocity if physics_body else Vector3.ZERO
+	
+	# Spawn logs scattered from impact point
+	for i in range(num_logs):
+		spawn_single_log(
+			ground_impact_position,
+			log_length,
+			log_radius,
+			trunk_material,
+			impact_velocity,
+			i,
+			num_logs
+		)
+
+func spawn_single_log(
+	spawn_pos: Vector3,
+	length: float,
+	radius: float,
+	material: Material,
+	impact_velocity: Vector3,
+	index: int,
+	total_logs: int
+):
+	"""Spawn a single log segment with physics"""
+	
+	# Load LogPiece script
+	var LogPieceScript = load("res://log_piece.gd")
+	if not LogPieceScript:
+		print("ERROR: Could not load log_piece.gd!")
+		return
+	
+	# Create log using the LogPiece class with randomized lifetime
+	var log = LogPieceScript.new()
+	log.lifetime = randf_range(1.0, 4.0)  # Random 1-4 seconds
+	get_tree().root.add_child(log)
+	
+	# Position along the fallen tree's length
+	var along_trunk = (float(index) / float(total_logs)) - 0.5
+	var trunk_direction = fall_direction if fall_direction != Vector3.ZERO else Vector3.FORWARD
+	var trunk_offset = trunk_direction * along_trunk * trunk_height * 0.8
+	
+	# Small random scatter
+	var scatter_offset = Vector3(
+		randf_range(-0.3, 0.3),
+		0.5 + randf_range(0, 0.3),
+		randf_range(-0.3, 0.3)
+	)
+	
+	log.global_position = spawn_pos + trunk_offset + scatter_offset
+	
+	# Random rotation for variety
+	log.rotation = Vector3(
+		randf_range(0, PI),
+		randf_range(0, TAU),
+		randf_range(0, PI)
+	)
+	
+	# Physics properties - balanced for rolling without excessive sliding
+	log.mass = 8.0 + randf_range(-2, 2)
+	log.gravity_scale = 1.0
+	log.linear_damp = 0.8
+	log.angular_damp = 0.6
+	log.can_sleep = true
+	
+	# Collision
+	log.collision_layer = 2
+	log.collision_mask = 1 + 2
+	
+	# Physics material for bounce and friction - adjusted for rolling
+	var phys_mat = PhysicsMaterial.new()
+	phys_mat.friction = 0.6
+	phys_mat.bounce = 0.25
+	log.physics_material_override = phys_mat
+	
+	# Create visual mesh
+	var mesh_instance = MeshInstance3D.new()
+	log.add_child(mesh_instance)
+	
+	var cylinder = CylinderMesh.new()
+	cylinder.height = length
+	cylinder.top_radius = radius
+	cylinder.bottom_radius = radius
+	cylinder.radial_segments = 8
+	cylinder.rings = 1
+	mesh_instance.mesh = cylinder
+	
+	# Apply material
+	if material:
+		mesh_instance.set_surface_override_material(0, material.duplicate())
+	else:
+		var log_mat = StandardMaterial3D.new()
+		log_mat.albedo_color = Color(0.4, 0.3, 0.2)
+		mesh_instance.material_override = log_mat
+	
+	# Collision shape - cylinder for proper rolling physics
+	var collision_shape = CollisionShape3D.new()
+	log.add_child(collision_shape)
+	var cyl_shape = CylinderShape3D.new()
+	cyl_shape.height = length * 0.9
+	cyl_shape.radius = radius * 0.95
+	collision_shape.shape = cyl_shape
+	
+	# Apply scatter physics - moderate scatter for rolling without flying
+	var scatter_direction = ground_impact_normal + Vector3(
+		randf_range(-0.6, 0.6),
+		randf_range(0.1, 0.3),
+		randf_range(-0.6, 0.6)
+	).normalized()
+	
+	var scatter_force = scatter_direction * randf_range(2.5, 4.5)
+	log.apply_central_impulse(scatter_force)
+	
+	# Add moderate spin for rolling/tumbling
+	var spin_torque = Vector3(
+		randf_range(-6, 6),
+		randf_range(-3, 3),
+		randf_range(-6, 6)
+	)
+	log.apply_torque_impulse(spin_torque)
+
+func get_trunk_material() -> Material:
+	"""Extract trunk material from tree meshes"""
+	if not physics_body or not is_instance_valid(physics_body):
+		return null
+	
+	# Find any mesh in the tree to get trunk material
 	for child in physics_body.get_children():
 		if child is MeshInstance3D:
 			var mesh_instance = child as MeshInstance3D
@@ -241,86 +378,31 @@ func spawn_log_pieces():
 				if not mat:
 					mat = mesh_instance.mesh.surface_get_material(0)
 				if mat:
-					# Found a material - use it!
-					trunk_material = mat
-					break
+					return mat
 	
-	for i in range(num_logs):
-		var log = RigidBody3D.new()
-		world.add_child(log)
-		
-		# Position ON THE GROUND near the tree
-		var offset = Vector3(randf() - 0.5, 0.2, randf() - 0.5)  # Keep Y low
-		log.global_position = tree_position + offset
-		
-		# Physics properties - heavier and more damped
-		log.mass = 20.0  # Even heavier logs
-		log.gravity_scale = 2.0  # Fall faster
-		log.linear_damp = 4.0  # Very high damping
-		log.angular_damp = 4.0
-		
-		# Create log mesh (cylinder)
-		var mesh_instance = MeshInstance3D.new()
-		log.add_child(mesh_instance)
-		
-		var cylinder = CylinderMesh.new()
-		cylinder.height = 0.8 + randf() * 0.4  # 0.8-1.2m logs
-		cylinder.top_radius = 0.15
-		cylinder.bottom_radius = 0.15
-		mesh_instance.mesh = cylinder
-		
-		# Copy the trunk material if found
-		if trunk_material:
-			mesh_instance.set_surface_override_material(0, trunk_material.duplicate())
-		else:
-			# Fallback to brown
-			var log_material = StandardMaterial3D.new()
-			log_material.albedo_color = Color(0.4, 0.25, 0.15)
-			mesh_instance.material_override = log_material
-		
-		# Collision
-		var collision = CollisionShape3D.new()
-		log.add_child(collision)
-		var shape = CylinderShape3D.new()
-		shape.radius = 0.15
-		shape.height = cylinder.height
-		collision.shape = shape
-		
-		# Lay logs flat on ground (rotate 90 degrees)
-		log.rotation = Vector3(PI/2, randf() * TAU, 0)
-		
-		# Apply VERY gentle scatter force - just a nudge
-		var scatter_direction = Vector3(randf() - 0.5, 0, randf() - 0.5).normalized()
-		log.apply_central_impulse(scatter_direction * (2.0 + randf() * 3.0))  # 2-5 force only
-		log.apply_torque_impulse(Vector3(randf() - 0.5, randf() - 0.5, randf() - 0.5) * 2.0)  # Very gentle spin
-		
-		# Store reference for cleanup
-		var timer = Timer.new()
-		log.add_child(timer)
-		timer.wait_time = 1.5 + randf() * 1.0  # 1.5-2.5 seconds (was 3-5)
-		timer.one_shot = true
-		timer.timeout.connect(func(): 
-			if is_instance_valid(log):
-				# Spawn wood particles at log position
-				var log_pos = log.global_position
-				HarvestParticles.create_break_particles(log_pos, "wood", world)
-				# Delete the log
-				log.queue_free()
-		)
-		timer.start()
+	return null
 
 func convert_to_physics_body():
-	"""Convert the tree from StaticBody3D to RigidBody3D for physics simulation"""
+	"""Convert the static tree to a physics-enabled falling tree
 	
-	# Store the tree's current position and rotation
+	CRITICAL CONVERSION PROCESS:
+	1. Find original collision shape (CylinderShape3D)
+	2. Extract trunk dimensions (height, radius)
+	3. Create new RigidBody3D as physics container
+	4. Reparent all visual meshes to physics body
+	5. Apply initial fall impulse (gentle tip away from player)
+	
+	PHYSICS TUNING:
+	- High mass (100kg) prevents unrealistic flying
+	- High damping (linear: 2.5, angular: 3.5) for slow, realistic fall
+	- Capsule collision on trunk only (not foliage)
+	- Physics material: max friction, zero bounce
+	"""
 	var current_position = global_position
 	var current_rotation = global_rotation
 	
-	# Find and remove the existing collision shape from the tree
-	var original_collision: CollisionShape3D = null
-	var trunk_height = tree_height
-	var trunk_radius = 0.3
-	
+	# Find the original collision shape to get accurate trunk dimensions
+	var original_collision = null
 	for child in get_children():
 		if child is CollisionShape3D:
 			original_collision = child
@@ -341,10 +423,10 @@ func convert_to_physics_body():
 	physics_body = RigidBody3D.new()
 	
 	# Configure physics properties
-	physics_body.mass = 100.0  # Even heavier to prevent flying
+	physics_body.mass = 100.0  # Heavy to prevent flying
 	physics_body.gravity_scale = 1.5  # Stronger gravity
-	physics_body.linear_damp = 2.5  # Much more air resistance (was 1.0)
-	physics_body.angular_damp = 3.5  # Much more rotation damping (was 2.5)
+	physics_body.linear_damp = 2.5  # Air resistance
+	physics_body.angular_damp = 3.5  # Rotation damping
 	physics_body.contact_monitor = true
 	physics_body.max_contacts_reported = 10
 	physics_body.can_sleep = false  # Keep active while falling
@@ -364,14 +446,13 @@ func convert_to_physics_body():
 	physics_collision.shape = capsule
 	
 	# Position the collision at the TRUNK's center (not tree center)
-	# This prevents the foliage from causing collision issues
 	physics_collision.position = Vector3(0, trunk_height * 0.45, 0)
 	physics_collision.rotation = Vector3(0, 0, 0)
 	
 	# Add physics material for friction (prevents sliding)
 	var physics_material = PhysicsMaterial.new()
-	physics_material.friction = 1.0  # Maximum friction (was 0.9)
-	physics_material.bounce = 0.0  # Zero bounce (was 0.1)
+	physics_material.friction = 1.0  # Maximum friction
+	physics_material.bounce = 0.0  # Zero bounce
 	physics_body.physics_material_override = physics_material
 	
 	# Add the physics body to the scene
@@ -393,169 +474,102 @@ func convert_to_physics_body():
 	collision_layer = 0
 	collision_mask = 0
 	
-	# Calculate fall force direction - EXTREMELY MINIMAL
-	# The tree should tip VERY SLOWLY like it's top-heavy
-	var fall_force = fall_direction * 8.0  # Almost no horizontal push
-	var fall_torque = Vector3(fall_direction.z, 0, -fall_direction.x).normalized() * 12.0  # Even gentler tip
+	# Calculate fall force direction
+	var fall_force = fall_direction * 8.0  # Gentle horizontal push
+	var fall_torque = Vector3(fall_direction.z, 0, -fall_direction.x).normalized() * 12.0  # Gentle tip
 	
 	# Apply the forces to make it fall
 	physics_body.apply_central_impulse(fall_force)
 	physics_body.apply_torque_impulse(fall_torque)
 	
-	# The tree should fall slowly, like it's unbalanced and top-heavy
-	
-	# Initialize all materials for transparency NOW (before fading starts)
-	prepare_materials_for_fade()
-	
-	# Connect to collision detection
-	physics_body.body_entered.connect(_on_physics_collision)
+	# Connect to collision detection for impact
+	physics_body.body_entered.connect(_on_ground_impact)
 
-func prepare_materials_for_fade():
-	"""Prepare all materials to support transparency before fading starts"""
-	if not physics_body or not is_instance_valid(physics_body):
+func _on_ground_impact(body: Node):
+	"""Called when the falling tree hits the ground
+	
+	IMPACT DETECTION:
+	- Only triggers once (has_hit_ground flag)
+	- Detects collision with anything solid after tree is falling
+	- Spawns logs immediately on impact
+	- Destroys the falling tree
+	"""
+	if has_hit_ground:
+		return  # Already processed impact
+	
+	# Ignore impacts in first 1.5 seconds (tree needs more time to actually fall)
+	if fall_timer < 1.5:
 		return
 	
-	for child in physics_body.get_children():
-		setup_transparent_materials(child)
-
-func setup_transparent_materials(node: Node):
-	"""Recursively setup materials on all meshes"""
-	if node is MeshInstance3D:
-		var mesh_instance = node as MeshInstance3D
+	# Only detect impact if tree has slowed down significantly (nearly settled)
+	if physics_body and is_instance_valid(physics_body):
+		var velocity = physics_body.linear_velocity.length()
+		if velocity > 1.0:  # Still falling fast, wait for it to settle
+			return
+	
+	# React to ANY collision (not just specific layers)
+	# This catches terrain, trees, rocks, buildings, etc.
+	has_hit_ground = true
+	
+	# Store impact position (use the tip of the tree, not the base)
+	if physics_body and is_instance_valid(physics_body):
+		# Get the tree tip position (where the tree actually hit)
+		var tree_tip_offset = fall_direction * trunk_height * 0.7
+		ground_impact_position = physics_body.global_position + tree_tip_offset
 		
-		if mesh_instance.mesh:
-			for surface_idx in range(mesh_instance.mesh.get_surface_count()):
-				# Get or duplicate the material
-				var original = mesh_instance.mesh.surface_get_material(surface_idx)
-				if original and original is StandardMaterial3D:
-					var material = original.duplicate()
-					
-					# Enable transparency
-					material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-					
-					# Set alpha to 1.0 (fully visible) to start
-					var color = material.albedo_color
-					color.a = 1.0
-					material.albedo_color = color
-					
-					mesh_instance.set_surface_override_material(surface_idx, material)
-	
-	# Recurse
-	for child in node.get_children():
-		setup_transparent_materials(child)
-
-func _on_physics_collision(body: Node):
-	"""Called when the falling tree collides with something"""
-	pass  # Can detect collisions here if needed
-
-func create_stump():
-	"""Create a stump that remains after tree falls"""
-	stump_mesh = MeshInstance3D.new()
-	get_parent().add_child(stump_mesh)
-	
-	# Position stump at tree base
-	stump_mesh.global_position = global_position
-	stump_mesh.rotation = Vector3.ZERO  # Keep upright
-	
-	# Create simple cylinder stump
-	var cylinder = CylinderMesh.new()
-	cylinder.top_radius = 0.4
-	cylinder.bottom_radius = 0.5  # Slightly wider at bottom
-	cylinder.height = 0.5  # Short stump
-	stump_mesh.mesh = cylinder
-	
-	# Find ANY mesh to get trunk material
-	var trunk_material = null
-	for child in get_children():
-		if child is MeshInstance3D:
-			var mesh_instance = child as MeshInstance3D
-			if mesh_instance.mesh and mesh_instance.mesh.get_surface_count() > 0:
-				var mat = mesh_instance.get_surface_override_material(0)
-				if not mat:
-					mat = mesh_instance.mesh.surface_get_material(0)
-				if mat:
-					trunk_material = mat
-					break
-	
-	# Apply material
-	if trunk_material:
-		stump_mesh.set_surface_override_material(0, trunk_material.duplicate())
-	else:
-		var stump_material = StandardMaterial3D.new()
-		stump_material.albedo_color = Color(0.3, 0.2, 0.1)
-		stump_mesh.material_override = stump_material
-	
-	# Add collision to stump
-	var static_body = StaticBody3D.new()
-	stump_mesh.add_child(static_body)
-	static_body.collision_layer = 1
-	static_body.collision_mask = 0
-	
-	var collision_shape = CollisionShape3D.new()
-	var shape = CylinderShape3D.new()
-	shape.radius = 0.4
-	shape.height = 0.5
-	collision_shape.shape = shape
-	static_body.add_child(collision_shape)
+		# Calculate impact normal (up from terrain)
+		ground_impact_normal = Vector3.UP
+		
+		# Spawn logs immediately on impact!
+		spawn_log_pieces()
+		
+		# Destroy the falling tree
+		if physics_body and is_instance_valid(physics_body):
+			physics_body.queue_free()
+		queue_free()
 
 func _process(delta):
-	if is_falling:
+	if is_falling and physics_body and is_instance_valid(physics_body):
 		fall_timer += delta
 		
-		# Track the physics body velocity to detect when it stops
-		if physics_body and is_instance_valid(physics_body):
-			# Check if the tree has come to rest (low velocity)
-			var velocity = physics_body.linear_velocity
+		# Manual collision detection - only when tree has SETTLED (low velocity)
+		if fall_timer > 1.5 and not has_hit_ground:
+			var velocity = physics_body.linear_velocity.length()
 			
-			if not has_hit_ground:
-				# Consider ground hit when velocity is very low
-				# AND we've been falling for at least 0.5 seconds (to avoid premature detection)
-				if velocity.length() < 0.8 and fall_timer > 0.5:
-					has_hit_ground = true
-					ground_hit_time = fall_timer
-			
-			# If tree has settled, wait a moment then break into logs
-			if has_hit_ground:
-				var time_since_ground = fall_timer - ground_hit_time
+			# Only break if tree is colliding AND moving slowly (settled)
+			var colliding_bodies = physics_body.get_colliding_bodies()
+			if colliding_bodies.size() > 0 and velocity < 0.8:  # Must be nearly stopped
+				has_hit_ground = true
 				
-				# Break into logs after longer delay
-				if time_since_ground >= 2.0:  # Wait 2 seconds (was 0.5)
-					# Spawn log pieces
-					spawn_log_pieces()
-					
-					# Destroy the tree and physics body immediately
-					if physics_body and is_instance_valid(physics_body):
-						physics_body.queue_free()
-					queue_free()
-					return
-
-func apply_fade_to_node(node: Node, alpha: float):
-	"""Recursively apply fade to a node and its children"""
-	if node is MeshInstance3D:
-		var mesh_instance = node as MeshInstance3D
+				# Calculate impact position
+				var tree_tip_offset = fall_direction * trunk_height * 0.7
+				ground_impact_position = physics_body.global_position + tree_tip_offset
+				ground_impact_normal = Vector3.UP
+				
+				# Spawn logs
+				spawn_log_pieces()
+				
+				# Destroy tree
+				physics_body.queue_free()
+				queue_free()
+				return
 		
-		# Make it shrink down dramatically - like sinking into the ground
-		mesh_instance.visible = true
-		mesh_instance.scale = Vector3(alpha, alpha, alpha)  # Shrink to 0
-		
-		# Hide completely when very small
-		if alpha < 0.05:
-			mesh_instance.visible = false
-	
-	# Recurse to children
-	for child in node.get_children():
-		apply_fade_to_node(child, alpha)
-
-func spawn_despawn_particles():
-	"""Spawn a poof particle effect when tree despawns"""
-	if physics_body and is_instance_valid(physics_body):
-		var tree_position = physics_body.global_position
-		# Get the world root to spawn particles in
-		var world = get_tree().root
-		if world:
-			# Use the harvest particles system to create a poof effect
-			HarvestParticles.create_break_particles(tree_position, "wood", world)
-
+		# Backup timer: If tree has been falling for >2.5 seconds, force break
+		if fall_timer > 2.5 and not has_hit_ground:
+			var velocity = physics_body.linear_velocity.length()
+			has_hit_ground = true
+			
+			# Calculate impact position
+			var tree_tip_offset = fall_direction * trunk_height * 0.7
+			ground_impact_position = physics_body.global_position + tree_tip_offset
+			ground_impact_normal = Vector3.UP
+			
+			# Spawn logs
+			spawn_log_pieces()
+			
+			# Destroy tree
+			physics_body.queue_free()
+			queue_free()
 
 func cancel_harvest():
 	"""Override to stop shake when cancelled"""
