@@ -371,6 +371,68 @@ static func create_pixel_material(texture: ImageTexture, base_color: Color = Col
 	
 	return material
 
+static func create_chest_texture() -> ImageTexture:
+	"""Create a pixelated chest texture with wood planks and metal straps"""
+	var image = Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGB8)
+	
+	# Wood colors (dark brown planks)
+	var wood_base = Color(0.4, 0.25, 0.15)    # Dark brown
+	var wood_light = Color(0.5, 0.35, 0.2)    # Lighter brown
+	var wood_dark = Color(0.3, 0.18, 0.1)     # Very dark brown
+	
+	# Metal colors (iron straps)
+	var metal_dark = Color(0.15, 0.15, 0.15)  # Dark gray/black
+	var metal_light = Color(0.3, 0.3, 0.3)    # Light gray
+	
+	# Fill base with wood planks
+	for x in range(TEXTURE_SIZE):
+		for y in range(TEXTURE_SIZE):
+			var color = wood_base
+			
+			# Vertical wood planks (every 4 pixels)
+			if x % 4 == 0:
+				color = wood_dark
+			elif x % 4 == 3:
+				color = wood_light
+			
+			# Add grain variation
+			color.r += (randf() - 0.5) * 0.08
+			color.g += (randf() - 0.5) * 0.08
+			color.b += (randf() - 0.5) * 0.08
+			
+			image.set_pixel(x, y, color)
+	
+	# Add horizontal metal straps (3 rows)
+	var strap_positions = [3, 7, 12]  # y positions for straps
+	for strap_y in strap_positions:
+		for x in range(TEXTURE_SIZE):
+			# Metal strap (2 pixels tall)
+			var metal_color = metal_dark
+			if x % 3 == 0:
+				metal_color = metal_light  # Highlight for metallic look
+			
+			image.set_pixel(x, strap_y, metal_color)
+			if strap_y + 1 < TEXTURE_SIZE:
+				image.set_pixel(x, strap_y + 1, metal_color.darkened(0.2))
+	
+	# Add vertical metal corner reinforcements
+	for y in range(TEXTURE_SIZE):
+		# Left edge strap
+		image.set_pixel(0, y, metal_dark)
+		image.set_pixel(1, y, metal_light if y % 3 == 0 else metal_dark)
+		
+		# Right edge strap
+		image.set_pixel(TEXTURE_SIZE - 2, y, metal_light if y % 3 == 0 else metal_dark)
+		image.set_pixel(TEXTURE_SIZE - 1, y, metal_dark)
+	
+	# Add keyhole in center (decorative)
+	var center_x = TEXTURE_SIZE / 2
+	var center_y = TEXTURE_SIZE / 2
+	image.set_pixel(center_x, center_y, Color(0.1, 0.1, 0.1))  # Keyhole
+	image.set_pixel(center_x, center_y + 1, Color(0.1, 0.1, 0.1))
+	
+	return create_texture_from_image(image)
+
 static func get_biome_terrain_material(biome: int) -> StandardMaterial3D:
 	"""Get the appropriate terrain material for a biome"""
 	match biome:

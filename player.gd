@@ -11,7 +11,11 @@ extends CharacterBody3D
 @export var controller_look_sensitivity: float = 3.0  # Right stick sensitivity
 @export var controller_deadzone: float = 0.15  # Analog stick deadzone
 
+# Container interaction settings
+const CONTAINER_INTERACTION_RANGE: float = 3.0  # Shorter range for containers vs harvesting (5.0)
+
 var is_flying: bool = false  # Fly/noclip mode toggle
+var current_container: Node = null  # Container player is looking at
 
 # Camera
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
@@ -145,6 +149,12 @@ func _input(event):
 			crafting_ui.toggle_visibility()
 		print("Toggle crafting")
 	
+	# Container interaction with E key
+	if event.is_action_pressed("interact"):  # E key
+		var container = get_container_at_cursor()
+		if container and not is_flying:
+			open_container(container)
+	
 	# Toggle fly mode with F key
 	if event.is_action_pressed("toggle_fly"):
 		is_flying = !is_flying
@@ -166,8 +176,8 @@ func _input(event):
 	# Cycle block type with Tab or C key or D-pad Down when in building mode
 	if building_system and building_system.preview_mode:
 		if event.is_action_pressed("cycle_block_type"):
-			# Cycle through block types
-			var types = ["stone_block", "stone_wall", "stone_floor", "wood_plank"]
+			# Cycle through block types (including chest!)
+			var types = ["stone_block", "stone_wall", "stone_floor", "wood_plank", "chest"]
 			var current_index = types.find(building_system.current_block_type)
 			var next_index = (current_index + 1) % types.size()
 			building_system.set_block_type(types[next_index])
@@ -282,6 +292,44 @@ func setup_ui():
 	else:
 		print("Warning: Could not load health_ui.tscn")
 
+func get_container_at_cursor() -> Node:
+	"""Raycast for containers on Layer 3 within 3m range"""
+	var space_state = get_world_3d().direct_space_state
+	var from = camera.global_position
+	var to = from - camera.global_transform.basis.z * CONTAINER_INTERACTION_RANGE
+	
+	var query = PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 4  # Layer 3 (2^2 = 4) - interactive objects
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	
+	var result = space_state.intersect_ray(query)
+	
+	if result and result.collider:
+		# The collider is the StaticBody3D child of the container
+		# Parent is the StorageContainer
+		var parent = result.collider.get_parent()
+		if parent and parent.has_method("open"):
+			# Debug: Container found
+			if parent != current_container:
+				print("🔍 Looking at container: ", parent.container_name)
+			return parent
+	
+	return null
+
+func open_container(container: Node):
+	"""Open a container (called when player interacts)"""
+	if not container or not container.has_method("open"):
+		print("ERROR: Invalid container")
+		return
+	
+	container.open()
+	current_container = container
+	# TODO: Show container UI in next phase
+	print("✅ Container opened successfully! (UI not implemented yet)")
+	print("   Container has ", container.get_item_count(), " item types inside")
+
+
 func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""
 	if inventory and drops.has("item") and drops.has("amount"):
@@ -343,9 +391,17 @@ func _physics_process(delta):
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	
-	# Handle jump (Space or A button)
-	if (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("controller_jump")) and is_on_floor():
-		velocity.y = jump_velocity
+	# Handle jump (Space or A button) - CONTEXT SENSITIVE
+	# Priority 1: Container interaction (if looking at one within 3m)
+	# Priority 2: Jump (if on ground)
+	if (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("controller_jump")):
+		var container = get_container_at_cursor()
+		if container and not is_flying:
+			# Container takes priority - open it instead of jumping
+			open_container(container)
+		elif is_on_floor():
+			# No container nearby - jump normally
+			velocity.y = jump_velocity
 	
 	# Get input direction (keyboard + left stick)
 	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")

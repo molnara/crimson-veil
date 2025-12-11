@@ -5,6 +5,7 @@ class_name BuildingSystem
 var player: Node3D
 var camera: Camera3D
 var inventory: Inventory
+var warning_ui: Control  # Container warning dialog
 
 # Building settings
 @export var placement_range: float = 5.0  # How far you can place blocks
@@ -49,6 +50,14 @@ var block_types = {
 		"mesh_type": "cube",
 		"material_color": Color(0.6, 0.4, 0.2),
 		"size": Vector3(1, 1, 1)
+	},
+	"chest": {
+		"name": "Chest",
+		"cost": {"wood": 10},
+		"mesh_type": "container",  # Special type
+		"material_color": Color(0.4, 0.25, 0.15),
+		"size": Vector3(1, 1, 1),
+		"is_container": true  # Flag for special handling
 	}
 }
 
@@ -60,6 +69,21 @@ signal preview_updated(can_place: bool, position: Vector3)
 func _ready():
 	# Create preview mesh
 	create_preview_mesh()
+	
+	# Create warning UI (deferred to avoid issues with scene tree)
+	call_deferred("create_warning_ui")
+
+func create_warning_ui():
+	"""Create the container warning dialog"""
+	var warning_script = load("res://container_warning_ui.gd")
+	if warning_script:
+		warning_ui = warning_script.new()
+		get_tree().root.add_child(warning_ui)
+		warning_ui.remove_confirmed.connect(_on_container_remove_confirmed)
+		warning_ui.remove_cancelled.connect(_on_container_remove_cancelled)
+		print("Container warning UI created")
+	else:
+		print("Warning: Could not load container_warning_ui.gd")
 
 func initialize(p: Node3D, cam: Camera3D, inv: Inventory):
 	"""Initialize with player, camera, and inventory references"""
@@ -201,7 +225,33 @@ func place_block() -> bool:
 		var cost = block_def["cost"][item]
 		inventory.remove_item(item, cost)
 	
-	# Create the actual block mesh
+	# Check if this is a container block (special handling)
+	if block_def.get("is_container", false):
+		# Create StorageContainer instead of regular block
+		var container_script = load("res://storage_container.gd")
+		var container = container_script.new()
+		get_tree().root.add_child(container)
+		
+		# Containers sit ON the surface (bottom at ground level), not centered
+		# Regular blocks are centered (offset by half height), containers are not
+		var container_position = placement_position
+		container_position.y -= block_def["size"].y / 2.0  # Undo the preview offset
+		container.initialize(container_position)
+		
+		# Store container reference
+		var pos_key = position_to_key(placement_position)
+		placed_blocks[pos_key] = {
+			"type": current_block_type,
+			"position": placement_position,
+			"node": container,
+			"is_container": true
+		}
+		
+		emit_signal("block_placed", current_block_type, placement_position)
+		print("Placed ", block_def["name"], " at ", placement_position)
+		return true
+	
+	# Regular block placement (existing code)
 	var block = MeshInstance3D.new()
 	get_tree().root.add_child(block)
 	
@@ -254,6 +304,18 @@ func remove_block_at_position(pos: Vector3) -> bool:
 	var block_type = block_data["type"]
 	var block_def = block_types[block_type]
 	
+	# Check if this is a container with items
+	if block_data.get("is_container", false):
+		var container = block_data["node"]
+		if container.has_method("has_items") and container.has_items():
+			# Container has items - show warning UI
+			if warning_ui:
+				var item_count = container.get_item_count()
+				warning_ui.show_warning(container, item_count, pos)
+			else:
+				print("Cannot remove container - has items inside! (Warning UI not available)")
+			return false
+	
 	# Refund resources
 	for item in block_def["cost"]:
 		var amount = block_def["cost"][item]
@@ -269,6 +331,38 @@ func remove_block_at_position(pos: Vector3) -> bool:
 	print("Removed ", block_def["name"], " from ", pos)
 	
 	return true
+
+func _on_container_remove_confirmed(pos: Vector3):
+	"""User confirmed removal of container with items - force remove"""
+	var pos_key = position_to_key(pos)
+	
+	if not placed_blocks.has(pos_key):
+		return
+	
+	var block_data = placed_blocks[pos_key]
+	var block_type = block_data["type"]
+	var block_def = block_types[block_type]
+	
+	# TODO: Drop items to ground (next phase)
+	print("Dropping container items to ground...")
+	
+	# Refund resources
+	for item in block_def["cost"]:
+		var amount = block_def["cost"][item]
+		inventory.add_item(item, amount)
+	
+	# Remove the block node
+	block_data["node"].queue_free()
+	
+	# Remove from tracking
+	placed_blocks.erase(pos_key)
+	
+	emit_signal("block_removed", block_type, pos)
+	print("Removed ", block_def["name"], " (forced)")
+
+func _on_container_remove_cancelled():
+	"""User cancelled container removal"""
+	print("Container removal cancelled by user")
 
 func get_block_at_raycast() -> Dictionary:
 	"""Get block data at the current raycast position (for removal)"""

@@ -6,6 +6,26 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-11 10:54] [MAJOR] Container placement system - Phase 1 complete (Priority 1 - 6/7 tasks)
+[2024-12-11 10:54] [MAJOR] Created storage_container.gd - placeable chests with independent inventories (~280 lines)
+[2024-12-11 10:54] [FEATURE] Chest block type - costs 10 wood, placed via building mode (Tab/D-Pad to cycle)
+[2024-12-11 10:54] [FEATURE] Low-poly chest mesh - 0.9x0.7x0.8m procedural geometry with proper ground placement
+[2024-12-11 10:54] [FEATURE] Chest texture - 16x16 pixel texture with wood planks, metal straps, and keyhole
+[2024-12-11 10:54] [FEATURE] Container interaction - E key or A button opens chest (3m range, context-sensitive)
+[2024-12-11 10:54] [FEATURE] Green highlight system - chests show outline when player looks at them
+[2024-12-11 10:54] [FEATURE] Layer 3 collision - containers use separate layer for clean raycast detection
+[2024-12-11 10:54] [FEATURE] Independent inventory - each chest has own 32-slot Inventory instance
+[2024-12-11 10:54] [MAJOR] Container removal warning - modal dialog prevents accidental deletion of full chests
+[2024-12-11 10:54] [MAJOR] Created container_warning_ui.gd - "Remove Anyway" confirmation dialog (~130 lines)
+[2024-12-11 10:54] [FEATURE] Container destruction - empty chests refund 10 wood, full chests require confirmation
+[2024-12-11 10:54] [MINOR] Context-sensitive A button - container interaction takes priority over jump
+[2024-12-11 10:54] [MINOR] Extended harvesting_system.gd - container raycast and highlighting (+130 lines)
+[2024-12-11 10:54] [MINOR] Extended building_system.gd - container placement and warning integration (+95 lines)
+[2024-12-11 10:54] [MINOR] Extended player.gd - container detection and interaction (+65 lines)
+[2024-12-11 10:54] [MINOR] Extended pixel_texture_generator.gd - chest texture generation (+60 lines)
+[2024-12-11 10:54] [FIX] Fixed D-Pad input conflict - removed D-Pad from movement, now dedicated to building controls
+[2024-12-11 10:54] [FIX] Fixed floating chests - containers now sit properly on ground instead of hovering
+[2024-12-11 10:54] [MINOR] Added debug output for container interaction - console shows detection and opening
 [2024-12-11 19:30] [MAJOR] Implemented item stacking system - Phase 1 complete
 [2024-12-11 19:30] [FEATURE] Stack limits enforced - wood (100), stone (50), food (20), tools (1)
 [2024-12-11 19:30] [FEATURE] Stack count display - shows current/max (e.g., "50/100")
@@ -43,7 +63,7 @@ Recent Changes (v0.3.0+):
 [2024-12-11 14:30] [FEATURE] D-Pad mapped - Up=Building mode, Down=Cycle blocks
 [2024-12-11 14:30] [MINOR] Added apply_deadzone() function for smooth analog stick handling
 [2024-12-11 14:30] [MINOR] Controller and keyboard/mouse work simultaneously
-[2024-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe â†” Pickaxe
+[2024-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe Ã¢â€ â€ Pickaxe
 [2024-12-11 14:30] [FEATURE] Updated project.godot with 16 new controller input actions
 [2024-12-11 14:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added controller support to file index and implemented features
 [2024-12-11 14:30] [FEATURE] Created XBOX_CONTROLLER_GUIDE.md - comprehensive setup and troubleshooting guide
@@ -90,7 +110,7 @@ Recent Changes (v0.3.0+):
 [2024-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
 [2024-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Â±500 for proper depth sorting
+[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Ã‚Â±500 for proper depth sorting
 [2024-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player

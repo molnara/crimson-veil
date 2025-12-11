@@ -10,7 +10,9 @@ var tool_system: ToolSystem
 
 # Raycasting
 var raycast_distance: float = 5.0
+var container_raycast_distance: float = 3.0  # Shorter range for containers
 var current_target: HarvestableResource = null
+var current_container: Node = null  # Container player is looking at
 var is_harvesting: bool = false
 var just_completed_harvest: bool = false  # Prevent cancel message after completion
 
@@ -66,10 +68,34 @@ func _process(delta):
 		update_harvest_progress(delta)
 
 func update_raycast():
-	"""Check what resource the player is looking at"""
+	"""Check what resource or container the player is looking at"""
 	if camera == null:
 		return
 	
+	# First, check for containers (Layer 3, 3m range) - priority
+	var container_target = check_for_container()
+	
+	# If looking at a container, skip resource checking
+	if container_target:
+		# Remove resource highlight if any
+		if current_target:
+			remove_highlight(current_target)
+			current_target = null
+		
+		# Update container highlighting
+		if container_target != current_container:
+			if current_container:
+				remove_container_highlight(current_container)
+			current_container = container_target
+			add_container_highlight(current_container)
+		return
+	
+	# No container - remove container highlight if any
+	if current_container:
+		remove_container_highlight(current_container)
+		current_container = null
+	
+	# Check for resources (Layer 2, 5m range)
 	var space_state = player.get_world_3d().direct_space_state
 	var from = camera.global_position
 	var to = from - camera.global_transform.basis.z * raycast_distance
@@ -107,6 +133,67 @@ func update_raycast():
 		
 		emit_signal("target_changed", current_target)
 		update_ui()
+
+func check_for_container() -> Node:
+	"""Check for containers at shorter range (3m)"""
+	var space_state = player.get_world_3d().direct_space_state
+	var from = camera.global_position
+	var to = from - camera.global_transform.basis.z * container_raycast_distance
+	
+	var query = PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 4  # Layer 3 (2^2 = 4) - interactive objects
+	query.collide_with_areas = false
+	query.collide_with_bodies = true
+	
+	var result = space_state.intersect_ray(query)
+	
+	if result and result.collider:
+		# The collider is the StaticBody3D child
+		var parent = result.collider.get_parent()
+		if parent and parent.has_method("open"):
+			return parent
+	
+	return null
+
+func add_container_highlight(container: Node):
+	"""Add green outline to container"""
+	if not container or not outline_material:
+		return
+	
+	var mesh_instance = null
+	if container.has_method("get_mesh_instance"):
+		mesh_instance = container.get_mesh_instance()
+	
+	if not mesh_instance:
+		return
+	
+	# Create highlight material
+	var highlight_mat = outline_material.duplicate()
+	highlight_mat.set_shader_parameter("outline_color", CORRECT_TOOL_COLOR)  # Always green for containers
+	highlight_mat.set_shader_parameter("outline_width", OUTLINE_WIDTH)
+	
+	# Apply outline
+	mesh_instance.material_overlay = highlight_mat
+	
+	if not highlighted_meshes.has(mesh_instance):
+		highlighted_meshes.append(mesh_instance)
+
+func remove_container_highlight(container: Node):
+	"""Remove outline from container"""
+	if not container:
+		return
+	
+	var mesh_instance = null
+	if container.has_method("get_mesh_instance"):
+		mesh_instance = container.get_mesh_instance()
+	
+	if not mesh_instance:
+		return
+	
+	mesh_instance.material_overlay = null
+	
+	if highlighted_meshes.has(mesh_instance):
+		highlighted_meshes.erase(mesh_instance)
 
 func start_harvest():
 	"""Start harvesting the current target"""
