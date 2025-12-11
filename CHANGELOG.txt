@@ -6,6 +6,22 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-11 16:00] [MAJOR] Sprint planning session - defined "Storage & Organization" sprint with clear priorities
+[2024-12-11 16:00] [MAJOR] Updated ROADMAP.txt - reorganized with detailed sprint tasks (15 items across 3 priorities)
+[2024-12-11 16:00] [MINOR] Added sprint risk assessment to ROADMAP.txt (UI complexity, save compatibility, feature creep)
+[2024-12-11 16:00] [MINOR] Documented sprint design decisions (click-to-transfer UI, harvestable containers, full stacking)
+[2024-12-11 16:00] [FEATURE] Defined storage container system architecture - placeable chests with independent inventories
+[2024-12-11 16:00] [FEATURE] Defined item stacking system - wood (100), stone (50), food (20) stack limits
+[2024-12-11 16:00] [FEATURE] Defined workbench system - proximity-based recipe unlocking (5m radius)
+[2024-12-11 16:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added storage/workbench systems to file index
+[2024-12-11 16:00] [MINOR] Added new collision layer (Layer 3) for interactive objects to architecture
+[2024-12-11 16:00] [MINOR] Added storage balance values - container slots (32/64), interaction range (3m), stack sizes
+[2024-12-11 16:00] [MINOR] Added container architecture patterns - signal-driven interaction, inventory management
+[2024-12-11 16:00] [MINOR] Added upload strategies for storage sprint tasks (4 new workflows)
+[2024-12-11 16:00] [MINOR] Added common tasks guide for containers, workbenches, and item stacking
+[2024-12-11 16:00] [MINOR] Updated file size reference - DEVELOPMENT_GUIDE.md now ~950 lines
+[2024-12-11 16:00] [PLANNING] Defined sprint scope - Core + Polish approach (1 week timeline, 15 tasks)
+[2024-12-11 16:00] [PLANNING] Deferred to next sprint - sort/quick-stack, workbench recipes, animations, drag-and-drop
 [2024-12-11 14:30] [MAJOR] Added full Xbox controller support - movement, camera, and all actions
 [2024-12-11 14:30] [FEATURE] Left stick controls movement with 0.15 deadzone (replaces WASD)
 [2024-12-11 14:30] [FEATURE] Right stick controls camera with configurable sensitivity (replaces mouse)
@@ -100,6 +116,13 @@ v0.3.0 (Current Release)
 - Tool system (Axe/Pickaxe) with requirement checking and visual feedback
 - Modular vegetation system with extracted tree visual generators
 - Full Xbox controller support with analog movement/camera and button mappings
+
+v0.4.0 (Planned - Storage & Organization Sprint)
+- Storage container system with placeable chests
+- Item stacking (wood: 100, stone: 50, food: 20)
+- Container UI with dual-panel interface
+- Workbench system with proximity-based recipe unlocking
+- Improved inventory management
 
 ---
 
