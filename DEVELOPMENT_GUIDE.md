@@ -244,7 +244,194 @@ When suggesting new features, always include:
 
 ## Quick Reference
 
-### Key Files
+### File Index & Location Map
+
+This index helps you find and upload the right files for your task. Files are organized by system/purpose.
+
+#### Core Systems (Always Needed)
+```
+res://
+├── DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
+├── ROADMAP.txt                    [Features, priorities, completed items]
+├── CHANGELOG.txt                  [Session-by-session change history]
+├── world.gd                       [Scene root, system initialization]
+├── player.gd                      [Input, movement, camera (300 lines)]
+└── project.godot                  [Godot project config]
+```
+
+#### World Generation
+```
+res://
+├── chunk_manager.gd               [Terrain generation, chunk loading (249 lines)]
+├── chunk.gd                       [Individual chunk meshes, biomes (428 lines)]
+└── water_plane.gd                 [Infinite ocean plane]
+```
+
+#### Vegetation System (Modular - Upload Only What You Need)
+```
+res://
+├── vegetation_spawner.gd          [Main spawner, delegates to visuals (1,457 lines)]
+├── vegetation/
+│   └── visuals/
+│       ├── tree_visual.gd         [Oak/deciduous trees (338 lines)]
+│       ├── pine_tree_visual.gd    [Pine/conifer trees (181 lines)]
+│       └── palm_tree_visual.gd    [Palm trees (188 lines)]
+```
+
+**When to upload:**
+- Modifying oak trees → `tree_visual.gd` only
+- Adding new tree type → Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
+- Adjusting density → `vegetation_spawner.gd` only
+- Understanding system → `DEVELOPMENT_GUIDE.md` has full explanation
+
+#### Harvestable Resources
+```
+res://
+├── harvestable_resource.gd        [Base class for all collectibles (324 lines)]
+├── harvestable_tree.gd            [Tree physics, falling, logs (563 lines)]
+├── harvestable_mushroom.gd        [Mushroom variants, glow effects]
+├── harvestable_strawberry.gd      [Strawberry bushes, size variants]
+└── resource_node.gd               [Generic resource node]
+```
+
+**When to upload:**
+- Adding new resource type → `harvestable_resource.gd` (base class)
+- Modifying tree behavior → `harvestable_tree.gd`
+- Bug with mushrooms → `harvestable_mushroom.gd` only
+
+#### Player Systems
+```
+res://
+├── harvesting_system.gd           [Raycast, progress, harvesting (338 lines)]
+├── building_system.gd             [Block placement, preview (313 lines)]
+├── tool_system.gd                 [Tool management, requirements]
+├── inventory.gd                   [Item storage, signals]
+└── crafting_system.gd             [Recipe management (134 lines)]
+```
+
+**When to upload:**
+- Adding new tool → `tool_system.gd`
+- New building block → `building_system.gd`
+- New recipe → `crafting_system.gd`
+
+#### UI Systems
+```
+res://
+├── harvest_ui.gd                  [Progress bar, target display (213 lines)]
+├── inventory_ui.gd                [Grid inventory display (175 lines)]
+├── crafting_ui.gd                 [Recipe UI, crafting interface (159 lines)]
+└── settings_menu.gd               [Graphics/game settings (329 lines)]
+```
+
+**When to upload:**
+- UI layout changes → Specific UI file only
+- Adding inventory features → `inventory_ui.gd`
+
+#### Environment & Visuals
+```
+res://
+├── day_night_cycle.gd             [Time, sun/moon, clouds, lighting (828 lines)]
+├── critter_spawner.gd             [Wildlife spawning, behavior (1,142 lines)]
+└── pixel_texture_generator.gd     [16x16 texture generation (392 lines)]
+```
+
+**When to upload:**
+- Day/night adjustments → `day_night_cycle.gd`
+- New critter type → `critter_spawner.gd`
+- Texture changes → `pixel_texture_generator.gd`
+
+#### Utilities & Shared Code
+```
+res://
+├── core/
+│   └── mesh_builder.gd            [Shared mesh utilities (78 lines)]
+└── settings_manager.gd            [Save/load settings (324 lines)]
+```
+
+**When to upload:**
+- Creating procedural meshes → `mesh_builder.gd`
+- New tree/critter visual → `mesh_builder.gd` (for utilities)
+
+---
+
+### Upload Strategy by Task
+
+**Adding New Tree Type:**
+```
+Upload:
+1. DEVELOPMENT_GUIDE.md (this file)
+2. vegetation/visuals/tree_visual.gd (as template)
+3. core/mesh_builder.gd (utilities)
+4. vegetation_spawner.gd (to wire it up)
+```
+
+**Modifying Existing Trees:**
+```
+Upload:
+1. DEVELOPMENT_GUIDE.md
+2. vegetation/visuals/[specific_tree]_visual.gd (only the one you're changing)
+```
+
+**New Harvestable Resource:**
+```
+Upload:
+1. DEVELOPMENT_GUIDE.md
+2. harvestable_resource.gd (base class)
+3. vegetation_spawner.gd (spawning logic)
+```
+
+**UI/UX Changes:**
+```
+Upload:
+1. DEVELOPMENT_GUIDE.md
+2. [specific_ui_file].gd (only what you're changing)
+```
+
+**Bug Fixes:**
+```
+Upload:
+1. DEVELOPMENT_GUIDE.md (for context)
+2. [file_with_bug].gd (specific file only)
+```
+
+**General Questions/Planning:**
+```
+Upload:
+1. DEVELOPMENT_GUIDE.md only
+   (Has all architecture, systems, patterns explained)
+```
+
+---
+
+### File Size Reference
+
+After refactoring, all files are easily uploadable:
+
+**Large Files (still manageable):**
+- vegetation_spawner.gd: 1,457 lines (~50KB) - reduced from 2,075!
+- critter_spawner.gd: 1,142 lines (~40KB) - candidate for future refactoring
+- day_night_cycle.gd: 828 lines (~30KB)
+- DEVELOPMENT_GUIDE.md: ~650 lines (~30KB)
+
+**Medium Files (very manageable):**
+- harvestable_tree.gd: 563 lines (~20KB)
+- chunk.gd: 428 lines (~15KB)
+- pixel_texture_generator.gd: 392 lines (~14KB)
+- tree_visual.gd: 338 lines (~12KB)
+- harvesting_system.gd: 338 lines (~12KB)
+
+**Small Files (always easy):**
+- All other visual generators: <200 lines
+- UI files: <200 lines
+- Most system files: <300 lines
+
+**Tip:** The refactoring broke the 2,075-line monolith into focused pieces. Now you typically upload 1-3 small files instead of one giant file!
+
+---
+
+### Quick File Descriptions
+
+**Note:** Full file index with locations is above. This section provides one-line descriptions.
 
 **Core Systems:**
 - `world.gd` - Scene orchestration, system initialization, settings application
