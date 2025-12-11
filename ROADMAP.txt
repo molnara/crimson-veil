@@ -6,72 +6,33 @@ AI MODEL GUIDE
 [Sonnet] = Standard implementation work (45-55 sessions/week capacity)
 [Opus] = Complex architecture, code reviews, multi-system refactoring (3-4 sessions/week capacity)
 
-CURRENT SPRINT: "Storage & Organization" (Next 1-2 weeks)
-----------------------------------------------------------
-Sprint Goal: Enable players to organize and store resources beyond 32-slot inventory limit
+CURRENT SPRINT: "Workbench & Advanced Crafting" (v0.5.0 - Next 1-2 weeks)
+--------------------------------------------------------------------------
+Sprint Goal: Implement workbench system and expand crafting progression
 
-PRIORITY 1 - Storage Containers (Core Feature) ✅ COMPLETE!
-[X] Container placement system [Sonnet] - Place chests as building blocks
-[X] Container inventory management [Sonnet] - Each chest has independent inventory
-[X] Container interaction [Sonnet] - Click to open, transfer items
-[X] Container UI [Sonnet] - Dual-panel interface (player left, container right) ✅ Phase 2 COMPLETE!
-[X] Container collision and physics [Sonnet] - Proper world placement
-[X] Container visual design [Sonnet] - Low-poly chest mesh with 16x16 texture
-[X] Controller support [Sonnet] - Open containers with gamepad, B button closes
-
-PRIORITY 2 - Inventory Improvements (Quality of Life) ✅ COMPLETE!
-[X] Item stacking [Sonnet] - Wood (100), Stone (50), Food (20) stack limits
-[X] Auto-stack on pickup [Sonnet] - Merge with existing stacks automatically
-[X] Stack count display [Sonnet] - Visual indication of stack size
-[X] Inventory persistence [Sonnet] - Stacks maintain across sessions (in-memory for now)
-
-PRIORITY 3 - Workbench Foundation (Progression Gate)
+PRIORITY 1 - Workbench Foundation (Progression Gate)
 [ ] Workbench placement [Sonnet] - Craftable building block (10 wood + 5 stone)
 [ ] Workbench visual design [Sonnet] - Low-poly table/bench model
 [ ] Proximity detection [Sonnet] - Check player within 5m radius
 [ ] Crafting UI integration [Sonnet] - Show "Requires Workbench" on locked recipes
 
-DEFERRED TO NEXT SPRINT:
+PRIORITY 2 - Inventory Organization (Quality of Life)
 [ ] Sort/Quick-stack buttons [Sonnet] - Inventory organization helpers
-[ ] New workbench recipes [Sonnet] - Advanced crafting options (need design)
 [ ] Container animations [Sonnet] - Open/close lid animations
-[ ] Drag-and-drop UI [Sonnet] - Enhanced item transfer (start with click-to-move)
+[ ] Drag-and-drop UI [Sonnet] - Enhanced item transfer
 
-CONTAINER UI FEATURES (Phase 2 - COMPLETE):
---------------------------------------------
-✅ Dual-panel layout (player LEFT, container RIGHT)
-✅ Click to transfer 1 item
-✅ Shift+click to transfer full stack
-✅ Stack limit display (e.g., "50/100")
-✅ Visual "FULL" indicators (red text/border)
-✅ Error notifications ("Inventory full!", "Container full!")
-✅ Partial transfer feedback ("Transferred 15/20")
-✅ Perfectly centered on screen
-✅ ESC closes container
-✅ B button closes container (controller)
-✅ Auto-close at 5m distance
-✅ UI suppression (inventory/crafting hidden when container open)
-✅ Input blocking (I/C/Y/X disabled during container interaction)
-✅ Smart UI restoration (previous state restored on close)
-✅ Professional styling (borders, rounded corners, transparency)
-✅ Scene-based architecture (container_ui.tscn)
+PRIORITY 3 - Expanded Recipes (Content)
+[ ] New workbench recipes [Sonnet] - 5+ advanced crafting options
+[ ] Tool tier upgrades [Sonnet] - Stone pickaxe, better axe
+[ ] Container visual polish [Sonnet] - Texture variations for different container types
 
 
-DESIGN DECISIONS FOR THIS SPRINT:
-----------------------------------
-✅ Container UI: Click-to-transfer (simple), defer drag-and-drop
-✅ Container scope: Harvestable chests (can break, get wood back, items drop)
-✅ Stacking: Full implementation this sprint (critical for storage value)
-✅ Workbench: Placement + proximity only, defer recipe gating to next sprint
-
-
-NEXT UP (After Current Sprint)
--------------------------------
-[ ] Workbench recipes [Sonnet] - 5+ new recipes requiring workbench proximity
-[ ] Sort/Quick-stack buttons [Sonnet] - Complete inventory QoL features
-[ ] Container visual polish [Sonnet] - Animations, texture variations
-[ ] Combat system [Opus] - Basic enemy encounters with simple weapons (new system)
+NEXT UP (After v0.5.0)
+----------------------
 [ ] Save/load system [Opus] - Persistent world state (HIGH PRIORITY, complex serialization)
+[ ] Combat system [Opus] - Basic enemy encounters with simple weapons (new system)
+[ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
+[ ] Tool durability [Sonnet] - Tools degrade with use
 
 
 BACKLOG (Prioritized)
@@ -119,6 +80,10 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+v0.4.0 RELEASE (December 12, 2025) - "Storage & Organization"
+Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
+Commit: d53049d
+
 [X] Container UI [Sonnet] - Dual-panel interface with click/shift-click transfers (Phase 2 COMPLETE)
 [X] UI state management [Sonnet] - Suppression/restoration when container opens/closes
 [X] B button container close [Sonnet] - Controller quick exit
@@ -134,6 +99,11 @@ COMPLETED (Recent)
 [X] Stack count display [Sonnet] - Shows "current/max" format, red "FULL" indicator when maxed
 [X] Inventory full notification [Sonnet] - On-screen alert when trying to exceed stack limits
 [X] Inventory UI scene [Sonnet] - Created inventory_ui.tscn for proper rendering
+[X] Code review [Opus] - Comprehensive codebase analysis (Grade: A)
+[X] AI capacity planning documentation [Sonnet] - Created AI_USAGE_ANALYSIS.md with tracking templates
+[X] DEVELOPMENT_GUIDE modernization [Sonnet] - Cleanup, encoding fixes, added technical debt section
+
+Pre-v0.4.0 Features:
 [X] Xbox controller support [Sonnet] - Full analog movement/camera, all buttons mapped
 [X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe ↔ Pickaxe
 [X] Valheim-style log breaking physics [Sonnet] - Trees break into 3-5 log pieces on impact
@@ -162,17 +132,17 @@ COMPLETED (Recent)
 [X] Settings menu [Sonnet] - Resolution, fullscreen, vsync, MSAA, quality presets
 [X] Water plane [Sonnet] - Infinite ocean with collision for walking
 [X] Visual polish [Sonnet] - Clouds, crosshair, harvest highlights, tree physics
-[X] Code review [Opus] - Comprehensive codebase analysis (Grade: A)
 
 
 DESIGN QUESTIONS / DECISIONS NEEDED
 ------------------------------------
-Sprint Planning Decisions (Made):
+v0.4.0 Sprint Decisions (Made):
 ✅ Storage scope: Core + Polish approach (1 week timeline)
 ✅ Container UI: Click-to-transfer first, drag-and-drop later
 ✅ Container destruction: Harvestable (break to get materials back)
 ✅ Item stacking: Full implementation this sprint
 ✅ Workbench scope: Placement + proximity, defer recipe gating
+✅ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
 
 Future Decisions (Still Open) - Use [Opus] for complex design decisions:
 ? Should tools degrade/break or have infinite durability? (affects resource loops) [Opus]
@@ -229,8 +199,8 @@ POTENTIAL ISSUES (from Code Review - not yet confirmed):
 [ ] Input blocking too broad [Sonnet] - player.gd line 148 blocks ALL input when container open
 
 
-SPRINT RISK ASSESSMENT
------------------------
+SPRINT RISK ASSESSMENT (v0.4.0 - COMPLETED)
+--------------------------------------------
 ✅ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
    Resolution: Scene-based architecture + click-to-transfer simplicity
    
@@ -252,13 +222,12 @@ Notes:
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
 - Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
-- Priority 1 (Storage Containers): 7/7 COMPLETE! ✅
-- Priority 2 (Inventory Improvements): 4/4 COMPLETE! ✅
-- Priority 3 (Workbench Foundation): 0/4 - NEXT UP
+- v0.4.0 Released: Storage Containers & Item Stacking (11/15 sprint tasks - 73% complete)
+- v0.5.0 Next: Workbench system (remaining 4 tasks from v0.4.0 sprint)
 - Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
 
 AI MODEL USAGE SUMMARY:
 - Total Opus tasks in backlog: ~12 (complex systems, architecture)
-- Total Sonnet tasks in backlog: ~40+ (implementation, fixes, polish)
+- Total Sonnet tasks in backlog: ~45+ (implementation, fixes, polish)
 - Recommended weekly balance: 1 Opus session + 10-15 Sonnet sessions
 - See AI_USAGE_ANALYSIS.md for detailed capacity planning

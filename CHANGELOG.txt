@@ -4,8 +4,70 @@ CRIMSON VEIL - CHANGELOG
 This file tracks all changes made to the project.
 Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
-Recent Changes (v0.3.0+):
+Recent Changes (v0.5.0+):
 -------------------------
+[2025-12-12 13:30] [RELEASE] v0.4.0 "Storage & Organization" released - Sprint Priorities 1 & 2 complete
+
+---
+
+Version History:
+----------------
+
+v0.4.0 (commit: d53049d) - December 12, 2025 - "Storage & Organization"
+Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
+
+MAJOR FEATURES:
+- Storage container system with placeable chests (10 wood cost)
+- Dual-panel container UI with click-to-transfer and shift+click for full stacks
+- Item stacking (wood: 100, stone: 50, food: 20, tools: 1) with visual feedback
+- UI state management (suppression/restoration when container opens/closes)
+- Comprehensive code review by Claude Opus 4.5 (Grade: A)
+- DEVELOPMENT_GUIDE.md modernization and AI capacity planning documentation
+
+CONTAINER SYSTEM:
+- Placeable chests via building mode (Tab/D-Pad to cycle to Chest block)
+- Independent 32-slot inventory per chest
+- E key or A button opens chest (3m interaction range)
+- Green highlight when looking at containers
+- Container removal warnings for full chests (prevents accidental item loss)
+- Layer 3 collision for clean raycast detection
+- Low-poly chest mesh (0.9x0.7x0.8m) with 16x16 pixel texture
+- Context-sensitive A button (container interaction priority over jump)
+
+CONTAINER UI:
+- Scene-based dual-panel interface (container_ui.tscn)
+- Player inventory LEFT, container RIGHT (Minecraft/Terraria convention)
+- Click to transfer 1 item between inventories
+- Shift+click to transfer full stack
+- Stack limit display (e.g., "50/100") with visual FULL indicators
+- Error notifications ("Inventory full!", "Container full!")
+- Partial transfer feedback ("Transferred 15/20")
+- Perfectly centered on screen with professional styling
+- ESC or B button to close
+- Auto-close at 5m distance
+- UI suppression (inventory/crafting hidden during container interaction)
+- Input blocking (I/C/Y/X disabled while container open)
+- Smart UI restoration (previous state restored on close)
+
+ITEM STACKING:
+- Stack limits enforced per item type (wood: 100, stone: 50, food: 20, tools: 1)
+- Auto-stack on pickup (items merge with existing stacks)
+- Stack count display in inventory UI
+- Visual "FULL" indicators (red text, red tint, red border on maxed stacks)
+- "INVENTORY FULL!" notification when trying to exceed limits
+- Created inventory_ui.tscn for proper scene-based rendering
+
+DOCUMENTATION & PLANNING:
+- Created AI_USAGE_ANALYSIS.md with capacity calculations and tracking templates
+- Added "AI Model Usage & Capacity Planning" section to DEVELOPMENT_GUIDE.md
+- Added Project Statistics table to DEVELOPMENT_GUIDE.md
+- Documented Sonnet vs Opus usage patterns and weekly capacity
+- Added AI model annotations [Sonnet]/[Opus] to all ROADMAP.txt tasks
+- DEVELOPMENT_GUIDE.md cleanup (removed line counts, fixed encoding, consolidated sections)
+- Added Technical Debt section with prioritized refactoring tasks
+- Created CODE_REVIEW.md from comprehensive Opus 4.5 codebase analysis
+
+CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-12 06:15] [DOC] Added commit hashes to Version History (v0.2.0: cc9669a, v0.3.0: aecc232)
 [2025-12-12 06:15] [DOC] Added "CHANGELOG ↔ Git Sync" workflow section to DEVELOPMENT_GUIDE.md
 [2025-12-12 06:15] [DOC] Updated commit checklist to include using CHANGELOG as commit message
@@ -181,26 +243,6 @@ Recent Changes (v0.3.0+):
 [2025-12-10 16:00] [MAJOR] Added minimal tool system - Axe/Pickaxe with requirement checking
 [2025-12-10 15:30] - Created ROADMAP.txt with current features and planned work
 [2025-12-10 15:35] - Created CHANGELOG.txt to track session changes
-
----
-
-Version History:
-----------------
-
-v0.4.0 (In Progress - Storage & Organization Sprint)
-- Storage container system with placeable chests (10 wood cost)
-- Dual-panel container UI with click-to-transfer and shift+click for full stacks
-- Item stacking (wood: 100, stone: 50, food: 20) with visual feedback
-- UI state management (suppression/restoration when container opens/closes)
-- B button and ESC close containers
-- Auto-close on distance (5m)
-- Container removal warnings for full chests
-- Independent 32-slot inventories per chest
-- Layer 3 collision for interactive objects
-- Comprehensive code review by Claude Opus 4.5 (Grade: A)
-- DEVELOPMENT_GUIDE.md modernization (removed line counts, fixed encoding, added technical debt)
-- AI Model Usage & Capacity Planning documentation
-- AI Usage Analysis baseline document with tracking templates
 
 v0.3.0 (commit: aecc232) - December 9, 2025
 - Procedural world generation with 7 biomes
