@@ -54,7 +54,7 @@ This ensures every session starts with full context.
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
   - Progression through biome exploration and resource gathering
-  - Satisfying crafting loops (gather â†’ craft â†’ unlock new areas/tools)
+  - Satisfying crafting loops (gather → craft → unlock new areas/tools)
   - Environmental storytelling through procedural world generation
   - Cozy base-building with functional purpose
 - **Visual Style**: 
@@ -89,22 +89,24 @@ This ensures every session starts with full context.
 - **Environment**: Day/night cycle, clouds, fog, sun/moon, time-based wildlife (fireflies/butterflies)
 - **Vegetation**: Procedural spawning with density controls, MultiMesh grass, biome-specific distributions
 - **Settings**: Runtime graphics adjustments (view distance, fog, shadows, cloud count)
+- **Crafting**: Recipe-based crafting system with 5 starter recipes
+- **Inventory**: Grid-based UI with 32 slots, visual item display
+- **Tools**: Axe and pickaxe with requirement checking
 
 ### Planned/Incomplete
-- Crafting recipes and progression gates
 - Boss encounters and progression milestones
 - Base defense mechanics
 - Advanced building pieces (roofs, windows, doors)
 - Tool progression (pickaxe, axe tiers)
-- Inventory UI expansion
 - Save/load system
 - Weather systems beyond day/night
+- Combat system
+- Health/hunger mechanics
 
 ### Known Issues
 - Tree falling physics occasionally glitches on steep mountain terrain
 - Building collision detection needs refinement for complex structures
 - Chunk unloading can cause vegetation pop-in if view distance changes rapidly
-- Material duplication warnings in console (performance optimization needed)
 
 ### Performance Considerations
 - Target: 60 FPS on mid-range hardware
@@ -117,12 +119,13 @@ This ensures every session starts with full context.
 ### Core Architecture
 - **Chunk-based world**: ChunkManager orchestrates terrain generation, VegetationSpawner populates
 - **Component systems**: Player has child nodes for HarvestingSystem, BuildingSystem, Inventory
-- **Resource inheritance**: HarvestableResource base class â†’ HarvestableTree/Mushroom/Strawberry
+- **Resource inheritance**: HarvestableResource base class → HarvestableTree/Mushroom/Strawberry
 - **Signal-driven communication**: Harvest completion signals trigger inventory updates and particle spawning
+- **Modular visual generators**: Tree creation delegated to separate visual generator classes (TreeVisual, PineTreeVisual, PalmTreeVisual)
 
 ### Naming Conventions
 - **Scripts**: snake_case (harvestable_tree.gd, chunk_manager.gd)
-- **Classes**: PascalCase (HarvestableResource, ChunkManager)
+- **Classes**: PascalCase (HarvestableResource, ChunkManager, TreeVisual)
 - **Enums**: PascalCase for enum name, SCREAMING_SNAKE for values (Biome.GRASSLAND, TreeType.PINE)
 - **Variables**: snake_case (tree_density, current_block_type)
 - **Constants**: SCREAMING_SNAKE_CASE (TEXTURE_SIZE, MAX_HEIGHT)
@@ -149,6 +152,12 @@ harvesting_system.harvest_completed.connect(_on_harvest_completed)
 - **Layer 1**: Terrain (player walks on this, buildings snap to this)
 - **Layer 2**: Harvestable resources (player raycasts detect this)
 - **Layer 8**: Critters (player passes through, purely visual)
+
+### Code Organization Philosophy
+- **Modular visual generators**: Large procedural mesh generators (300+ lines) should be extracted to separate files
+- **Single responsibility**: Each file should have one primary purpose
+- **AI-friendly file sizes**: Keep files under 500 lines when possible for better AI context window usage
+- **Shared utilities**: Common mesh operations belong in `core/mesh_builder.gd`
 
 ## Gameplay Balance Values
 
@@ -186,258 +195,97 @@ raycast_distance = 5.0       # Arm's reach for harvesting
 placement_range = 5.0        # Same as raycast for consistency
 ```
 
-### Design Rationale
-- **Tree density 0.35**: Lowered from 0.45 because forests felt too crowded for navigation
-- **Harvest times**: Tuned for "meditative but not boring" - player should feel engaged, not waiting
-- **Drop rates**: Balanced for "one more trip" loop - never quite enough, always want a bit more
-- **Sprint speed 2x walk**: Significant enough to feel useful, not so fast it trivializes exploration
-
-### Progression Targets (Planned)
-- Early game: Player needs ~50 wood, ~30 stone for first shelter
-- Mid game: Tool upgrades require rare biome materials
-- Late game: Boss summons need significant resource investment
-
-## Code Documentation Standards
-
-### File-Level Docstrings (Required for non-trivial files)
+### Biome Temperature & Moisture Ranges
 ```gdscript
-"""
-FileName - Brief purpose
+# Temperature (-1.0 to 1.0, lower = colder)
+SNOW: < -0.3
+MOUNTAIN: -0.3 to 0.0
+GRASSLAND: 0.0 to 0.4
+FOREST: 0.0 to 0.4 (wetter than grassland)
+DESERT: > 0.4
+BEACH: Special case (near water)
+OCEAN: Special case (below sea level)
 
-ARCHITECTURE:
-- System role and responsibilities
-- What creates/manages this class
-
-DEPENDENCIES:
-- Required nodes/groups (with integration details)
-- External systems this depends on
-
-PERFORMANCE NOTES:
-- Critical optimizations (why they matter)
-- Known bottlenecks avoided
-
-LIFECYCLE/STATE MACHINE:
-- State transitions (for stateful classes)
-- Creation -> Usage -> Destruction flow
-"""
+# Moisture (-1.0 to 1.0, higher = wetter)
+DESERT: < -0.2
+GRASSLAND: -0.2 to 0.3
+FOREST: > 0.3
 ```
 
-### Inline Comments - When to Use
-- **Integration points**: Document required collision layers, groups, signals
-- **Performance decisions**: Explain why something is done a certain way
-- **Non-obvious "why"**: Complex algorithms need reasoning, not just description
-- **State transitions**: Mark when objects change behavior/type
-- **Calculated values**: Flag derived values that shouldn't be set directly
-- **Balance tuning**: Flag values that affect game feel
-- **Proc-gen decisions**: Explain randomization choices
-- **Player feedback hooks**: Mark where UX/juice happens
+## Biome System Details
 
-### What NOT to Comment
-- Self-explanatory code (`var player: Player  # The player` â† bad)
-- Obvious getters/setters
-- Standard Godot patterns everyone knows
-
-### Examples of Good Comments
-
+### Biome-Specific Vegetation
 ```gdscript
-# INTEGRATION: Must be on layer 2 so player raycasts detect
-collision_layer = 2
-
-# PERFORMANCE: Duplicate materials ONCE here, not per-frame (previous bottleneck)
-prepare_materials_for_glow()
-
-# STATE TRANSITION: Standing (StaticBody3D) -> Falling (RigidBody3D)
-convert_to_physics_body()
-
-# CALCULATED: Do not set directly, derived from spawn_radius_chunks * chunk_size
-var despawn_distance: float
-
-# BALANCE: 0.5s feels responsive, 1.0s too sluggish (playtested)
-harvest_time = 0.5
-
-# PROCGEN: 15% mushrooms feels natural in forests (not too sparse/dense)
-if rand > (1.0 - mushroom_density * 0.15):
-
-# PLAYER FEEDBACK: Shake on hit makes harvesting feel impactful
-apply_hit_shake()
+OCEAN: None
+BEACH: Palm trees, small rocks
+GRASSLAND: Oak trees, grass, wildflowers, strawberries, rabbits
+FOREST: Oak trees (dense), mushrooms, grass, strawberries, deer, foxes
+DESERT: Cacti, small rocks, lizards
+MOUNTAIN: Pine trees, boulders, rocks, eagles
+SNOW: Pine trees (sparse), rocks, arctic foxes
 ```
 
-## Godot 4.5 Specific Guidelines
+## Feature Request Format
 
-### Project Structure
-- **Engine**: Godot 4.5 with GDScript
-- **Main scene**: world.tscn (orchestrates all systems)
-- **Global classes**: PixelTextureGenerator (no preload needed)
-- **Version control**: Files linked to GitHub (manual sync workflow)
+When suggesting new features, always include:
 
-### Scene Structure
-```
-World (Node3D)
-â”œâ”€â”€ ChunkManager (Node3D)
-â”œâ”€â”€ Player (CharacterBody3D)
-â”‚   â”œâ”€â”€ SpringArm3D
-â”‚   â”‚   â””â”€â”€ Camera3D
-â”‚   â”œâ”€â”€ HarvestingSystem (Node)
-â”‚   â”œâ”€â”€ BuildingSystem (Node3D)
-â”‚   â””â”€â”€ Inventory (Node)
-â”œâ”€â”€ VegetationSpawner (Node3D)
-â”œâ”€â”€ CritterSpawner (Node3D)
-â”œâ”€â”€ DayNightCycle (Node3D)
-â””â”€â”€ SettingsMenu (Control)
-
-Harvestable Resource Structure (spawned at runtime):
-HarvestableTree/Mushroom/Strawberry (StaticBody3D)
-â”œâ”€â”€ MeshInstance3D (visual)
-â””â”€â”€ CollisionShape3D (interaction)
-```
-
-### Common Godot Gotchas in This Project
-1. **Material duplication**: MUST duplicate in _ready(), NEVER per-frame
-   ```gdscript
-   # CORRECT - in _ready():
-   material = material.duplicate()
-   mesh_instance.set_surface_override_material(0, material)
-   
-   # WRONG - in _process():
-   var mat = material.duplicate()  # Memory leak!
-   ```
-
-2. **Collision setup**: Always deferred after mesh generation
-   ```gdscript
-   func _ready():
-       generate_mesh()
-       call_deferred("create_collision")  # Must be deferred
-   ```
-
-3. **MultiMesh limitations**: Cannot be modified after creation, must recreate
-   ```gdscript
-   # To change grass: recreate entire MultiMesh, don't try to modify instances
-   ```
-
-4. **Collision layers**: Must be set correctly or systems break
-   ```gdscript
-   # Terrain
-   collision_layer = 1
-   collision_mask = 0
-   
-   # Harvestables
-   collision_layer = 2
-   collision_mask = 0
-   
-   # Player
-   collision_layer = 1
-   collision_mask = 1  # Only terrain
-   ```
-
-5. **Node references**: Use get_node() or @onready, never assume tree structure
-   ```gdscript
-   @onready var camera = $SpringArm3D/Camera3D  # Validates at ready
-   # NOT: var camera = get_node("Camera3D")  # Fragile
-   ```
-
-6. **Signal connections**: Always check if callable exists
-   ```gdscript
-   if harvesting_system.has_signal("harvest_completed"):
-	   harvesting_system.harvest_completed.connect(_on_harvest_completed)
-   ```
-
-## Testing & Iteration
-
-### Debug Tools Available
-- **Fly mode**: Press F to toggle noclip (flies at 15 m/s)
-- **Inventory print**: Press I to dump inventory contents to console
-- **Settings menu**: ESC to access runtime graphics adjustments
-- **Collision visualization**: Enable in Godot editor â†’ Debug â†’ Visible Collision Shapes
-
-### Quick Testing Workflows
-1. **Test specific biome**: Modify player spawn position in world.gd
-2. **Test resource spawn**: Adjust density sliders in VegetationSpawner inspector
-3. **Test harvest times**: Change @export values in HarvestableResource subclasses
-4. **Test building costs**: Modify block_types dictionary in BuildingSystem
-
-### Performance Profiling
-- Enable Godot profiler: Debug â†’ Profiler
-- Watch for: Vegetation spawning spikes, material duplication warnings, chunk load stutters
-- Target frame time: ~16.67ms (60 FPS)
-
-### Scene Testing
-- Individual resources can't be tested in isolation (need ChunkManager for terrain height)
-- Use minimal world: Reduce view_distance to 1 chunk for faster iteration
-- Building blocks: Can test in empty scene with just Player + BuildingSystem
-
-## Iteration Priorities
-
-When making changes, evaluate in this order:
-
-1. **Does it serve the core pillars?**
-   - Exploration? Crafting? Base-building?
-   - If it doesn't support at least one pillar, reconsider
-
-2. **Does it maintain the aesthetic?**
-   - Can it work with 16x16 pixel textures?
-   - Does it fit low-poly geometric style?
-   - Readable silhouettes?
-
-3. **Does it respect "one more trip" loop?**
-   - Does it create satisfying micro-goals?
-   - Is reward timing right (not too fast/slow)?
-
-4. **Is it meditative or disruptive?**
-   - Does it add stress or calm?
-   - Accomplishment-focused or frustration-focused?
-
-5. **Technical feasibility?**
-   - Can Godot 4.5 handle it performantly?
-   - Does it fit existing architecture or require refactor?
-
-## Feature Request Template
-
-When requesting new features, provide:
-
-1. **Player motivation**: Why would player want this?
-   - Example: "Players want to mark discovered locations so they can return"
-
-2. **Fits which pillar**: Exploration? Crafting? Base-building?
-   - Example: "Exploration - helps navigate large world"
-
-3. **Inspiration example**: Reference game + modification
-   - Example: "Like Valheim's map markers but simpler, no full map UI"
-
-4. **Scope estimate**: Small tweak? New system? Content addition?
-   - Small: Single-session implementation
-   - Medium: 2-3 sessions
-   - Large: Week+ of work
-
-5. **Balance consideration**: How does this affect difficulty/progression?
-   - Example: "Makes navigation easier, might reduce exploration tension"
+### Required Information
+1. **Motivation**: Why does this feature support the core pillars?
+2. **Player Experience**: What does this add to the "one more trip" loop?
+3. **Scope**: Small/Medium/Large implementation
+4. **Dependencies**: What systems need to exist first?
+5. **Balance Considerations**: How does this affect progression/economy?
 
 ### Good Example
 "Add stone walls for base building. Players want protection from future threats (base-building pillar). Like Valheim's walls but snapped to grid. Medium scope - needs collision, placement validation, cost balancing. Should require significant stone investment to prevent trivializing defense."
 
 ### Bad Example
-"Add walls" â† Missing motivation, scope, balance considerations
+"Add walls" ❌ Missing motivation, scope, balance considerations
 
 ## Quick Reference
 
 ### Key Files
+
+**Core Systems:**
 - `world.gd` - Scene orchestration, system initialization, settings application
 - `chunk_manager.gd` - Terrain generation, biome logic, chunk loading/unloading
 - `chunk.gd` - Individual chunk mesh generation, biome determination
-- `vegetation_spawner.gd` - Procedural resource placement, biome-specific spawning
 - `player.gd` - Input handling, movement, system integration
+
+**Vegetation System:**
+- `vegetation_spawner.gd` - Procedural resource placement, biome-specific spawning, delegates to visual generators
+- `vegetation/visuals/tree_visual.gd` - Oak/deciduous tree procedural mesh generation
+- `vegetation/visuals/pine_tree_visual.gd` - Pine/conifer tree procedural mesh generation
+- `vegetation/visuals/palm_tree_visual.gd` - Palm tree procedural mesh generation
+
+**Harvestable Resources:**
 - `harvestable_resource.gd` - Base class for all collectible resources
 - `harvestable_tree.gd` - Tree-specific: falling physics, log spawning
 - `harvestable_mushroom.gd` - Mushroom variants with glow effects
 - `harvestable_strawberry.gd` - Strawberry bush size variants
+
+**Player Systems:**
 - `harvesting_system.gd` - Raycast detection, progress tracking, harvest logic
 - `building_system.gd` - Block placement, preview rendering, resource costs
+- `tool_system.gd` - Tool management and requirement checking
 - `inventory.gd` - Item storage, signal emissions for UI updates
+- `crafting_system.gd` - Recipe management and crafting logic
+
+**UI Systems:**
 - `harvest_ui.gd` - Progress bar, target display, inventory list
-- `pixel_texture_generator.gd` - Global class, generates all 16x16 textures
-- `day_night_cycle.gd` - Time progression, sun/moon, clouds, lighting
-- `critter_spawner.gd` - Time-based wildlife (fireflies, butterflies)
-- `settings_manager.gd` - Save/load settings, apply runtime changes
+- `inventory_ui.gd` - Grid-based inventory display
+- `crafting_ui.gd` - Recipe display and crafting interface
 - `settings_menu.gd` - UI for graphics/game settings
+
+**Environment:**
+- `day_night_cycle.gd` - Time progression, sun/moon, clouds, lighting
+- `critter_spawner.gd` - Time-based wildlife (fireflies, butterflies, critters)
+- `water_plane.gd` - Infinite ocean plane
+
+**Utilities:**
+- `core/mesh_builder.gd` - Shared mesh creation utilities (add_box, create_cylinder, finalize_mesh)
+- `pixel_texture_generator.gd` - Global class, generates all 16x16 textures
+- `settings_manager.gd` - Save/load settings, apply runtime changes
 
 ### Common Tasks
 
@@ -446,7 +294,15 @@ When requesting new features, provide:
 2. Override _ready() to set properties (health, harvest_time, drops)
 3. Add to VegType enum in vegetation_spawner.gd
 4. Add spawning logic in spawn_large_vegetation_for_biome()
-5. Create visual mesh generation function
+5. Create visual mesh generation function (consider extracting to separate file if >300 lines)
+
+**Add new tree type:**
+1. Create new visual generator in `vegetation/visuals/[tree_name]_visual.gd`
+2. Extend from Node with static `create(mesh_instance, spawner)` function
+3. Access spawner parameters via `spawner.tree_height_min` etc.
+4. Add to VegType enum in vegetation_spawner.gd
+5. Add preload and case in create_vegetation_mesh()
+6. Add spawning logic in spawn_large_vegetation_for_biome()
 
 **Add new biome:**
 1. Add to Chunk.Biome enum
@@ -478,6 +334,13 @@ When requesting new features, provide:
 3. Change lighting colors in update_environment_lighting()
 4. Test shadow transitions and visibility
 
+**Refactor large file (>1000 lines):**
+1. Identify the largest self-contained functions (usually mesh generators)
+2. Create new file in appropriate subdirectory (e.g., `vegetation/visuals/`)
+3. Extract function to static class method
+4. Update original file to call new class
+5. Test thoroughly to ensure identical behavior
+
 ## Response Style Guidelines
 
 ### Keep responses concise and focused
@@ -502,7 +365,7 @@ When requesting new features, provide:
 ### What NOT to do
 - Don't generate README updates unless requested
 - Don't create documentation files unless requested
-- Don't suggest file organization changes
+- Don't suggest file organization changes unless file is >1000 lines
 - Don't add comments explaining obvious code
 - Don't create architecture diagrams unless requested
 
@@ -514,7 +377,7 @@ When requesting new features, provide:
 
 IMPACT levels:
 - CRITICAL: Breaks save compatibility, major system overhaul
-- MAJOR: New system, significant feature addition
+- MAJOR: New system, significant feature addition, major refactoring
 - MINOR: Tweaks, balance adjustments, small additions
 - FIX: Bug fixes, performance improvements
 ```
@@ -525,6 +388,7 @@ IMPACT levels:
 [2024-01-15 15:45] [MAJOR] Added strawberry bushes with 3 size variants (small/medium/large)
 [2024-01-15 16:20] [FIX] Fixed material duplication memory leak in HarvestableResource
 [2024-01-16 10:00] [CRITICAL] Refactored chunk loading system - old saves incompatible
+[2024-12-11 02:00] [MAJOR] Refactored vegetation_spawner.gd - extracted tree generators (reduced from 2,075 to 1,457 lines)
 ```
 
 ### Session Workflow
@@ -533,19 +397,27 @@ IMPACT levels:
    - Read current CHANGELOG.txt from /mnt/project/
    - Add new entries at top under "Recent Changes" for ALL changes made this session
    - Also add to v0.X.0 feature list if it's a new feature
+   - Update ROADMAP.txt if completing items or adding to technical debt section
    - Copy updated CHANGELOG.txt to /mnt/user-data/outputs/
-   - Copy all modified files to /mnt/user-data/outputs/
+   - Copy updated ROADMAP.txt to /mnt/user-data/outputs/ (if modified)
+   - Copy all modified .gd files to /mnt/user-data/outputs/
+   - Copy all modified .tscn files to /mnt/user-data/outputs/
+   - Copy project.godot if modified
    - Provide suggested commit message based on changes
 3. **At start of new sessions**: Read CHANGELOG.txt to see what's been done previously
 
-**Important**: CHANGELOG.txt is only modified when preparing a commit, not during development. This keeps the file clean and only shows "official" committed changes.
+**Important**: CHANGELOG.txt and ROADMAP.txt are only modified when preparing a commit, not during development. This keeps files clean and only shows "official" committed changes.
 
 ### Commit Preparation Checklist
 When user says they want to commit:
 - [ ] Read /mnt/project/CHANGELOG.txt
+- [ ] Read /mnt/project/ROADMAP.txt
 - [ ] Add entries for all changes this session (newest first)
+- [ ] Update ROADMAP.txt (mark completions, add to technical debt if refactoring)
 - [ ] Copy CHANGELOG.txt to outputs
+- [ ] Copy ROADMAP.txt to outputs (if modified)
 - [ ] Copy all modified .gd files to outputs
+- [ ] Copy all new .gd files to outputs (with proper folder structure)
 - [ ] Copy all modified .tscn files to outputs
 - [ ] Copy project.godot if modified
 - [ ] Provide git commit message suggestion
@@ -583,11 +455,11 @@ Closes #issue_number (if applicable)
 - Atmospheric without being oppressive
 
 ### Avoid These Anti-Patterns
-- âŒ Punishing difficulty (not Dark Souls, not survival horror)
-- âŒ Overwhelming UI/systems (keep it simple and clean)
-- âŒ Tedious grinding (gathering should feel satisfying, not repetitive)
-- âŒ Complex crafting trees (Valheim-simple, not Factorio-complex)
-- âŒ Time pressure mechanics (let player explore at their own pace)
+- ❌ Punishing difficulty (not Dark Souls, not survival horror)
+- ❌ Overwhelming UI/systems (keep it simple and clean)
+- ❌ Tedious grinding (gathering should feel satisfying, not repetitive)
+- ❌ Complex crafting trees (Valheim-simple, not Factorio-complex)
+- ❌ Time pressure mechanics (let player explore at their own pace)
 
 ## Version Control Notes
 
@@ -596,6 +468,26 @@ Closes #issue_number (if applicable)
 - .tscn files are text-based, safe to merge
 - Be cautious with binary assets (textures, models if added later)
 - Always test after pulling changes from remote
+
+## AI-Assisted Development Best Practices
+
+### File Size Management
+- **Target**: Keep files under 500 lines when possible
+- **Warning threshold**: 800+ lines (consider refactoring)
+- **Critical threshold**: 1500+ lines (definitely refactor)
+- **Extraction pattern**: Large mesh generators (300+ lines) → separate visual generator files
+
+### Context Window Optimization
+- Prefer reading focused files over large monoliths
+- When modifying trees: read tree_visual.gd (338 lines) not full vegetation_spawner.gd (1,457 lines)
+- Use modular architecture to minimize required context
+
+### Refactoring Guidelines
+- Only refactor when files exceed 1000 lines
+- Extract self-contained functions first (procedural generators, visual creators)
+- Create appropriate folder structure (e.g., `vegetation/visuals/`, `critters/visuals/`)
+- Use static class methods for stateless generators
+- Pass parent object reference for parameter access
 
 ---
 
