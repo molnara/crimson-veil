@@ -10,10 +10,26 @@ class_name ChunkManager
 @export var noise_scale: float = 0.01  # Lower = smoother, larger features (was 0.03, now 67% larger - LARGE BIOMES)
 @export var height_multiplier: float = 10.0  # Maximum terrain height (reduced for gentler terrain)
 
-# Biome settings
-@export var biome_scale: float = 0.01  # Lower = larger biomes (easier to find)
-@export var temperature_scale: float = 0.003  # Temperature variation (was 0.008, now 63% larger - LARGE BIOMES)
-@export var moisture_scale: float = 0.004  # Moisture variation (was 0.01, now 60% larger - LARGE BIOMES)
+@export_group("Biome Generation Settings")
+@export var biome_scale: float = 0.01  ## Overall biome size (lower = larger biomes)
+@export var temperature_scale: float = 0.003  ## Temperature zone size (lower = larger hot/cold regions)
+@export var moisture_scale: float = 0.004  ## Moisture zone size (lower = larger wet/dry regions)
+
+@export_group("Biome Threshold Configuration")
+@export_range(50.0, 300.0) var spawn_zone_radius: float = 100.0  ## Radius around (0,0) that's always Grassland for safe spawning
+
+@export_subgroup("Ocean & Beach")
+@export_range(-1.0, 0.0) var ocean_threshold: float = -0.35  ## Height below this = ocean (lower = more ocean)
+@export_range(-1.0, 0.0) var beach_threshold: float = -0.2  ## Height below this = beach (higher = wider beaches)
+
+@export_subgroup("Mountain & Snow")
+@export_range(0.0, 1.0) var mountain_threshold: float = 0.4  ## Height above this = mountain/snow (lower = more mountains)
+@export_range(-1.0, 1.0) var snow_temperature: float = -0.2  ## Temperature below this = snow (higher = more snow biomes)
+
+@export_subgroup("Desert, Forest, Grassland")
+@export_range(-1.0, 1.0) var desert_temperature: float = 0.2  ## Temperature above this (+ dry) = desert (lower = more desert)
+@export_range(-1.0, 1.0) var desert_moisture: float = 0.0  ## Moisture below this (+ hot) = desert (higher = more desert)
+@export_range(-1.0, 1.0) var forest_moisture: float = 0.15  ## Moisture above this = forest (lower = more forest)
 
 # Internal variables
 var chunks: Dictionary = {}  # Dictionary to store loaded chunks
@@ -109,9 +125,10 @@ func world_to_chunk(world_pos: Vector3) -> Vector2i:
 func load_chunk(chunk_pos: Vector2i):
 	# INTEGRATION: Pass detail_noise and ridge_noise to Chunk for layered terrain
 	# Pass edge height cache to prevent seams between chunks
+	# Pass self (chunk_manager) so chunks can access biome thresholds
 	var chunk = Chunk.new(chunk_pos, chunk_size, chunk_height, noise, height_multiplier, 
 						   temperature_noise, moisture_noise, detail_noise, ridge_noise, 
-						   chunk_edge_heights)
+						   chunk_edge_heights, self)
 	add_child(chunk)
 	chunks[chunk_pos] = chunk
 
@@ -158,33 +175,38 @@ func calculate_terrain_height_at_position(world_x: float, world_z: float) -> flo
 	var temperature = temperature_noise.get_noise_2d(world_x, world_z)
 	var moisture = moisture_noise.get_noise_2d(world_x, world_z)
 	
+	# SPAWN ZONE OVERRIDE: Force Grassland near world origin for safe spawning
+	var distance_from_origin = sqrt(world_x * world_x + world_z * world_z)
 	var biome: int
-	if base_height < -0.2:
-		if base_height < -0.35:
+	if distance_from_origin < spawn_zone_radius:  # Configurable safe zone
+		biome = 2  # GRASSLAND
+	elif base_height < beach_threshold:
+		if base_height < ocean_threshold:
 			biome = 0  # OCEAN
 		else:
 			biome = 1  # BEACH
-	elif base_height > 0.4:
-		if temperature < -0.2:
+	elif base_height > mountain_threshold:
+		if temperature < snow_temperature:
 			biome = 6  # SNOW
 		else:
 			biome = 5  # MOUNTAIN
 	else:
-		if temperature > 0.2 and moisture < 0.0:
+		if temperature > desert_temperature and moisture < desert_moisture:
 			biome = 4  # DESERT
-		elif moisture > 0.15:
+		elif moisture > forest_moisture:
 			biome = 3  # FOREST
 		else:
 			biome = 2  # GRASSLAND
 	
 	# Calculate beach blend
 	var beach_blend = 0.0
-	if base_height < -0.35:
+	if base_height < ocean_threshold:
 		beach_blend = 0.0
-	elif base_height > -0.2:
+	elif base_height > beach_threshold:
 		beach_blend = 1.0
 	else:
-		var blend = (base_height + 0.35) / 0.15
+		var blend_range = beach_threshold - ocean_threshold
+		var blend = (base_height - ocean_threshold) / blend_range
 		beach_blend = blend * blend * (3.0 - 2.0 * blend)
 	
 	# Apply biome modifiers

@@ -49,47 +49,74 @@ var player: Node3D
 
 # Vegetation density settings - individual control for each type
 @export_group("Vegetation Density")
-@export_range(0.0, 1.0) var tree_density: float = 0.35  ## Density of trees (0.0 = none, 1.0 = maximum)
-@export_range(0.0, 1.0) var rock_density: float = 0.25  ## Density of rocks and boulders (0.0 = none, 1.0 = maximum)
-@export_range(0.0, 1.0) var mushroom_density: float = 0.15  ## Density of mushrooms (0.0 = none, 1.0 = maximum)
-@export_range(0.0, 1.0) var strawberry_density: float = 0.20  ## Density of strawberry bushes (0.0 = none, 1.0 = maximum)
-@export_range(0.0, 1.0) var grass_density: float = 0.8  ## Density of grass and ground cover (higher for fuller look)
-@export_range(0.0, 1.0) var flower_density: float = 0.15  ## Density of wildflowers (0.0 = none, 1.0 = maximum)
-@export_range(1, 5) var spawn_radius: int = 2  ## How many chunks around player to populate with vegetation
+@export_range(0.0, 1.0) var tree_density: float = 0.40  ## Forests feel full, grasslands open
+@export_range(0.0, 1.0) var rock_density: float = 0.30  ## Common but not overwhelming
+@export_range(0.0, 1.0) var mushroom_density: float = 0.18  ## Rare forest finds
+@export_range(0.0, 1.0) var strawberry_density: float = 0.25  ## Regular food source
+@export_range(0.0, 1.0) var grass_density: float = 0.75  ## Lush but performant
+@export_range(0.0, 1.0) var flower_density: float = 0.20  ## Colorful accents
+@export_range(1, 5) var spawn_radius: int = 3  ## Balanced view distance
 
 @export_group("Tree Size Variation")
-@export_range(2.0, 15.0) var tree_height_min: float = 3.5  ## Minimum tree height in meters (smallest trees)
-@export_range(2.0, 15.0) var tree_height_max: float = 9.5  ## Maximum tree height in meters (tallest trees)
-@export_range(0.1, 1.0) var trunk_radius_base: float = 0.3  ## Base trunk radius in meters (scales with tree size)
+@export_range(2.0, 15.0) var tree_height_min: float = 4.0  ## Valheim scale
+@export_range(2.0, 15.0) var tree_height_max: float = 10.0  ## Impressive but not ridiculous
+@export_range(0.1, 1.0) var trunk_radius_base: float = 0.35  ## Sturdy trunks
 
 @export_group("Tree Branch Settings")
-@export_range(2, 8) var branch_count_min: int = 3  ## Minimum number of branches per tree
-@export_range(2, 8) var branch_count_max: int = 5  ## Maximum number of branches per tree
-@export_range(0.5, 3.0) var branch_length_min: float = 1.6  ## Minimum branch length in meters
-@export_range(0.5, 3.0) var branch_length_max: float = 2.0  ## Maximum branch length in meters
-@export_range(0.0, 1.0) var branch_height_start: float = 0.5  ## Where branches start as fraction of trunk height (0.5 = halfway up)
-@export_range(0.0, 1.0) var branch_height_end: float = 0.85  ## Where branches end as fraction of trunk height (0.85 = near top)
-@export_range(0.0, 0.5) var branch_upward_angle: float = 0.25  ## How much branches angle upward (0 = horizontal, 0.5 = steep)
+@export_range(2, 8) var branch_count_min: int = 3  ## Minimum variety
+@export_range(2, 8) var branch_count_max: int = 6  ## Fuller canopies
+@export_range(0.5, 3.0) var branch_length_min: float = 1.5  
+@export_range(0.5, 3.0) var branch_length_max: float = 2.2  ## Wider spread
+@export_range(0.0, 1.0) var branch_height_start: float = 0.45  ## Lower branches
+@export_range(0.0, 1.0) var branch_height_end: float = 0.85  
+@export_range(0.0, 0.5) var branch_upward_angle: float = 0.20  ## Natural droop
 
 @export_group("Tree Foliage Settings")
-@export_range(2, 8) var branch_foliage_layers: int = 4  ## Number of foliage disc layers per branch (more = fuller coverage)
-@export_range(2, 10) var top_foliage_layers: int = 5  ## Number of foliage disc layers at tree top (more = denser crown)
-@export_range(0.1, 1.0) var foliage_disc_thickness: float = 0.4  ## Base thickness of foliage discs in meters
-@export_range(0.0, 1.0) var foliage_layer_gap: float = 0.2  ## Vertical spacing between foliage layers (lower = tighter, less trunk visible)
-@export_range(0.5, 2.0) var foliage_disc_size: float = 0.75  ## Size multiplier for foliage disc radius (larger = wider canopy)
-@export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.88  ## Where top crown starts as fraction of trunk height (higher = near top)
+@export_range(2, 8) var branch_foliage_layers: int = 5  ## Fuller coverage
+@export_range(2, 10) var top_foliage_layers: int = 6  ## Dense crown
+@export_range(0.1, 1.0) var foliage_disc_thickness: float = 0.45  
+@export_range(0.0, 1.0) var foliage_layer_gap: float = 0.15  ## Tighter layering
+@export_range(0.5, 2.0) var foliage_disc_size: float = 0.80  ## Balanced canopy
+@export_range(0.7, 1.0) var top_crown_height_ratio: float = 0.85  ## Lower crown start
 
 @export_group("Tree Trunk Tilt Settings")
-@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.15  ## Maximum trunk tilt angle in radians (0 = vertical, 0.4 = ~23Ãƒâ€šÃ‚Â°)
-@export_range(0.0, 1.0) var trunk_tilt_influence: float = 0.7  ## How much taller trees lean (0 = no influence, 1 = tall trees lean most)
+@export_range(0.0, 0.4) var trunk_tilt_max: float = 0.12  ## Subtle character
+@export_range(0.0, 1.0) var trunk_tilt_influence: float = 0.65  
 
 @export_group("Character Tree Settings")
-@export_range(0.0, 0.15) var character_tree_chance: float = 0.05  ## Chance for rare "character" trees with unique features (0-15%)
-@export_range(0.0, 1.0) var branch_asymmetry_amount: float = 0.4  ## How much branches favor one side (0 = symmetric, 1 = extreme one-sided)
+@export_range(0.0, 0.15) var character_tree_chance: float = 0.08  ## Slightly more common
+@export_range(0.0, 1.0) var branch_asymmetry_amount: float = 0.35  
 
 @export_group("Ground Cover Settings")
-@export_range(10, 150) var ground_cover_samples_per_chunk: int = 60  ## Number of grass/flower samples per chunk (higher = denser)
-@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 15  ## Number of tree/rock samples per chunk (lower = more sparse)
+@export_range(10, 150) var ground_cover_samples_per_chunk: int = 75  ## Valheim density
+@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 18  ## More resources
+
+@export_group("Forest Biome Configuration")
+@export_range(0.0, 1.0) var forest_tree_density: float = 0.75  ## Dense, dark forests
+@export_range(0.0, 1.0) var forest_mushroom_density: float = 0.55  ## Abundant mushrooms
+@export_range(0.0, 1.0) var forest_rock_density: float = 0.25  
+
+@export_group("Grassland Biome Configuration")
+@export_range(0.0, 1.0) var grassland_tree_density: float = 0.18  ## Sparse, open
+@export_range(0.0, 1.0) var grassland_strawberry_density: float = 0.60  ## Berry fields
+@export_range(0.0, 1.0) var grassland_rock_density: float = 0.70  ## Common rocks
+
+@export_group("Mountain Biome Configuration")
+@export_range(0.0, 1.0) var mountain_pine_density: float = 0.20  ## Sparse treeline
+@export_range(0.0, 1.0) var mountain_rock_density: float = 0.80  ## Very rocky
+@export_range(0.0, 1.0) var mountain_boulder_ratio: float = 0.60  ## Lots of boulders
+
+@export_group("Snow Biome Configuration")
+@export_range(0.0, 1.0) var snow_pine_density: float = 0.30  ## Sparse pines
+@export_range(0.0, 1.0) var snow_rock_density: float = 0.50  
+
+@export_group("Desert Biome Configuration")
+@export_range(0.0, 1.0) var desert_cactus_density: float = 0.25  ## Sparse cacti
+@export_range(0.0, 1.0) var desert_rock_density: float = 0.65  
+
+@export_group("Beach Biome Configuration")
+@export_range(0.0, 1.0) var beach_palm_density: float = 0.30  ## Tropical feel
+@export_range(0.0, 1.0) var beach_rock_density: float = 0.45
 
 # Track which chunks have vegetation
 var populated_chunks: Dictionary = {}
@@ -281,10 +308,10 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 	match biome:
 		Chunk.Biome.FOREST:
 			# Trees - Oak only (dense, dark forest)
-			if rand > (1.0 - tree_density * 0.70):
+			if rand > (1.0 - tree_density * forest_tree_density):
 				veg_type = VegType.TREE
 			# Mushrooms - Signature forest resource (increased spawn)
-			elif rand > (1.0 - mushroom_density * 0.50):
+			elif rand > (1.0 - mushroom_density * forest_mushroom_density):
 				var mushroom_rand = randf()
 				if mushroom_rand > 0.6:
 					veg_type = VegType.MUSHROOM_RED
@@ -293,7 +320,7 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				else:
 					veg_type = VegType.MUSHROOM_CLUSTER
 			# Rocks (reduced spawn for forest floor)
-			elif rand > (1.0 - rock_density * 0.30):
+			elif rand > (1.0 - rock_density * forest_rock_density):
 				var rock_rand = randf()
 				if rock_rand > 0.95:  # 5% boulders
 					veg_type = VegType.BOULDER
@@ -306,10 +333,10 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 		
 		Chunk.Biome.GRASSLAND:
 			# Trees - Sparse oak trees (open pastoral feel)
-			if rand > (1.0 - tree_density * 0.20):
+			if rand > (1.0 - tree_density * grassland_tree_density):
 				veg_type = VegType.TREE
 			# Strawberries - Signature grassland resource (increased spawn)
-			elif rand > (1.0 - strawberry_density * 0.55):
+			elif rand > (1.0 - strawberry_density * grassland_strawberry_density):
 				var size_rand = randf()
 				if size_rand > 0.85:  # 15% large
 					veg_type = VegType.STRAWBERRY_BUSH_LARGE
@@ -318,7 +345,7 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 				else:  # 30% small
 					veg_type = VegType.STRAWBERRY_BUSH_SMALL
 			# Rocks (high spawn rate, mostly small)
-			elif rand > (1.0 - rock_density * 0.65):
+			elif rand > (1.0 - rock_density * grassland_rock_density):
 				var rock_rand = randf()
 				if rock_rand > 0.92:  # 8% boulders
 					veg_type = VegType.BOULDER
@@ -331,10 +358,10 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 		
 		Chunk.Biome.DESERT:
 			# Cactus (uses tree density)
-			if rand > (1.0 - tree_density * 0.30):
+			if rand > (1.0 - tree_density * desert_cactus_density):
 				veg_type = VegType.CACTUS
 			# Rocks (high spawn rate, mostly small)
-			elif rand > (1.0 - rock_density * 0.70):
+			elif rand > (1.0 - rock_density * desert_rock_density):
 				var rock_rand = randf()
 				if rock_rand > 0.90:  # 10% boulders
 					veg_type = VegType.BOULDER
@@ -347,26 +374,26 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 		
 		Chunk.Biome.MOUNTAIN:
 			# Pine trees - Sparse, windswept conifers
-			if rand > (1.0 - tree_density * 0.25):
+			if rand > (1.0 - tree_density * mountain_pine_density):
 				veg_type = VegType.PINE_TREE
 			# Boulders and rocks (abundant - mountain biome)
-			elif rand > (1.0 - rock_density * 0.70):
+			elif rand > (1.0 - rock_density * mountain_rock_density):
 				var rock_rand = randf()
-				if rock_rand > 0.5:  # 50% boulders
+				if rock_rand > (1.0 - mountain_boulder_ratio):  # Configurable boulder ratio
 					veg_type = VegType.BOULDER
-				elif rock_rand > 0.25:  # 25% regular rocks
+				elif rock_rand > 0.25:  # Regular rocks
 					veg_type = VegType.ROCK
-				else:  # 25% small rocks
+				else:  # Small rocks
 					veg_type = VegType.SMALL_ROCK
 			else:
 				return
 		
 		Chunk.Biome.SNOW:
 			# Pine trees
-			if rand > (1.0 - tree_density * 0.35):
+			if rand > (1.0 - tree_density * snow_pine_density):
 				veg_type = VegType.PINE_TREE
 			# Rocks (high spawn rate, mostly small)
-			elif rand > (1.0 - rock_density * 0.55):
+			elif rand > (1.0 - rock_density * snow_rock_density):
 				var rock_rand = randf()
 				if rock_rand > 0.88:  # 12% boulders
 					veg_type = VegType.BOULDER
@@ -379,10 +406,10 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 		
 		Chunk.Biome.BEACH:
 			# Palm trees
-			if rand > (1.0 - tree_density * 0.25):
+			if rand > (1.0 - tree_density * beach_palm_density):
 				veg_type = VegType.PALM_TREE
 			# Rocks (high spawn rate, mostly small)
-			elif rand > (1.0 - rock_density * 0.50):
+			elif rand > (1.0 - rock_density * beach_rock_density):
 				var rock_rand = randf()
 				if rock_rand > 0.75:  # Only 25% regular rocks
 					veg_type = VegType.ROCK

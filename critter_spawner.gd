@@ -27,33 +27,33 @@ var critter_noise: FastNoiseLite
 var player: Node3D
 var day_night_cycle: DayNightCycle = null
 
-# Critter density settings
+# Critter density settings - Valheim-inspired ambient life
 @export_group("Ground Critter Density")
-@export_range(0.0, 1.0) var rabbit_density: float = 0.12
-@export_range(0.0, 1.0) var fox_density: float = 0.08
-@export_range(0.0, 1.0) var arctic_fox_density: float = 0.1
-@export_range(0.0, 1.0) var crab_density: float = 0.15
-@export_range(0.0, 1.0) var lizard_density: float = 0.12
+@export_range(0.0, 1.0) var rabbit_density: float = 0.15  ## Common in grasslands
+@export_range(0.0, 1.0) var fox_density: float = 0.10  ## Rare predators
+@export_range(0.0, 1.0) var arctic_fox_density: float = 0.12  ## Snow biome
+@export_range(0.0, 1.0) var crab_density: float = 0.18  ## Beaches feel alive
+@export_range(0.0, 1.0) var lizard_density: float = 0.14  ## Desert activity
 
 @export_group("Flying Critter Density")
-@export_range(0.0, 1.0) var butterfly_density: float = 0.2
-@export_range(0.0, 1.0) var eagle_density: float = 0.03
+@export_range(0.0, 1.0) var butterfly_density: float = 0.25  ## Daytime magic
+@export_range(0.0, 1.0) var eagle_density: float = 0.04  ## Rare majesty
 
 @export_group("Particle Critter Density")
-@export_range(0.0, 1.0) var firefly_density: float = 0.25  ## Spawns only at night in forests
+@export_range(0.0, 1.0) var firefly_density: float = 0.30  ## Night forest magic
 
 @export_group("Spawn Settings")
-@export_range(5, 50) var critters_per_chunk: int = 3
-@export_range(2, 6) var spawn_radius_chunks: int = 3
-@export_range(1.5, 3.0) var despawn_distance_multiplier: float = 2.0
+@export_range(5, 50) var critters_per_chunk: int = 4  ## More life (was 3)
+@export_range(2, 6) var spawn_radius_chunks: int = 3  
+@export_range(1.5, 3.0) var despawn_distance_multiplier: float = 2.0  
 
 @export_group("Behavior Settings")
-@export_range(1.0, 10.0) var ground_move_speed: float = 3.0
-@export_range(0.5, 5.0) var idle_time_min: float = 1.0
-@export_range(0.5, 5.0) var idle_time_max: float = 3.0
-@export_range(5.0, 15.0) var flying_speed: float = 8.0
-@export_range(15.0, 40.0) var flying_height_min: float = 20.0  ## Reduced from 40.0
-@export_range(5.0, 20.0) var flying_height_variation: float = 10.0  ## Reduced from 30.0
+@export_range(1.0, 10.0) var ground_move_speed: float = 2.5  ## Slower, natural (was 3.0)
+@export_range(0.5, 5.0) var idle_time_min: float = 1.5  ## Longer pauses (was 1.0)
+@export_range(0.5, 5.0) var idle_time_max: float = 4.0  ## More varied (was 3.0)
+@export_range(5.0, 15.0) var flying_speed: float = 7.0  ## Graceful (was 8.0)
+@export_range(15.0, 40.0) var flying_height_min: float = 18.0  ## Lower eagles (was 20.0)
+@export_range(5.0, 20.0) var flying_height_variation: float = 12.0  ## More variety (was 10.0)
 
 # Track spawned critters
 var active_critters: Array = []

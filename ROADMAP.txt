@@ -3,7 +3,7 @@ CRIMSON VEIL - FEATURE ROADMAP
 
 CURRENT SPRINT (Next 1-2 weeks)
 --------------------------------
-[ ] Biome-specific resources - Unique materials in each biome (desert cacti, snow ice, etc)
+(Current sprint items completed - ready for new sprint planning)
 
 VISUAL POLISH
 -------------
@@ -34,7 +34,6 @@ NEXT UP (This Month)
 BACKLOG (Prioritized)
 ---------------------
 HIGH PRIORITY:
-[ ] Biome configuration options - Expose biome-specific vegetation densities and distributions in Inspector for easy tuning
 [ ] Boss progression system - Valheim-style boss encounters that gate biome access
 [ ] Advanced building - Walls, roofs, furniture for proper base construction
 [ ] Save/load system - Persistent world state and player progress
@@ -70,6 +69,9 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+[X] Biome configuration system - Inspector controls for biome size, thresholds, and vegetation densities per biome
+[X] Guaranteed Grassland spawn zone - Valheim-style safe spawn with configurable radius
+[X] Biome-specific vegetation distributions - Each biome has unique tree types and signature resources
 [X] Code refactoring - Extracted tree generators from vegetation_spawner (reduced from 2,075 to 1,457 lines)
 [X] Inventory UI - Grid-based visual inventory (Tab to toggle), 32 slots with item icons and counts
 [X] Crafting system - Recipe-based crafting with UI (Press R), 5 starter recipes (stone tools, campfire, torch, wood wall)

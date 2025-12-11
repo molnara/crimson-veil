@@ -14,6 +14,7 @@ var detail_noise: FastNoiseLite  # Small bumps/hills
 var ridge_noise: FastNoiseLite   # Mountain ridges
 var edge_heights: Dictionary      # Shared edge heights from ChunkManager
 var mesh_instance: MeshInstance3D
+var chunk_manager: ChunkManager   # Reference to access biome thresholds
 
 # Biome types
 enum Biome {
@@ -29,7 +30,7 @@ enum Biome {
 func _init(pos: Vector2i, size: int, height: int, noise_generator: FastNoiseLite, height_mult: float,
 		   temp_noise: FastNoiseLite, moist_noise: FastNoiseLite, 
 		   detail_noise_gen: FastNoiseLite, ridge_noise_gen: FastNoiseLite,
-		   shared_edge_heights: Dictionary):
+		   shared_edge_heights: Dictionary, manager: ChunkManager):
 	chunk_position = pos
 	chunk_size = size
 	chunk_height = height
@@ -40,6 +41,7 @@ func _init(pos: Vector2i, size: int, height: int, noise_generator: FastNoiseLite
 	detail_noise = detail_noise_gen
 	ridge_noise = ridge_noise_gen
 	edge_heights = shared_edge_heights  # Reference to shared cache
+	chunk_manager = manager  # Store reference to access biome thresholds
 	
 	# Set collision layers - layer 1 for terrain
 	collision_layer = 1
@@ -204,21 +206,18 @@ func calculate_beach_blend(base_noise: float) -> float:
 	"""Calculate smooth blend factor for beach transitions
 	
 	IMPROVEMENT #5: Beach Transition Blending
-	Returns 0.0 to 1.0 based on position in beach zone:
-	- base_noise < -0.35: 0.0 (deep ocean, no blend)
-	- base_noise -0.35 to -0.2: 0.0→1.0 (beach zone, smooth gradient)
-	- base_noise > -0.2: 1.0 (land, no blend)
+	Returns 0.0 to 1.0 based on position in beach zone using configurable thresholds
 	
 	INTEGRATION: Used in height calculation to smoothly lerp between ocean and land elevation
 	"""
-	if base_noise < -0.35:
+	if base_noise < chunk_manager.ocean_threshold:
 		return 0.0  # Pure ocean
-	elif base_noise > -0.2:
+	elif base_noise > chunk_manager.beach_threshold:
 		return 1.0  # Pure land
 	else:
 		# Beach zone: smooth transition
-		# Normalize -0.35→-0.2 range to 0.0→1.0
-		var blend = (base_noise + 0.35) / 0.15
+		var blend_range = chunk_manager.beach_threshold - chunk_manager.ocean_threshold
+		var blend = (base_noise - chunk_manager.ocean_threshold) / blend_range
 		# Apply smoothstep for even smoother transition
 		return blend * blend * (3.0 - 2.0 * blend)
 
@@ -354,21 +353,27 @@ func create_collision():
 	collision_shape.shape = heightmap_shape
 
 func get_biome(world_x: float, world_z: float, base_noise: float) -> Biome:
+	# SPAWN ZONE OVERRIDE: Force Grassland near world origin (0, 0) for safe spawning
+	# Like Valheim always spawning in Meadows - configurable radius
+	var distance_from_origin = sqrt(world_x * world_x + world_z * world_z)
+	if distance_from_origin < chunk_manager.spawn_zone_radius:
+		return Biome.GRASSLAND
+	
 	# Get temperature and moisture values (-1 to 1)
 	var temperature = temperature_noise.get_noise_2d(world_x, world_z)
 	var moisture = moisture_noise.get_noise_2d(world_x, world_z)
 	
-	# Determine biome based on multiple factors
-	# Very low areas = ocean/beach (more generous threshold)
-	if base_noise < -0.2:  # Much easier to generate ocean
-		if base_noise < -0.35:
+	# Determine biome based on configurable thresholds
+	# Very low areas = ocean/beach
+	if base_noise < chunk_manager.beach_threshold:
+		if base_noise < chunk_manager.ocean_threshold:
 			return Biome.OCEAN
 		else:
 			return Biome.BEACH
 	
 	# High elevation = mountains/snow
-	elif base_noise > 0.4:
-		if temperature < -0.2:
+	elif base_noise > chunk_manager.mountain_threshold:
+		if temperature < chunk_manager.snow_temperature:
 			return Biome.SNOW
 		else:
 			return Biome.MOUNTAIN
@@ -376,10 +381,10 @@ func get_biome(world_x: float, world_z: float, base_noise: float) -> Biome:
 	# Mid-level biomes based on temperature and moisture
 	else:
 		# Hot and dry = desert
-		if temperature > 0.2 and moisture < 0.0:
+		if temperature > chunk_manager.desert_temperature and moisture < chunk_manager.desert_moisture:
 			return Biome.DESERT
 		# Wet = forest
-		elif moisture > 0.15:
+		elif moisture > chunk_manager.forest_moisture:
 			return Biome.FOREST
 		# Default = grassland
 		else:

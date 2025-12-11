@@ -6,7 +6,13 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
-[2024-12-10 21:59] [MAJOR] Biome-specific vegetation distributions - forests now oak-only with increased mushrooms, grasslands feature strawberries, mountains have sparse pines
+[2024-12-10 XX:XX] [MAJOR] Added biome generation configuration - exposed noise scales and thresholds in Inspector for biome size/shape control
+[2024-12-10 XX:XX] [MAJOR] Added biome-specific vegetation configuration - per-biome density controls in Inspector (forest trees, grassland strawberries, etc)
+[2024-12-10 XX:XX] [FEATURE] Guaranteed Grassland spawn zone - 100m radius around origin always Grassland (Valheim-style safe spawning)
+[2024-12-10 XX:XX] [MINOR] Added spawn_zone_radius export variable (50-300m configurable radius)
+[2024-12-10 XX:XX] [MINOR] Added temperature_scale, moisture_scale controls for biome size tuning
+[2024-12-10 XX:XX] [MINOR] Added configurable biome thresholds (ocean/beach/mountain/snow/desert/forest levels)
+[2024-12-10 XX:XX] [MAJOR] Biome-specific vegetation distributions - forests now oak-only with increased mushrooms, grasslands feature strawberries, mountains have sparse pines
 [2024-12-10 XX:XX] [MINOR] Removed pine trees from forests (forests now 100% oak trees for distinct identity)
 [2024-12-10 XX:XX] [MINOR] Removed strawberries from forests (now grassland-exclusive resource)
 [2024-12-10 XX:XX] [MINOR] Added sparse pine trees to mountains (25% density to reduce barren feel)
