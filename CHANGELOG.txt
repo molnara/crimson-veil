@@ -6,6 +6,15 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-11 23:45] [DOC] Major DEVELOPMENT_GUIDE.md cleanup and modernization
+[2024-12-11 23:45] [DOC] Removed line counts from file index (too cumbersome to maintain)
+[2024-12-11 23:45] [DOC] Consolidated duplicate Storage & Interaction Systems sections
+[2024-12-11 23:45] [DOC] Fixed Unicode encoding issues (garbled characters → clean symbols)
+[2024-12-11 23:45] [DOC] Added missing files to index: container_warning_ui.gd, CODE_REVIEW.md
+[2024-12-11 23:45] [DOC] Added Technical Debt section with HIGH/MEDIUM priorities from code review
+[2024-12-11 23:45] [DOC] Added potential bugs to Known Issues (race condition, input blocking)
+[2024-12-11 23:45] [DOC] Updated refactoring thresholds: 1000 → 800 lines (more practical)
+[2024-12-11 23:45] [DOC] Reduced DEVELOPMENT_GUIDE.md from ~950 to ~650 lines
 [2024-12-11 22:30] [MAJOR] Comprehensive code review completed by Claude Opus 4.5
 [2024-12-11 22:30] [DOC] Created CODE_REVIEW.md - Full codebase analysis with architecture review, file-by-file analysis, and recommendations
 [2024-12-11 22:30] [DOC] Updated ROADMAP.txt - Added code review recommendations to Technical Debt section
@@ -167,6 +176,7 @@ v0.4.0 (In Progress - Storage & Organization Sprint)
 - Independent 32-slot inventories per chest
 - Layer 3 collision for interactive objects
 - Comprehensive code review by Claude Opus 4.5 (Grade: A)
+- DEVELOPMENT_GUIDE.md modernization (removed line counts, fixed encoding, added technical debt)
 
 v0.3.0 (Current Release)
 - Procedural world generation with 7 biomes
