@@ -30,16 +30,16 @@ What should I work on next?
 
 **Example Session Start Output:**
 ```
-📋 CURRENT SPRINT:
-- Tool system ✓ (completed)
+ðŸ“‹ CURRENT SPRINT:
+- Tool system âœ“ (completed)
 - Crafting system (next up)
 - Inventory UI (planned)
 
-🔨 RECENT CHANGES:
+ðŸ”¨ RECENT CHANGES:
 [2024-12-10 16:00] [MAJOR] Added minimal tool system
 [2024-12-10 16:30] [MINOR] Added visual tool feedback
 
-🐛 KNOWN ISSUES:
+ðŸ› KNOWN ISSUES:
 - Trees occasionally clip through terrain on slopes
 - Fullscreen only works in exported builds
 
@@ -54,7 +54,7 @@ This ensures every session starts with full context.
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
   - Progression through biome exploration and resource gathering
-  - Satisfying crafting loops (gather → craft → unlock new areas/tools)
+  - Satisfying crafting loops (gather â†’ craft â†’ unlock new areas/tools)
   - Environmental storytelling through procedural world generation
   - Cozy base-building with functional purpose
 - **Visual Style**: 
@@ -119,7 +119,7 @@ This ensures every session starts with full context.
 ### Core Architecture
 - **Chunk-based world**: ChunkManager orchestrates terrain generation, VegetationSpawner populates
 - **Component systems**: Player has child nodes for HarvestingSystem, BuildingSystem, Inventory
-- **Resource inheritance**: HarvestableResource base class → HarvestableTree/Mushroom/Strawberry
+- **Resource inheritance**: HarvestableResource base class â†’ HarvestableTree/Mushroom/Strawberry
 - **Signal-driven communication**: Harvest completion signals trigger inventory updates and particle spawning
 - **Modular visual generators**: Tree creation delegated to separate visual generator classes (TreeVisual, PineTreeVisual, PalmTreeVisual)
 
@@ -240,7 +240,7 @@ When suggesting new features, always include:
 "Add stone walls for base building. Players want protection from future threats (base-building pillar). Like Valheim's walls but snapped to grid. Medium scope - needs collision, placement validation, cost balancing. Should require significant stone investment to prevent trivializing defense."
 
 ### Bad Example
-"Add walls" ❌ Missing motivation, scope, balance considerations
+"Add walls" âŒ Missing motivation, scope, balance considerations
 
 ## Quick Reference
 
@@ -251,106 +251,106 @@ This index helps you find and upload the right files for your task. Files are or
 #### Core Systems (Always Needed)
 ```
 res://
-├── DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
-├── ROADMAP.txt                    [Features, priorities, completed items]
-├── CHANGELOG.txt                  [Session-by-session change history]
-├── world.gd                       [Scene root, system initialization]
-├── player.gd                      [Input, movement, camera (300 lines)]
-└── project.godot                  [Godot project config]
+â”œâ”€â”€ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
+â”œâ”€â”€ ROADMAP.txt                    [Features, priorities, completed items]
+â”œâ”€â”€ CHANGELOG.txt                  [Session-by-session change history]
+â”œâ”€â”€ world.gd                       [Scene root, system initialization]
+â”œâ”€â”€ player.gd                      [Input, movement, camera (300 lines)]
+â””â”€â”€ project.godot                  [Godot project config]
 ```
 
 #### World Generation
 ```
 res://
-├── chunk_manager.gd               [Terrain generation, chunk loading (249 lines)]
-├── chunk.gd                       [Individual chunk meshes, biomes (428 lines)]
-└── water_plane.gd                 [Infinite ocean plane]
+â”œâ”€â”€ chunk_manager.gd               [Terrain generation, chunk loading (249 lines)]
+â”œâ”€â”€ chunk.gd                       [Individual chunk meshes, biomes (428 lines)]
+â””â”€â”€ water_plane.gd                 [Infinite ocean plane]
 ```
 
 #### Vegetation System (Modular - Upload Only What You Need)
 ```
 res://
-├── vegetation_spawner.gd          [Main spawner, delegates to visuals (1,457 lines)]
-├── vegetation/
-│   └── visuals/
-│       ├── tree_visual.gd         [Oak/deciduous trees (338 lines)]
-│       ├── pine_tree_visual.gd    [Pine/conifer trees (181 lines)]
-│       └── palm_tree_visual.gd    [Palm trees (188 lines)]
+â”œâ”€â”€ vegetation_spawner.gd          [Main spawner, delegates to visuals (1,457 lines)]
+â”œâ”€â”€ vegetation/
+â”‚   â””â”€â”€ visuals/
+â”‚       â”œâ”€â”€ tree_visual.gd         [Oak/deciduous trees (338 lines)]
+â”‚       â”œâ”€â”€ pine_tree_visual.gd    [Pine/conifer trees (181 lines)]
+â”‚       â””â”€â”€ palm_tree_visual.gd    [Palm trees (188 lines)]
 ```
 
 **When to upload:**
-- Modifying oak trees → `tree_visual.gd` only
-- Adding new tree type → Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
-- Adjusting density → `vegetation_spawner.gd` only
-- Understanding system → `DEVELOPMENT_GUIDE.md` has full explanation
+- Modifying oak trees â†’ `tree_visual.gd` only
+- Adding new tree type â†’ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
+- Adjusting density â†’ `vegetation_spawner.gd` only
+- Understanding system â†’ `DEVELOPMENT_GUIDE.md` has full explanation
 
 #### Harvestable Resources
 ```
 res://
-├── harvestable_resource.gd        [Base class for all collectibles (324 lines)]
-├── harvestable_tree.gd            [Tree physics, falling, logs (563 lines)]
-├── harvestable_mushroom.gd        [Mushroom variants, glow effects]
-├── harvestable_strawberry.gd      [Strawberry bushes, size variants]
-└── resource_node.gd               [Generic resource node]
+â”œâ”€â”€ harvestable_resource.gd        [Base class for all collectibles (324 lines)]
+â”œâ”€â”€ harvestable_tree.gd            [Tree physics, falling, logs (563 lines)]
+â”œâ”€â”€ harvestable_mushroom.gd        [Mushroom variants, glow effects]
+â”œâ”€â”€ harvestable_strawberry.gd      [Strawberry bushes, size variants]
+â””â”€â”€ resource_node.gd               [Generic resource node]
 ```
 
 **When to upload:**
-- Adding new resource type → `harvestable_resource.gd` (base class)
-- Modifying tree behavior → `harvestable_tree.gd`
-- Bug with mushrooms → `harvestable_mushroom.gd` only
+- Adding new resource type â†’ `harvestable_resource.gd` (base class)
+- Modifying tree behavior â†’ `harvestable_tree.gd`
+- Bug with mushrooms â†’ `harvestable_mushroom.gd` only
 
 #### Player Systems
 ```
 res://
-├── harvesting_system.gd           [Raycast, progress, harvesting (338 lines)]
-├── building_system.gd             [Block placement, preview (313 lines)]
-├── tool_system.gd                 [Tool management, requirements]
-├── inventory.gd                   [Item storage, signals]
-└── crafting_system.gd             [Recipe management (134 lines)]
+â”œâ”€â”€ harvesting_system.gd           [Raycast, progress, harvesting (338 lines)]
+â”œâ”€â”€ building_system.gd             [Block placement, preview (313 lines)]
+â”œâ”€â”€ tool_system.gd                 [Tool management, requirements]
+â”œâ”€â”€ inventory.gd                   [Item storage, signals]
+â””â”€â”€ crafting_system.gd             [Recipe management (134 lines)]
 ```
 
 **When to upload:**
-- Adding new tool → `tool_system.gd`
-- New building block → `building_system.gd`
-- New recipe → `crafting_system.gd`
+- Adding new tool â†’ `tool_system.gd`
+- New building block â†’ `building_system.gd`
+- New recipe â†’ `crafting_system.gd`
 
 #### UI Systems
 ```
 res://
-├── harvest_ui.gd                  [Progress bar, target display (213 lines)]
-├── inventory_ui.gd                [Grid inventory display (175 lines)]
-├── crafting_ui.gd                 [Recipe UI, crafting interface (159 lines)]
-└── settings_menu.gd               [Graphics/game settings (329 lines)]
+â”œâ”€â”€ harvest_ui.gd                  [Progress bar, target display (213 lines)]
+â”œâ”€â”€ inventory_ui.gd                [Grid inventory display (175 lines)]
+â”œâ”€â”€ crafting_ui.gd                 [Recipe UI, crafting interface (159 lines)]
+â””â”€â”€ settings_menu.gd               [Graphics/game settings (329 lines)]
 ```
 
 **When to upload:**
-- UI layout changes → Specific UI file only
-- Adding inventory features → `inventory_ui.gd`
+- UI layout changes â†’ Specific UI file only
+- Adding inventory features â†’ `inventory_ui.gd`
 
 #### Environment & Visuals
 ```
 res://
-├── day_night_cycle.gd             [Time, sun/moon, clouds, lighting (828 lines)]
-├── critter_spawner.gd             [Wildlife spawning, behavior (1,142 lines)]
-└── pixel_texture_generator.gd     [16x16 texture generation (392 lines)]
+â”œâ”€â”€ day_night_cycle.gd             [Time, sun/moon, clouds, lighting (828 lines)]
+â”œâ”€â”€ critter_spawner.gd             [Wildlife spawning, behavior (1,142 lines)]
+â””â”€â”€ pixel_texture_generator.gd     [16x16 texture generation (392 lines)]
 ```
 
 **When to upload:**
-- Day/night adjustments → `day_night_cycle.gd`
-- New critter type → `critter_spawner.gd`
-- Texture changes → `pixel_texture_generator.gd`
+- Day/night adjustments â†’ `day_night_cycle.gd`
+- New critter type â†’ `critter_spawner.gd`
+- Texture changes â†’ `pixel_texture_generator.gd`
 
 #### Utilities & Shared Code
 ```
 res://
-├── core/
-│   └── mesh_builder.gd            [Shared mesh utilities (78 lines)]
-└── settings_manager.gd            [Save/load settings (324 lines)]
+â”œâ”€â”€ core/
+â”‚   â””â”€â”€ mesh_builder.gd            [Shared mesh utilities (78 lines)]
+â””â”€â”€ settings_manager.gd            [Save/load settings (324 lines)]
 ```
 
 **When to upload:**
-- Creating procedural meshes → `mesh_builder.gd`
-- New tree/critter visual → `mesh_builder.gd` (for utilities)
+- Creating procedural meshes â†’ `mesh_builder.gd`
+- New tree/critter visual â†’ `mesh_builder.gd` (for utilities)
 
 ---
 
@@ -583,6 +583,7 @@ IMPACT levels:
 2. **When user says "ready to commit" / "prepare commit" / "push to GitHub"**:
    - Read current CHANGELOG.txt from /mnt/project/
    - Add new entries at top under "Recent Changes" for ALL changes made this session
+   - **Use current timestamp** in format [YYYY-MM-DD HH:MM] (e.g., [2024-12-10 14:30])
    - Also add to v0.X.0 feature list if it's a new feature
    - Update ROADMAP.txt if completing items or adding to technical debt section
    - Copy updated CHANGELOG.txt to /mnt/user-data/outputs/
@@ -599,7 +600,7 @@ IMPACT levels:
 When user says they want to commit:
 - [ ] Read /mnt/project/CHANGELOG.txt
 - [ ] Read /mnt/project/ROADMAP.txt
-- [ ] Add entries for all changes this session (newest first)
+- [ ] Add entries for all changes this session (newest first) **with current timestamp**
 - [ ] Update ROADMAP.txt (mark completions, add to technical debt if refactoring)
 - [ ] Copy CHANGELOG.txt to outputs
 - [ ] Copy ROADMAP.txt to outputs (if modified)
@@ -642,11 +643,11 @@ Closes #issue_number (if applicable)
 - Atmospheric without being oppressive
 
 ### Avoid These Anti-Patterns
-- ❌ Punishing difficulty (not Dark Souls, not survival horror)
-- ❌ Overwhelming UI/systems (keep it simple and clean)
-- ❌ Tedious grinding (gathering should feel satisfying, not repetitive)
-- ❌ Complex crafting trees (Valheim-simple, not Factorio-complex)
-- ❌ Time pressure mechanics (let player explore at their own pace)
+- âŒ Punishing difficulty (not Dark Souls, not survival horror)
+- âŒ Overwhelming UI/systems (keep it simple and clean)
+- âŒ Tedious grinding (gathering should feel satisfying, not repetitive)
+- âŒ Complex crafting trees (Valheim-simple, not Factorio-complex)
+- âŒ Time pressure mechanics (let player explore at their own pace)
 
 ## Version Control Notes
 
@@ -662,7 +663,7 @@ Closes #issue_number (if applicable)
 - **Target**: Keep files under 500 lines when possible
 - **Warning threshold**: 800+ lines (consider refactoring)
 - **Critical threshold**: 1500+ lines (definitely refactor)
-- **Extraction pattern**: Large mesh generators (300+ lines) → separate visual generator files
+- **Extraction pattern**: Large mesh generators (300+ lines) â†’ separate visual generator files
 
 ### Context Window Optimization
 - Prefer reading focused files over large monoliths
