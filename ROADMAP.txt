@@ -182,12 +182,25 @@ Future Decisions (Still Open):
 TECHNICAL DEBT / REFACTORING
 -----------------------------
 [X] Code organization - Extracted large tree generators into modular files (COMPLETE)
+
+HIGH PRIORITY (from Opus 4.5 Code Review - 2024-12-11):
+[ ] Critter visual extraction - Extract critter visuals to separate files (rabbit_visual.gd, crab_visual.gd, etc.) following tree_visual.gd pattern. Reduces critter_spawner.gd from 1,143 lines.
+[ ] ITEM_COLORS consolidation - Move duplicated ITEM_COLORS dictionary from inventory_ui.gd and container_ui.gd to shared location (e.g., constants.gd or inventory.gd)
+[ ] Container null safety - Add container validity checks in container_ui.gd to prevent null reference if container is destroyed while UI is open
+
+MEDIUM PRIORITY (from Code Review):
+[ ] Input handling consolidation - Consolidate duplicate input handling in player.gd (uses both InputEventKey checks AND Input.is_action_pressed for same actions). Use only Input Actions for maintainability.
+[ ] Cloud system extraction - Extract cloud system from day_night_cycle.gd (829 lines) to separate cloud_manager.gd
+[ ] Debug output toggle - Add debug flag to control print() statements throughout codebase instead of commenting out
+
+LOW PRIORITY:
 [ ] Multi-material terrain system - Replace vertex color tinting with proper material blending (chunk.gd)
 [ ] Settings preset detection - "Custom" preset detection could be more robust
 [ ] Resource spawning optimization - Could batch-spawn resources instead of one-at-a-time
 [ ] Chunk unloading delay - Add graceful fade-out before unloading distant chunks
-[ ] Critter spawner refactoring - Could extract critter visual generators (same pattern as vegetation)
 [ ] Container slot pooling - Reuse UI nodes instead of queue_free/recreate (performance optimization)
+[ ] Block rotation - Add ability to rotate walls/floors before placement in building system
+[ ] LOD for distant trees - Implement level-of-detail system for vegetation
 
 
 BUGS / FIXES
@@ -201,6 +214,10 @@ BUGS / FIXES
 [X] Wrong panel order in container UI - FIXED (player left, container right)
 [X] Other UIs visible when container open - FIXED (UI suppression system)
 [X] Inventory debug text showing during container interaction - FIXED (harvest_ui suppression)
+
+POTENTIAL ISSUES (from Code Review - not yet confirmed):
+[ ] Race condition - Container destroyed while UI open could cause null reference (see container null safety above)
+[ ] Input blocking too broad - player.gd line 148 blocks ALL input when container open, should be more targeted
 
 
 SPRINT RISK ASSESSMENT
@@ -229,3 +246,4 @@ Notes:
 - Priority 1 (Storage Containers): 7/7 COMPLETE! ✅
 - Priority 2 (Inventory Improvements): 4/4 COMPLETE! ✅
 - Priority 3 (Workbench Foundation): 0/4 - NEXT UP
+- Code Review (Opus 4.5): Completed 2024-12-11 - Overall grade: A (Excellent)
