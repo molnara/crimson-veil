@@ -6,12 +6,60 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.5.0+):
 -------------------------
+[2025-12-11 16:30] [PLANNING] v0.5.0 "Atmosphere & Audio" sprint planned - pivot from workbench to sound/music
+[2025-12-11 16:30] [PLANNING] Sprint scope: Audio manager, 43 AI-generated sounds, music system ($34 budget)
+[2025-12-11 16:30] [PLANNING] Design decisions: Pure ambient drone music, biome-aware footsteps, hybrid volume
+[2025-12-11 16:30] [DOC] Updated ROADMAP.txt - replaced workbench sprint with audio sprint
+[2025-12-11 16:30] [DOC] Added "Sprint Planning Workflow" section to DEVELOPMENT_GUIDE.md (~150 lines)
 [2025-12-12 13:30] [RELEASE] v0.4.0 "Storage & Organization" released - Sprint Priorities 1 & 2 complete
 
 ---
 
 Version History:
 ----------------
+
+v0.5.0 (In Progress) - December 2025 - "Atmosphere & Audio"
+Sprint Goal: Implement professional-quality sound system and ambient music
+Timeline: 7-10 days (12-15 sessions, ~24-30% Sonnet capacity)
+Budget: $34 ($20 SFX Engine + $14 Mubert 1-month subscription)
+
+SPRINT PLAN:
+Priority 1 - Core Sound System (5 sessions):
+- Audio manager architecture with sound pooling and volume controls
+- AI sound generation (22 professional SFX via ElevenLabs/SFX Engine)
+- SFX integration (harvesting, movement, building, UI, containers)
+
+Priority 2 - Music & Ambient System (5-6 sessions):
+- Music manager with crossfade system
+- AI music generation (2 ambient tracks: day/night via Mubert)
+- Ambient environmental sounds (wind, ocean, wildlife - 8 loops)
+- UI & feedback sounds (crafting, health/hunger warnings)
+
+Priority 3 - Polish & Refinement (2-4 sessions):
+- Settings menu audio controls (volume sliders, mute toggles)
+- Sound variation system (pitch/volume randomization)
+- Audio balance pass (test and adjust levels)
+- Controller rumble (optional - tree falling, harvesting feedback)
+
+DESIGN DECISIONS:
+✅ Music Style: Pure ambient drone (minimal, atmospheric, non-intrusive)
+✅ Footstep Complexity: Biome-aware (4 surfaces: grass, stone, sand, snow)
+✅ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
+✅ Music Variety: Day/night variation (2 tracks total)
+✅ Budget Approach: $34 investment for professional commercial-licensed audio
+
+AUDIO FILE MANIFEST (43 files):
+- 22 SFX files (harvesting, movement, building, UI, container)
+- 2 Music tracks (day ambient, night ambient - 3 minutes each)
+- 8 Ambient files (wind, ocean, crickets, birds, leaves, thunder)
+- 9 Additional UI sounds (warnings, feedback, settings)
+
+DEFERRED TO FUTURE SPRINTS:
+- Workbench system (placement, proximity detection, recipe gating)
+- Inventory organization (sort/quick-stack, drag-and-drop, container animations)
+- Expanded crafting recipes (tool tiers, furniture, storage upgrades)
+
+---
 
 v0.4.0 (commit: d53049d) - December 12, 2025 - "Storage & Organization"
 Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
@@ -69,7 +117,7 @@ DOCUMENTATION & PLANNING:
 
 CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-12 06:15] [DOC] Added commit hashes to Version History (v0.2.0: cc9669a, v0.3.0: aecc232)
-[2025-12-12 06:15] [DOC] Added "CHANGELOG ↔ Git Sync" workflow section to DEVELOPMENT_GUIDE.md
+[2025-12-12 06:15] [DOC] Added "CHANGELOG → Git Sync" workflow section to DEVELOPMENT_GUIDE.md
 [2025-12-12 06:15] [DOC] Updated commit checklist to include using CHANGELOG as commit message
 [2025-12-12 06:15] [DOC] Added v0.2.0 description to Version History
 [2025-12-12 06:00] [DOC] Fixed date typo in Technical Debt section (2024 -> 2025)

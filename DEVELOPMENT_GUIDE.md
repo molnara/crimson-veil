@@ -27,8 +27,8 @@
    - Brief reminder of next priorities
 5. **Show the quick commands list below**
 6. **Assess feature complexity** - Decide Sonnet vs Opus:
-   - Implementation work, bug fixes, single-file changes â†’ **Sonnet**
-   - Architecture decisions, code reviews, multi-system refactoring â†’ **Opus**
+   - Implementation work, bug fixes, single-file changes Ã¢â€ â€™ **Sonnet**
+   - Architecture decisions, code reviews, multi-system refactoring Ã¢â€ â€™ **Opus**
 
 ---
 
@@ -107,17 +107,17 @@ What should I work on next?
 
 **Example Session Start Output:**
 ```
-ðŸŽ¯ CURRENT SPRINT: Storage & Organization
-- Priority 1: Storage Containers âœ“ (complete)
-- Priority 2: Inventory Improvements âœ“ (complete)
+Ã°Å¸Å½Â¯ CURRENT SPRINT: Storage & Organization
+- Priority 1: Storage Containers Ã¢Å“â€œ (complete)
+- Priority 2: Inventory Improvements Ã¢Å“â€œ (complete)
 - Priority 3: Workbench Foundation (next up) [Sonnet]
 
-ðŸ“ RECENT CHANGES:
+Ã°Å¸â€œÂ RECENT CHANGES:
 [2025-12-12 05:50] [DOC] Added AI model annotations to ROADMAP.txt
 [2025-12-12 05:45] [DOC] Created AI_USAGE_ANALYSIS.md
 [2025-12-11 21:00] [MAJOR] Container UI Phase 2 complete
 
-ðŸ› KNOWN ISSUES:
+Ã°Å¸Ââ€º KNOWN ISSUES:
 - Tree falling physics occasionally glitches on steep terrain
 - Potential: Race condition if container destroyed while UI open
 
@@ -159,13 +159,13 @@ This ensures every session starts with full context.
 
 ### Examples:
 
-**âŒ BAD - Suggesting code immediately:**
+**Ã¢ÂÅ’ BAD - Suggesting code immediately:**
 ```
 User: "Add a sleep system"
 Claude: "Here's a sleep system implementation..."
 ```
 
-**âœ… GOOD - Request files first:**
+**Ã¢Å“â€¦ GOOD - Request files first:**
 ```
 User: "Add a sleep system"
 Claude: "To implement a sleep system, I'll need to analyze:
@@ -183,7 +183,7 @@ Could you upload these three files so I can see how they're currently structured
 - Produces working code on first try
 - Keeps documentation up-to-date for future sessions
 
-**âœ… GOOD - Including documentation update:**
+**Ã¢Å“â€¦ GOOD - Including documentation update:**
 ```
 User: "Add a sleep system"
 Claude: 
@@ -200,11 +200,165 @@ This ensures future development sessions can easily find and work with the sleep
 
 ---
 
+## Sprint Planning Workflow
+
+**When planning a new sprint (e.g., v0.X.0), Claude should create a comprehensive planning package:**
+
+### Required Documents (4 files)
+
+**1. ROADMAP.txt** - High-level sprint overview
+- Replace "CURRENT SPRINT" section with new sprint
+- Define sprint goal and timeline
+- Break down into 3 priorities (Foundation, Enhancement, Polish)
+- List all tasks with [Sonnet]/[Opus] annotations
+- Move previous sprint tasks to "COMPLETED" section
+- Defer incomplete tasks to backlog or next sprint
+
+**2. CHANGELOG.txt** - Planning session record
+- Add [PLANNING] entries at top of "Recent Changes"
+- Include timestamp (YYYY-MM-DD HH:MM format)
+- Document sprint pivot decisions if changing direction
+- Summarize what's being built and deferred
+- Note design decisions made during planning
+
+**3. DEVELOPMENT_GUIDE.md** - Architecture updates
+- Update "Currently In Development" section with new sprint focus
+- Move previous sprint items to "Planned/Incomplete" if deferred
+- Add any new systems to relevant sections
+
+**4. vX.X.X_IMPLEMENTATION_GUIDE.md** - Complete implementation details ⭐ CRITICAL
+- **All AI generation prompts** (if using AI tools)
+- **Code snippets and references** for key implementations
+- **Tool setup instructions** with exact steps
+- **Complete file structure** showing all new files
+- **Design decisions** with full rationale
+- **Workflow checklists** for each phase
+- **Quality standards** and acceptance criteria
+- **Budget breakdown** if applicable
+
+### Sprint Planning Session Checklist
+
+When user requests sprint planning:
+- [ ] **Review context** - Read ROADMAP, CHANGELOG, DEVELOPMENT_GUIDE
+- [ ] **Assess capacity** - Calculate Sonnet/Opus sessions needed
+- [ ] **Define sprint goal** - Clear, achievable objective
+- [ ] **Break into priorities** - 3 levels (Foundation, Enhancement, Polish)
+- [ ] **Make design decisions** - Document all choices with rationale
+- [ ] **Create task breakdown** - Specific, measurable tasks
+- [ ] **Estimate timeline** - Sessions per task, total sprint duration
+- [ ] **Risk assessment** - Identify potential blockers
+- [ ] **Create implementation guide** - All prompts, code, details
+- [ ] **Update all 4 documents** - ROADMAP, CHANGELOG, GUIDE, IMPLEMENTATION
+- [ ] **Provide commit message** - Summarize sprint planning
+
+### Implementation Guide Template
+
+Every sprint should have a detailed implementation guide following this structure:
+
+```markdown
+# vX.X.X "[Sprint Name]" - Complete Implementation Guide
+
+## Design Decisions Summary
+- Decision 1: [Choice] - Rationale: [Why]
+- Decision 2: [Choice] - Rationale: [Why]
+(etc.)
+
+## AI Generation Prompts (if applicable)
+### Sound Effect 1
+```
+Prompt: "Exact text to use in AI tool"
+Duration: X seconds
+Tool: [Tool name]
+Notes: Implementation details
+```
+
+## Code References
+```gdscript
+// Key code snippets with explanations
+```
+
+## File Structure
+```
+res://
+└── [Complete directory tree]
+```
+
+## Workflow Checklist
+Phase 1:
+- [ ] Step 1
+- [ ] Step 2
+
+## Quality Standards
+- Criteria 1
+- Criteria 2
+
+## Budget/Resources (if applicable)
+- Tool 1: $X
+- Total: $X
+```
+
+### Why Implementation Guides Matter
+
+**Problem:** Sprint planning documents show WHAT to build, but not HOW to build it.
+
+**Solution:** Implementation guides capture:
+- ✅ Exact AI prompts (copy-paste ready)
+- ✅ Tool setup steps (no searching docs)
+- ✅ Code patterns to follow (consistency)
+- ✅ File organization (clear structure)
+- ✅ Quality criteria (acceptance tests)
+
+**Without implementation guide:** Developer wastes time reconstructing decisions, searching for tools, trial-and-error with prompts.
+
+**With implementation guide:** Developer has everything needed to execute sprint efficiently.
+
+### Sprint Planning Examples
+
+**Good Sprint Planning (includes implementation guide):**
+```
+User: "Plan v0.5.0 sprint for audio system"
+Claude:
+1. Reviews current state
+2. Proposes sprint structure (3 priorities)
+3. Makes design decisions (music style, footsteps, etc.)
+4. Creates ROADMAP.txt updates
+5. Creates CHANGELOG.txt entry
+6. Updates DEVELOPMENT_GUIDE.md
+7. Creates V0.5.0_AUDIO_IMPLEMENTATION_GUIDE.md with:
+   - All 43 AI prompts
+   - Tool setup instructions
+   - Code snippets
+   - File structure
+   - Workflow checklist
+```
+
+**Bad Sprint Planning (missing implementation details):**
+```
+User: "Plan v0.5.0 sprint for audio system"
+Claude:
+1. Updates ROADMAP.txt: "Add audio system"
+2. Updates CHANGELOG.txt: "Planning audio"
+3. Done
+
+[Missing: HOW to generate sounds, WHAT tools to use, WHICH prompts to use]
+```
+
+### Post-Planning Workflow
+
+After sprint planning is approved:
+1. User commits 4 documents to repository
+2. Implementation guide becomes sprint reference
+3. Each session refers to guide for details
+4. No need to reconstruct decisions or search for tools
+5. Sprint execution is faster and more consistent
+
+---
+
 ## Project Overview
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
   - Progression through biome exploration and resource gathering
-  - Satisfying crafting loops (gather â†’ craft â†’ unlock new areas/tools)
+  - Satisfying crafting loops (gather Ã¢â€ â€™ craft Ã¢â€ â€™ unlock new areas/tools)
   - Environmental storytelling through procedural world generation
   - Cozy base-building with functional purpose
 - **Visual Style**: 
@@ -248,8 +402,12 @@ This ensures future development sessions can easily find and work with the sleep
 - **Storage Containers**: Placeable chests (10 wood) with independent 32-slot inventories, 3m interaction range, green highlight, removal warnings
 - **Container UI**: Dual-panel interface with click/shift-click transfers, centered layout, UI suppression, ESC/B button to close, auto-close at 5m
 
-### Currently In Development (Storage & Organization Sprint)
-- **Workbench System**: Crafting station with proximity detection for recipe gating (Priority 3 - next up)
+### Currently In Development (Atmosphere & Audio Sprint - v0.5.0)
+- **Audio Manager System**: Centralized audio with sound pooling, volume controls, pitch variation
+- **Sound Effects**: 22 AI-generated SFX (harvesting, movement, building, UI, containers)
+- **Music System**: Day/night ambient tracks with crossfade system
+- **Ambient Sounds**: Environmental layers (wind, ocean, wildlife) for atmosphere
+- **Audio Settings**: Volume sliders and mute toggles in settings menu
 
 ### Technical Debt (From Code Review - 2025-12-11)
 HIGH PRIORITY:
@@ -263,6 +421,8 @@ MEDIUM PRIORITY:
 - **Debug output toggle**: Add debug flag to control print() statements
 
 ### Planned/Incomplete
+- Workbench system (crafting station with proximity detection for recipe gating)
+- Inventory organization (sort/quick-stack buttons, drag-and-drop, container animations)
 - Boss encounters and progression milestones
 - Base defense mechanics
 - Advanced building pieces (roofs, windows, doors)
@@ -290,7 +450,7 @@ MEDIUM PRIORITY:
 ### Core Architecture
 - **Chunk-based world**: ChunkManager orchestrates terrain generation, VegetationSpawner populates
 - **Component systems**: Player has child nodes for HarvestingSystem, BuildingSystem, Inventory
-- **Resource inheritance**: HarvestableResource base class â†’ HarvestableTree/Mushroom/Strawberry
+- **Resource inheritance**: HarvestableResource base class Ã¢â€ â€™ HarvestableTree/Mushroom/Strawberry
 - **Signal-driven communication**: Harvest completion signals trigger inventory updates and particle spawning
 - **Modular visual generators**: Tree creation delegated to separate visual generator classes (TreeVisual, PineTreeVisual, PalmTreeVisual)
 - **Container architecture**: StorageContainer extends Node3D, has own Inventory instance, emits interaction signals
@@ -436,7 +596,7 @@ When suggesting new features, always include:
 "Add stone walls for base building. Players want protection from future threats (base-building pillar). Like Valheim's walls but snapped to grid. Medium scope - needs collision, placement validation, cost balancing. Should require significant stone investment to prevent trivializing defense."
 
 ### Bad Example
-"Add walls" â†’ Missing motivation, scope, balance considerations
+"Add walls" Ã¢â€ â€™ Missing motivation, scope, balance considerations
 
 ## Quick Reference
 
@@ -447,152 +607,152 @@ This index helps you find and upload the right files for your task. Files are or
 #### Core Systems (Always Needed)
 ```
 res://
-â”œâ”€â”€ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
-â”œâ”€â”€ ROADMAP.txt                   [Features, priorities, completed items]
-â”œâ”€â”€ CHANGELOG.txt                 [Session-by-session change history]
-â”œâ”€â”€ CODE_REVIEW.md                [Codebase analysis from Opus 4.5 review]
-â”œâ”€â”€ AI_USAGE_ANALYSIS.md          [AI capacity planning & usage tracking]
-â”œâ”€â”€ world.gd                      [Scene root, system initialization]
-â”œâ”€â”€ player.gd                     [Input, movement, camera, controller support, UI state management]
-â”œâ”€â”€ player.tscn                   [Player scene with health system, camera, collision]
-â””â”€â”€ project.godot                 [Godot project config]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ROADMAP.txt                   [Features, priorities, completed items]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ CHANGELOG.txt                 [Session-by-session change history]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ CODE_REVIEW.md                [Codebase analysis from Opus 4.5 review]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ AI_USAGE_ANALYSIS.md          [AI capacity planning & usage tracking]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ world.gd                      [Scene root, system initialization]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ player.gd                     [Input, movement, camera, controller support, UI state management]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ player.tscn                   [Player scene with health system, camera, collision]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ project.godot                 [Godot project config]
 ```
 
 **When to upload:**
-- Starting any session â†’ DEVELOPMENT_GUIDE.md (always)
-- Sprint planning â†’ ROADMAP.txt + AI_USAGE_ANALYSIS.md
-- Checking recent work â†’ CHANGELOG.txt
-- Capacity planning â†’ AI_USAGE_ANALYSIS.md
-- Code quality concerns â†’ CODE_REVIEW.md
-- Adding controller support â†’ project.godot (for input actions)
-- Modifying input mappings â†’ project.godot
-- Player input/movement â†’ player.gd
+- Starting any session Ã¢â€ â€™ DEVELOPMENT_GUIDE.md (always)
+- Sprint planning Ã¢â€ â€™ ROADMAP.txt + AI_USAGE_ANALYSIS.md
+- Checking recent work Ã¢â€ â€™ CHANGELOG.txt
+- Capacity planning Ã¢â€ â€™ AI_USAGE_ANALYSIS.md
+- Code quality concerns Ã¢â€ â€™ CODE_REVIEW.md
+- Adding controller support Ã¢â€ â€™ project.godot (for input actions)
+- Modifying input mappings Ã¢â€ â€™ project.godot
+- Player input/movement Ã¢â€ â€™ player.gd
 
 #### World Generation
 ```
 res://
-â”œâ”€â”€ chunk_manager.gd              [Terrain generation, chunk loading]
-â”œâ”€â”€ chunk.gd                      [Individual chunk meshes, biomes]
-â””â”€â”€ water_plane.gd                [Infinite ocean plane]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ chunk_manager.gd              [Terrain generation, chunk loading]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ chunk.gd                      [Individual chunk meshes, biomes]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ water_plane.gd                [Infinite ocean plane]
 ```
 
 #### Vegetation System (Modular - Upload Only What You Need)
 ```
 res://
-â”œâ”€â”€ vegetation_spawner.gd         [Large - main spawner, delegates to visuals]
-â””â”€â”€ vegetation/visuals/
-    â”œâ”€â”€ tree_visual.gd            [Oak/deciduous trees]
-    â”œâ”€â”€ pine_tree_visual.gd       [Pine/conifer trees]
-    â””â”€â”€ palm_tree_visual.gd       [Palm trees]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ vegetation_spawner.gd         [Large - main spawner, delegates to visuals]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ vegetation/visuals/
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ tree_visual.gd            [Oak/deciduous trees]
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ pine_tree_visual.gd       [Pine/conifer trees]
+    Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ palm_tree_visual.gd       [Palm trees]
 ```
 
 **When to upload:**
-- Modifying oak trees â†’ `tree_visual.gd` only
-- Adding new tree type â†’ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
-- Adjusting density â†’ `vegetation_spawner.gd` only
-- Understanding system â†’ `DEVELOPMENT_GUIDE.md` has full explanation
+- Modifying oak trees Ã¢â€ â€™ `tree_visual.gd` only
+- Adding new tree type Ã¢â€ â€™ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
+- Adjusting density Ã¢â€ â€™ `vegetation_spawner.gd` only
+- Understanding system Ã¢â€ â€™ `DEVELOPMENT_GUIDE.md` has full explanation
 
 #### Harvestable Resources
 ```
 res://
-â”œâ”€â”€ harvestable_resource.gd       [Base class for all collectibles]
-â”œâ”€â”€ harvestable_tree.gd           [Tree physics, falling, log spawning]
-â”œâ”€â”€ harvestable_mushroom.gd       [Mushroom variants, glow effects]
-â”œâ”€â”€ harvestable_strawberry.gd     [Strawberry bushes, size variants]
-â”œâ”€â”€ log_piece.gd                  [Log physics debris, timed despawn, particles]
-â””â”€â”€ resource_node.gd              [Generic resource node]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_resource.gd       [Base class for all collectibles]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_tree.gd           [Tree physics, falling, log spawning]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_mushroom.gd       [Mushroom variants, glow effects]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_strawberry.gd     [Strawberry bushes, size variants]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ log_piece.gd                  [Log physics debris, timed despawn, particles]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ resource_node.gd              [Generic resource node]
 ```
 
 **When to upload:**
-- Adding new resource type â†’ `harvestable_resource.gd` (base class)
-- Modifying tree behavior/physics â†’ `harvestable_tree.gd`
-- Changing log despawn/particles â†’ `log_piece.gd`
-- Bug with mushrooms â†’ `harvestable_mushroom.gd` only
+- Adding new resource type Ã¢â€ â€™ `harvestable_resource.gd` (base class)
+- Modifying tree behavior/physics Ã¢â€ â€™ `harvestable_tree.gd`
+- Changing log despawn/particles Ã¢â€ â€™ `log_piece.gd`
+- Bug with mushrooms Ã¢â€ â€™ `harvestable_mushroom.gd` only
 
 #### Player Systems
 ```
 res://
-â”œâ”€â”€ harvesting_system.gd          [Raycast, progress, harvesting, container detection]
-â”œâ”€â”€ building_system.gd            [Block placement, preview, container placement]
-â”œâ”€â”€ tool_system.gd                [Tool management, requirements]
-â”œâ”€â”€ inventory.gd                  [Item storage, signals, stacking logic]
-â”œâ”€â”€ crafting_system.gd            [Recipe management]
-â””â”€â”€ health_hunger_system.gd       [Stats, regeneration, hunger depletion, movement penalties]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvesting_system.gd          [Raycast, progress, harvesting, container detection]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ building_system.gd            [Block placement, preview, container placement]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ tool_system.gd                [Tool management, requirements]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ inventory.gd                  [Item storage, signals, stacking logic]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ crafting_system.gd            [Recipe management]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ health_hunger_system.gd       [Stats, regeneration, hunger depletion, movement penalties]
 ```
 
 **When to upload:**
-- Adding new tool â†’ `tool_system.gd`
-- New building block â†’ `building_system.gd`
-- New recipe â†’ `crafting_system.gd`
-- Health/hunger mechanics â†’ `health_hunger_system.gd`
-- Food system â†’ `health_hunger_system.gd` + `inventory_ui.gd`
-- Item stacking â†’ `inventory.gd` + `inventory_ui.gd`
+- Adding new tool Ã¢â€ â€™ `tool_system.gd`
+- New building block Ã¢â€ â€™ `building_system.gd`
+- New recipe Ã¢â€ â€™ `crafting_system.gd`
+- Health/hunger mechanics Ã¢â€ â€™ `health_hunger_system.gd`
+- Food system Ã¢â€ â€™ `health_hunger_system.gd` + `inventory_ui.gd`
+- Item stacking Ã¢â€ â€™ `inventory.gd` + `inventory_ui.gd`
 
 #### Storage & Interaction Systems
 ```
 res://
-â”œâ”€â”€ storage_container.gd          [Container logic, inventory management, interaction]
-â”œâ”€â”€ storage_container.tscn        [Container scene with collision and mesh]
-â”œâ”€â”€ container_warning_ui.gd       [Destruction warning dialog for full containers]
-â”œâ”€â”€ container_ui.gd               [Dual-panel container interface, scene-based]
-â”œâ”€â”€ container_ui.tscn             [Container UI scene - centered layout]
-â”œâ”€â”€ workbench.gd                  [Workbench proximity detection, recipe gating - PLANNED]
-â””â”€â”€ workbench.tscn                [Workbench scene - PLANNED]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ storage_container.gd          [Container logic, inventory management, interaction]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ storage_container.tscn        [Container scene with collision and mesh]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_warning_ui.gd       [Destruction warning dialog for full containers]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.gd               [Dual-panel container interface, scene-based]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.tscn             [Container UI scene - centered layout]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ workbench.gd                  [Workbench proximity detection, recipe gating - PLANNED]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ workbench.tscn                [Workbench scene - PLANNED]
 ```
 
 **When to upload:**
-- Adding container features â†’ `storage_container.gd`
-- Container visuals â†’ `storage_container.gd` + `pixel_texture_generator.gd`
-- Container UI modifications â†’ `container_ui.gd` + `container_ui.tscn`
-- Container removal â†’ `building_system.gd` + `container_warning_ui.gd`
-- Workbench features â†’ `workbench.gd`
-- Proximity detection â†’ `workbench.gd` + `crafting_system.gd`
+- Adding container features Ã¢â€ â€™ `storage_container.gd`
+- Container visuals Ã¢â€ â€™ `storage_container.gd` + `pixel_texture_generator.gd`
+- Container UI modifications Ã¢â€ â€™ `container_ui.gd` + `container_ui.tscn`
+- Container removal Ã¢â€ â€™ `building_system.gd` + `container_warning_ui.gd`
+- Workbench features Ã¢â€ â€™ `workbench.gd`
+- Proximity detection Ã¢â€ â€™ `workbench.gd` + `crafting_system.gd`
 
 #### UI Systems
 ```
 res://
-â”œâ”€â”€ harvest_ui.gd                 [Progress bar, target display]
-â”œâ”€â”€ harvest_ui.tscn               [Harvest UI scene]
-â”œâ”€â”€ inventory_ui.gd               [Grid inventory display, stacking UI, full notifications]
-â”œâ”€â”€ inventory_ui.tscn             [Inventory UI scene - proper rendering structure]
-â”œâ”€â”€ container_ui.gd               [Dual-panel container interface, scene-based]
-â”œâ”€â”€ container_ui.tscn             [Container UI scene - centered layout]
-â”œâ”€â”€ crafting_ui.gd                [Recipe UI, crafting interface, workbench requirements]
-â”œâ”€â”€ health_ui.gd                  [Health/hunger bars, well-fed indicator]
-â”œâ”€â”€ health_ui.tscn                [UI scene for health display]
-â””â”€â”€ settings_menu.gd              [Graphics/game settings]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvest_ui.gd                 [Progress bar, target display]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvest_ui.tscn               [Harvest UI scene]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ inventory_ui.gd               [Grid inventory display, stacking UI, full notifications]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ inventory_ui.tscn             [Inventory UI scene - proper rendering structure]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.gd               [Dual-panel container interface, scene-based]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.tscn             [Container UI scene - centered layout]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ crafting_ui.gd                [Recipe UI, crafting interface, workbench requirements]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ health_ui.gd                  [Health/hunger bars, well-fed indicator]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ health_ui.tscn                [UI scene for health display]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ settings_menu.gd              [Graphics/game settings]
 ```
 
 **When to upload:**
-- Inventory features/eating â†’ `inventory_ui.gd` + `inventory_ui.tscn`
-- Container UI modifications â†’ `container_ui.gd` + `container_ui.tscn`
-- Crafting UI changes â†’ `crafting_ui.gd`
+- Inventory features/eating Ã¢â€ â€™ `inventory_ui.gd` + `inventory_ui.tscn`
+- Container UI modifications Ã¢â€ â€™ `container_ui.gd` + `container_ui.tscn`
+- Crafting UI changes Ã¢â€ â€™ `crafting_ui.gd`
 
 #### Environment & Visuals
 ```
 res://
-â”œâ”€â”€ day_night_cycle.gd            [Large - time, sun/moon, clouds, lighting]
-â”œâ”€â”€ critter_spawner.gd            [Large - wildlife spawning, behavior - candidate for refactoring]
-â””â”€â”€ pixel_texture_generator.gd    [16x16 texture generation]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ day_night_cycle.gd            [Large - time, sun/moon, clouds, lighting]
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ critter_spawner.gd            [Large - wildlife spawning, behavior - candidate for refactoring]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ pixel_texture_generator.gd    [16x16 texture generation]
 ```
 
 **When to upload:**
-- Day/night adjustments â†’ `day_night_cycle.gd`
-- New critter type â†’ `critter_spawner.gd`
-- Texture changes â†’ `pixel_texture_generator.gd`
+- Day/night adjustments Ã¢â€ â€™ `day_night_cycle.gd`
+- New critter type Ã¢â€ â€™ `critter_spawner.gd`
+- Texture changes Ã¢â€ â€™ `pixel_texture_generator.gd`
 
 #### Utilities & Shared Code
 ```
 res://
-â””â”€â”€ core/
-    â”œâ”€â”€ mesh_builder.gd           [Shared mesh utilities (add_box, create_cylinder, finalize_mesh)]
-    â””â”€â”€ settings_manager.gd       [Save/load settings, apply runtime changes]
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ core/
+    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ mesh_builder.gd           [Shared mesh utilities (add_box, create_cylinder, finalize_mesh)]
+    Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ settings_manager.gd       [Save/load settings, apply runtime changes]
 ```
 
 **When to upload:**
-- Creating procedural meshes â†’ `mesh_builder.gd`
-- New tree/critter visual â†’ `mesh_builder.gd` (for utilities)
-- Container/workbench meshes â†’ `mesh_builder.gd` + specific file
+- Creating procedural meshes Ã¢â€ â€™ `mesh_builder.gd`
+- New tree/critter visual Ã¢â€ â€™ `mesh_builder.gd` (for utilities)
+- Container/workbench meshes Ã¢â€ â€™ `mesh_builder.gd` + specific file
 
 ---
 
@@ -801,6 +961,8 @@ IMPACT levels:
 - PLANNING: Roadmap/sprint planning changes
 ```
 
+**Timezone Note:** All timestamps use EST (user's timezone, UTC-5 in winter). See TIMEZONE_REFERENCE.md for conversion details.
+
 ### Examples
 ```
 [2024-01-15 14:30] [MINOR] Reduced tree_density 0.45->0.35 (forests felt too crowded)
@@ -835,7 +997,7 @@ IMPACT levels:
 
 **Important**: CHANGELOG.txt, ROADMAP.txt, and DEVELOPMENT_GUIDE.md are only modified when preparing a commit, not during development. This keeps files clean and only shows "official" committed changes.
 
-### CHANGELOG â†” Git Sync
+### CHANGELOG Ã¢â€ â€ Git Sync
 
 Each commit should correspond to one development session. This keeps CHANGELOG and git history aligned.
 
@@ -862,24 +1024,36 @@ Then update CHANGELOG.txt Version History with the commit hash.
 
 ### Commit Preparation Checklist
 When user says they want to commit:
+
+**Documentation Updates:**
 - [ ] Read /mnt/project/CHANGELOG.txt
 - [ ] Read /mnt/project/ROADMAP.txt
 - [ ] Read /mnt/project/DEVELOPMENT_GUIDE.md
-- [ ] Add entries for all changes this session (newest first) **with current timestamp**
+- [ ] Add entries for all changes this session (newest first) **with current timestamp (EST)**
 - [ ] Update ROADMAP.txt (mark completions, add to technical debt if refactoring)
 - [ ] **Update DEVELOPMENT_GUIDE.md** (add new files, update features)
 - [ ] **If new files were created**: Update DEVELOPMENT_GUIDE.md "File Index & Location Map" section
+- [ ] **If this is sprint planning**: Create vX.X.X_IMPLEMENTATION_GUIDE.md with all details (AI prompts, code snippets, workflow)
+
+**File Preparation:**
 - [ ] Copy CHANGELOG.txt to outputs
 - [ ] Copy ROADMAP.txt to outputs (if modified)
 - [ ] Copy DEVELOPMENT_GUIDE.md to outputs
+- [ ] **If sprint planning**: Copy vX.X.X_IMPLEMENTATION_GUIDE.md to outputs
 - [ ] **For large files (>800 lines)**: Create separate `[filename]_patch_[number].gd` files
 - [ ] **For small/medium files (<800 lines)**: Copy all modified .gd files to outputs
 - [ ] Copy all new .gd files to outputs (with proper folder structure)
 - [ ] Copy all modified .tscn files to outputs
 - [ ] Copy project.godot if modified
+
+**Git Workflow:**
+- [ ] **Verify on correct branch** (feature/v0.X.0-name for sprint work, or main for hotfixes)
+- [ ] **If starting new sprint**: Provide branch creation command
 - [ ] **Use CHANGELOG entries as commit message body** (keeps git history in sync)
-- [ ] Provide git commit message suggestion
-- [ ] List all files that need to be committed
+- [ ] Provide git commit message suggestion (following conventional commits format)
+- [ ] List all files that need to be staged and committed
+- [ ] **If completing sprint**: Provide merge-to-main workflow commands
+- [ ] **If completing sprint**: Provide version tag command
 
 ### Commit Message Format
 ```
@@ -949,19 +1123,381 @@ This allows easy copy-paste of each code block directly into the source file at 
 - Atmospheric without being oppressive
 
 ### Avoid These Anti-Patterns
-- âœ— Punishing difficulty (not Dark Souls, not survival horror)
-- âœ— Overwhelming UI/systems (keep it simple and clean)
-- âœ— Tedious grinding (gathering should feel satisfying, not repetitive)
-- âœ— Complex crafting trees (Valheim-simple, not Factorio-complex)
-- âœ— Time pressure mechanics (let player explore at their own pace)
+- Ã¢Å“â€” Punishing difficulty (not Dark Souls, not survival horror)
+- Ã¢Å“â€” Overwhelming UI/systems (keep it simple and clean)
+- Ã¢Å“â€” Tedious grinding (gathering should feel satisfying, not repetitive)
+- Ã¢Å“â€” Complex crafting trees (Valheim-simple, not Factorio-complex)
+- Ã¢Å“â€” Time pressure mechanics (let player explore at their own pace)
+
+## Git Branching Strategy
+
+### Strategy: GitHub Flow (Simplified)
+
+**Why GitHub Flow:**
+- ✅ Simple and lightweight for solo development
+- ✅ Works great with AI-assisted sessions
+- ✅ Sprint-based feature isolation
+- ✅ Clean, maintainable history
+- ✅ Easy to understand and follow
+
+### Branch Structure
+
+```
+main (production-ready releases)
+  ↓
+  ├─ feature/v0.5.0-audio-system (current sprint)
+  ├─ feature/v0.6.0-workbench (next sprint)
+  └─ hotfix/container-crash (emergency fixes)
+```
+
+---
+
+### Branch Types
+
+#### 1. `main` - Production Branch
+**Purpose:** Stable, release-ready code only
+
+**Rules:**
+- ✅ Only merge completed, tested features
+- ✅ Every merge = potential release
+- ✅ Tagged with version numbers (v0.4.0, v0.5.0)
+- ❌ Never commit directly to main
+- ❌ No work-in-progress code
+
+#### 2. `feature/*` - Sprint Development Branches
+**Purpose:** Develop sprint features in isolation
+
+**Naming Convention:**
+```
+feature/v0.X.0-sprint-name
+feature/v0.5.0-audio-system
+feature/v0.6.0-workbench
+```
+
+**Workflow:**
+1. Create from main: `git checkout -b feature/v0.5.0-audio-system`
+2. Work on sprint (multiple sessions)
+3. Commit frequently (every session)
+4. Push daily (backup)
+5. Merge to main when complete
+6. Tag release: `git tag v0.5.0`
+7. Delete branch: `git branch -d feature/v0.5.0-audio-system`
+
+#### 3. `hotfix/*` - Emergency Bug Fixes
+**Purpose:** Fix critical bugs in production quickly
+
+**Naming Convention:**
+```
+hotfix/crash-description
+hotfix/container-null-crash
+```
+
+**When to Use:**
+- ⚠️ Game-breaking bugs
+- ⚠️ Save file corruption
+- ⚠️ Critical performance issues
+
+---
+
+### Sprint Workflow (Detailed)
+
+#### Starting New Sprint
+
+```bash
+# 1. Update main branch
+git checkout main
+git pull origin main
+
+# 2. Create feature branch for sprint
+git checkout -b feature/v0.5.0-audio-system
+
+# 3. Do sprint planning (create docs)
+# ... ROADMAP.txt, CHANGELOG.txt, implementation guide ...
+
+# 4. Commit planning documentation
+git add ROADMAP.txt CHANGELOG.txt DEVELOPMENT_GUIDE.md V0.5.0_AUDIO_IMPLEMENTATION_GUIDE.md
+git commit -m "docs: v0.5.0 sprint planning - Atmosphere & Audio
+
+- [PLANNING] Complete audio sprint with 43 AI-generated files
+- [DOC] Updated ROADMAP.txt with sprint details
+- [DOC] Created implementation guide with all AI prompts
+
+Sprint: 12-15 sessions, $34 budget"
+
+# 5. Push feature branch
+git push -u origin feature/v0.5.0-audio-system
+```
+
+#### During Sprint (Session-Based Commits)
+
+```bash
+# At end of each development session:
+
+# 1. Stage changes
+git add .
+
+# 2. Commit with descriptive message (use CHANGELOG entries)
+git commit -m "feat: implement audio manager with sound pooling
+
+- [MAJOR] Created audio_manager.gd AutoLoad singleton
+- [FEATURE] Sound pooling system (max 10 concurrent)
+- [FEATURE] Volume controls for all categories
+
+Task 1.1 complete (Priority 1 - 1/3 tasks)"
+
+# 3. Push to remote (daily backup)
+git push origin feature/v0.5.0-audio-system
+```
+
+#### Completing Sprint
+
+```bash
+# 1. Ensure feature branch is up to date
+git checkout feature/v0.5.0-audio-system
+git pull origin feature/v0.5.0-audio-system
+
+# 2. Update main
+git checkout main
+git pull origin main
+
+# 3. Squash merge feature branch (clean history)
+git merge --squash feature/v0.5.0-audio-system
+
+# 4. Commit with sprint summary
+git commit -m "feat: v0.5.0 Atmosphere & Audio sprint complete
+
+Sprint Summary:
+- Audio manager with sound pooling
+- 43 AI-generated sounds (SFX + music + ambient)
+- Music system with day/night crossfades
+- Settings menu audio controls
+
+Sprint Stats: 13 sessions, 11/11 tasks (100%), $34 budget
+Files: audio_manager.gd, music_manager.gd, 43 audio files
+
+Closes sprint v0.5.0"
+
+# 5. Tag the release
+git tag -a v0.5.0 -m "v0.5.0 - Atmosphere & Audio
+
+Professional audio system with AI-generated sounds"
+
+# 6. Push main and tags
+git push origin main
+git push origin v0.5.0
+
+# 7. Delete feature branch (cleanup)
+git branch -d feature/v0.5.0-audio-system
+git push origin --delete feature/v0.5.0-audio-system
+
+# 8. Update CHANGELOG.txt Version History with commit hash
+```
+
+#### Hotfix Workflow
+
+```bash
+# 1. Create hotfix from main
+git checkout main
+git checkout -b hotfix/container-null-crash
+
+# 2. Fix bug (minimal changes)
+# ... edit files ...
+
+# 3. Commit fix
+git commit -m "fix: prevent null reference crash in container UI
+
+- [FIX] Added null check in container_ui.gd
+- [TEST] Verified crash resolved
+
+Fixes #42"
+
+# 4. Merge to main
+git checkout main
+git merge hotfix/container-null-crash
+
+# 5. Tag patch version
+git tag v0.4.1
+
+# 6. Push and cleanup
+git push origin main v0.4.1
+git branch -d hotfix/container-null-crash
+```
+
+---
+
+### Commit Message Convention
+
+**Format:** Conventional Commits
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat:` - New feature (sprint work)
+- `fix:` - Bug fix
+- `docs:` - Documentation only
+- `refactor:` - Code restructuring
+- `perf:` - Performance improvement
+- `test:` - Adding tests
+- `chore:` - Maintenance
+
+**Examples:**
+
+Good:
+```
+feat: add audio manager with sound pooling
+
+- Created audio_manager.gd singleton
+- Sound pooling (10 concurrent max)
+- Volume controls for all categories
+
+Task 1.1 complete
+```
+
+Bad:
+```
+update stuff
+wip
+more changes
+```
+
+---
+
+### Version Tagging Strategy
+
+**Format:** `v0.MAJOR.PATCH`
+
+**MAJOR (Sprint Releases):**
+- v0.4.0 - Storage & Organization
+- v0.5.0 - Atmosphere & Audio
+- v0.6.0 - Workbench & Advanced Crafting
+
+**PATCH (Hotfixes):**
+- v0.4.1 - Container crash fix
+- v0.5.1 - Audio crackle fix
+
+**v1.0.0 Milestone:**
+- All core systems complete
+- Save/load working
+- Boss progression implemented
+- Feature complete / beta ready
+
+---
+
+### Quick Reference Commands
+
+```bash
+# Start sprint
+git checkout main && git pull
+git checkout -b feature/v0.X.0-name
+
+# Daily work
+git add .
+git commit -m "feat: descriptive message"
+git push origin feature/v0.X.0-name
+
+# Complete sprint
+git checkout main && git pull
+git merge --squash feature/v0.X.0-name
+git commit -m "feat: v0.X.0 sprint complete"
+git tag -a v0.X.0 -m "Version description"
+git push origin main --tags
+git branch -d feature/v0.X.0-name
+
+# Hotfix
+git checkout main && git pull
+git checkout -b hotfix/bug-name
+# ... fix ...
+git commit -m "fix: description"
+git checkout main && git merge hotfix/bug-name
+git tag v0.X.Y
+git push origin main v0.X.Y
+git branch -d hotfix/bug-name
+```
+
+---
+
+### .gitignore Updates
+
+Ensure your `.gitignore` includes:
+
+```gitignore
+# Godot
+.import/
+export.cfg
+export_presets.cfg
+.mono/
+data_*/
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+---
+
+### AI-Assisted Development Notes
+
+**Session-Based Workflow:**
+- Each Claude session typically = 1-3 commits
+- Feature branch preserves full sprint history
+- Easy to track progress across sessions
+- Rollback individual changes if needed
+
+**Context Preservation:**
+- Feature branch keeps work-in-progress isolated
+- Main branch always stable for testing
+- Sprint history available for reference
+- Clean squash merge at completion
+
+---
+
+### Benefits of This Strategy
+
+1. ✅ **Clean main** - Always playable/deployable
+2. ✅ **Sprint isolation** - Work without breaking production
+3. ✅ **Easy rollback** - Revert entire sprints if needed
+4. ✅ **Clear history** - Squash merges keep main clean
+5. ✅ **Version tracking** - Tags mark all releases
+6. ✅ **AI-friendly** - Sessions map to commits naturally
+7. ✅ **Simple** - Only 2 branch types needed
+
+---
+
+### Branch Lifecycle Visualization
+
+```
+main:     o─────────o─────────────o─────────o
+          │         │             │         │
+          │         v0.4.0        v0.4.1    v0.5.0
+          │
+          ├─feature/v0.5.0──o──o──o──o──o──┤
+          │                         (squash merge)
+          │
+          └─hotfix/crash─o─┤
+                     (fast-forward merge)
+```
+
+---
 
 ## Version Control Notes
 
-- Project files are synced to GitHub manually
-- Not using Git LFS currently
+- Project uses GitHub Flow branching strategy (see above)
 - .tscn files are text-based, safe to merge
+- Not using Git LFS currently
 - Be cautious with binary assets (textures, models if added later)
 - Always test after pulling changes from remote
+- Feature branches preserve full sprint development history
+- Squash merges keep main branch history clean
 
 ## AI-Assisted Development Best Practices
 
@@ -969,7 +1505,7 @@ This allows easy copy-paste of each code block directly into the source file at 
 - **Target**: Keep files under 500 lines when possible
 - **Warning threshold**: 800+ lines (consider refactoring)
 - **Critical threshold**: 1500+ lines (definitely refactor)
-- **Extraction pattern**: Large mesh generators (300+ lines) â†’ separate visual generator files
+- **Extraction pattern**: Large mesh generators (300+ lines) Ã¢â€ â€™ separate visual generator files
 
 ### Context Window Optimization
 - Prefer reading focused files over large monoliths
