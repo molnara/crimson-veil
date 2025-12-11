@@ -57,9 +57,15 @@ func get_tool_name(tool: Tool = -1) -> String:
 	return TOOL_NAMES.get(tool, "Unknown")
 
 func cycle_tool():
-	"""Cycle to the next available tool"""
-	var tools = [Tool.NONE, Tool.AXE, Tool.PICKAXE]
+	"""Cycle between Axe and Pickaxe only (no None)"""
+	var tools = [Tool.AXE, Tool.PICKAXE]
 	var current_index = tools.find(equipped_tool)
+	
+	# If somehow not in the list (e.g., Tool.NONE), start with AXE
+	if current_index == -1:
+		equip_tool(Tool.AXE)
+		return
+	
 	var next_index = (current_index + 1) % tools.size()
 	equip_tool(tools[next_index])
 

@@ -21,6 +21,7 @@ IN PROGRESS
 [X] Settings system - Graphics, display, performance options (COMPLETE)
 [X] Crafting system - Simple crafting recipes to convert resources into tools/items (COMPLETE)
 [X] Inventory UI - Visual display of collected resources and equipped tools (COMPLETE)
+[X] Xbox controller support - Full gamepad controls for movement, camera, harvesting, building, and UI (COMPLETE)
 
 
 NEXT UP (This Month)
@@ -45,6 +46,7 @@ MEDIUM PRIORITY:
 [ ] Farming system - Plant crops, tend gardens for renewable food
 [ ] NPC traders - Buy/sell resources, discover rare items
 [ ] Character customization - Appearance options for player model
+[ ] Controller UI navigation - D-Pad navigation through inventory/crafting menus with visual focus
 
 LOW PRIORITY:
 [ ] Performance stats UI - Display FPS, CPU, GPU, and memory usage in upper right corner
@@ -55,6 +57,7 @@ LOW PRIORITY:
 [ ] Fishing system - Coastal/river fishing for food variety
 [ ] Mounts/vehicles - Faster travel options for exploring large biomes
 [ ] Music system - Ambient tracks that match biome/time of day
+[ ] Controller rumble - Haptic feedback for harvesting, damage, and building
 
 
 SOMEDAY/MAYBE (Ideas to explore)
@@ -69,6 +72,8 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+[X] Xbox controller support - Full analog movement/camera, all buttons mapped, simultaneous keyboard+controller support
+[X] Tool cycling improvement - Removed "None" option, now only cycles Axe ↔ Pickaxe
 [X] Valheim-style log breaking physics - Trees break into 3-5 log pieces on impact with satisfying scatter
 [X] Impact-based tree shattering - Logs spawn when fallen tree collides with terrain/objects
 [X] Log despawn particles - Brown particle "poof" effects when logs disappear (1-4 second randomized lifetimes)
@@ -103,6 +108,7 @@ DESIGN QUESTIONS / DECISIONS NEEDED
 ? Should building have structural integrity like Valheim or free placement like Minecraft?
 ? How rare should character trees be? (currently 5% - too common or too rare?)
 ? Should critters be harvestable for food/materials or purely ambient?
+? Should controller vibration intensity be configurable in settings?
 
 
 TECHNICAL DEBT / REFACTORING
@@ -130,3 +136,4 @@ Notes:
 - Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
+- Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously

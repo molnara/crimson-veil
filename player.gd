@@ -7,6 +7,10 @@ extends CharacterBody3D
 @export var mouse_sensitivity: float = 0.002
 @export var fly_speed: float = 15.0  # Speed when flying
 
+# Controller settings
+@export var controller_look_sensitivity: float = 3.0  # Right stick sensitivity
+@export var controller_deadzone: float = 0.15  # Analog stick deadzone
+
 var is_flying: bool = false  # Fly/noclip mode toggle
 
 # Camera
@@ -98,7 +102,7 @@ func _input(event):
 		spring_arm.rotate_x(-event.relative.y * mouse_sensitivity)
 		spring_arm.rotation.x = clamp(spring_arm.rotation.x, -PI/2, PI/2)
 	
-	# Toggle mouse capture
+	# Toggle mouse capture (ESC/Start button)
 	if event.is_action_pressed("ui_cancel"):
 		# Close inventory if open
 		if inventory_ui and inventory_ui.visible:
@@ -117,31 +121,41 @@ func _input(event):
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
-	# Toggle inventory with Tab key
+	# Toggle inventory with Tab key or Y button (Xbox)
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_TAB:
 			if inventory_ui:
 				inventory_ui.toggle_visibility()
 			print("Tab key pressed - Toggle inventory")
 	
-	# Toggle crafting menu with R key
+	if event.is_action_pressed("toggle_inventory"):  # Y button on Xbox
+		if inventory_ui:
+			inventory_ui.toggle_visibility()
+		print("Toggle inventory")
+	
+	# Toggle crafting menu with R key or X button (Xbox)
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_R:
 			if crafting_ui:
 				crafting_ui.toggle_visibility()
 			print("R key pressed - Toggle crafting")
 	
+	if event.is_action_pressed("toggle_crafting"):  # X button on Xbox
+		if crafting_ui:
+			crafting_ui.toggle_visibility()
+		print("Toggle crafting")
+	
 	# Toggle fly mode with F key
 	if event.is_action_pressed("toggle_fly"):
 		is_flying = !is_flying
 		print("Fly mode: ", "ON" if is_flying else "OFF")
 	
-	# Cycle tools with T key
+	# Cycle tools with T key or D-pad Left/Right
 	if event.is_action_pressed("cycle_tool"):
 		if tool_system:
 			tool_system.cycle_tool()
 	
-	# Toggle building mode with B key
+	# Toggle building mode with B key or D-pad Up
 	if event.is_action_pressed("toggle_building"):
 		if building_system:
 			if building_system.preview_mode:
@@ -149,7 +163,7 @@ func _input(event):
 			else:
 				building_system.enable_building_mode("stone_block")
 	
-	# Cycle block type with Tab or C key when in building mode
+	# Cycle block type with Tab or C key or D-pad Down when in building mode
 	if building_system and building_system.preview_mode:
 		if event.is_action_pressed("cycle_block_type"):
 			# Cycle through block types
@@ -158,7 +172,26 @@ func _input(event):
 			var next_index = (current_index + 1) % types.size()
 			building_system.set_block_type(types[next_index])
 	
-	# Mouse button handling
+	# Controller: RT (interact/harvest) and LT (cancel/remove)
+	if event.is_action_pressed("controller_interact"):  # RT
+		# Building mode takes priority
+		if building_system and building_system.preview_mode:
+			building_system.place_block()
+		# Otherwise try harvesting
+		elif harvesting_system and harvesting_system.is_looking_at_resource():
+			harvesting_system.start_harvest()
+	
+	if event.is_action_pressed("controller_cancel"):  # LT
+		if building_system and building_system.preview_mode:
+			# Try to remove block at cursor
+			var block_data = building_system.get_block_at_raycast()
+			if block_data:
+				building_system.remove_block_at_position(block_data["position"])
+		elif harvesting_system and harvesting_system.is_harvesting:
+			harvesting_system.cancel_harvest()
+			print("Harvest manually cancelled")
+	
+	# Mouse button handling (keep existing)
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			# Building mode takes priority
@@ -251,20 +284,46 @@ func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	if inventory and drops.has("item") and drops.has("amount"):
 		inventory.add_item(drops["item"], drops["amount"])
 
+func apply_deadzone(value: float, deadzone: float) -> float:
+	"""Apply deadzone to analog stick input"""
+	if abs(value) < deadzone:
+		return 0.0
+	# Scale the remaining range to 0-1
+	return (abs(value) - deadzone) / (1.0 - deadzone) * sign(value)
+
 func _physics_process(delta):
+	# Controller camera look (right stick)
+	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+		var look_x = apply_deadzone(Input.get_axis("controller_look_left", "controller_look_right"), controller_deadzone)
+		var look_y = apply_deadzone(Input.get_axis("controller_look_up", "controller_look_down"), controller_deadzone)
+		
+		if abs(look_x) > 0 or abs(look_y) > 0:
+			rotate_y(-look_x * controller_look_sensitivity * delta)
+			spring_arm.rotate_x(-look_y * controller_look_sensitivity * delta)
+			spring_arm.rotation.x = clamp(spring_arm.rotation.x, -PI/2, PI/2)
+	
 	# Fly mode - noclip movement
 	if is_flying:
 		# No gravity or collision in fly mode
 		velocity = Vector3.ZERO
 		
-		# Get input direction (including up/down)
+		# Get input direction (keyboard + left stick)
 		var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+		
+		# Controller left stick (with deadzone)
+		var stick_x = apply_deadzone(Input.get_axis("controller_move_left", "controller_move_right"), controller_deadzone)
+		var stick_y = apply_deadzone(Input.get_axis("controller_move_forward", "controller_move_backward"), controller_deadzone)
+		if abs(stick_x) > abs(input_dir.x):
+			input_dir.x = stick_x
+		if abs(stick_y) > abs(input_dir.y):
+			input_dir.y = stick_y
+		
 		var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 		
-		# Up/down movement
-		if Input.is_action_pressed("ui_accept"):  # Space - fly up
+		# Up/down movement (Space/Shift or A/B buttons)
+		if Input.is_action_pressed("ui_accept") or Input.is_action_pressed("controller_jump"):
 			direction.y += 1.0
-		if Input.is_action_pressed("ui_shift"):  # Shift - fly down
+		if Input.is_action_pressed("ui_shift") or Input.is_action_pressed("controller_sprint"):
 			direction.y -= 1.0
 		
 		direction = direction.normalized()
@@ -281,12 +340,21 @@ func _physics_process(delta):
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	
-	# Handle jump
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+	# Handle jump (Space or A button)
+	if (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("controller_jump")) and is_on_floor():
 		velocity.y = jump_velocity
 	
-	# Get input direction
+	# Get input direction (keyboard + left stick)
 	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+	
+	# Controller left stick (with deadzone)
+	var stick_x = apply_deadzone(Input.get_axis("controller_move_left", "controller_move_right"), controller_deadzone)
+	var stick_y = apply_deadzone(Input.get_axis("controller_move_forward", "controller_move_backward"), controller_deadzone)
+	if abs(stick_x) > abs(input_dir.x):
+		input_dir.x = stick_x
+	if abs(stick_y) > abs(input_dir.y):
+		input_dir.y = stick_y
+	
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	
 	# Debug: Print position when pressing P
@@ -295,8 +363,9 @@ func _physics_process(delta):
 		print("On floor: ", is_on_floor())
 		print("Velocity: ", velocity)
 	
-	# Apply movement
-	var current_speed = sprint_speed if Input.is_action_pressed("ui_shift") else move_speed
+	# Apply movement (Shift or B button for sprint)
+	var is_sprinting = Input.is_action_pressed("ui_shift") or Input.is_action_pressed("controller_sprint")
+	var current_speed = sprint_speed if is_sprinting else move_speed
 	
 	# Apply hunger speed penalty
 	if health_hunger_system:
