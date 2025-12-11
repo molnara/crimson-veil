@@ -1,14 +1,12 @@
-[gd_scene load_steps=9 format=3 uid="uid://bc354ntptv04q"]
+[gd_scene load_steps=8 format=3 uid="uid://bc354ntptv04q"]
 
 [ext_resource type="Script" uid="uid://ckhk1lvasit4r" path="res://chunk_manager.gd" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
-[ext_resource type="Script" uid="uid://daqqh63op6cvn" path="res://player.gd" id="2_tlwt5"]
+[ext_resource type="PackedScene" path="res://player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://c2gqjpxjajo8c" path="res://day_night_cycle.gd" id="4_aqk2v"]
 [ext_resource type="Script" uid="uid://5k6aextniq48" path="res://vegetation_spawner.gd" id="5_036b0"]
 [ext_resource type="Script" uid="uid://c33xs1ujes8lw" path="res://water_plane.gd" id="6_dwbse"]
 [ext_resource type="Script" uid="uid://wn1w2h0qttrp" path="res://critter_spawner.gd" id="7_critter"]
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aqk2v"]
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_tlwt5")
@@ -16,23 +14,7 @@ script = ExtResource("1_tlwt5")
 [node name="ChunkManager" type="Node3D" parent="."]
 script = ExtResource("1_fj7yv")
 
-[node name="Player" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 25, 0)
-floor_max_angle = 1.2217305
-floor_snap_length = 0.5
-script = ExtResource("2_tlwt5")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-shape = SubResource("CapsuleShape3D_aqk2v")
-
-[node name="SpringArm3D" type="SpringArm3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
-spring_length = 0.0
-margin = 0.2
-
-[node name="Camera3D" type="Camera3D" parent="Player/SpringArm3D"]
-near = 0.3
+[node name="Player" parent="." instance=ExtResource("2_player")]
 
 [node name="DayNightCycle" type="Node3D" parent="."]
 script = ExtResource("4_aqk2v")

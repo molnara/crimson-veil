@@ -19,9 +19,11 @@ var building_system: BuildingSystem
 var crafting_system: CraftingSystem
 var tool_system: ToolSystem
 var inventory: Inventory
+var health_hunger_system: HealthHungerSystem
 var harvest_ui: Control
 var crafting_ui: Control
 var inventory_ui: Control
+var health_ui: Control
 
 # Get the gravity from the project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -53,6 +55,16 @@ func _ready():
 	# Initialize inventory
 	inventory = Inventory.new()
 	add_child(inventory)
+	
+	# Get health/hunger system from scene (created in player.tscn)
+	health_hunger_system = $HealthHungerSystem if has_node("HealthHungerSystem") else null
+	if not health_hunger_system:
+		# Fallback: create one if it doesn't exist
+		print("Warning: HealthHungerSystem not found in scene, creating new one")
+		health_hunger_system = HealthHungerSystem.new()
+		add_child(health_hunger_system)
+	else:
+		print("HealthHungerSystem found in scene!")
 	
 	# Initialize tool system
 	tool_system = ToolSystem.new()
@@ -220,7 +232,19 @@ func setup_ui():
 	inventory_ui = preload("res://inventory_ui.gd").new()
 	get_tree().root.add_child(inventory_ui)
 	inventory_ui.set_inventory(inventory)
+	print("DEBUG: health_hunger_system exists: ", health_hunger_system != null)
+	inventory_ui.set_health_system(health_hunger_system)  # Pass health system for eating
 	print("Inventory UI loaded successfully")
+	
+	# Load health UI
+	print("Creating health UI...")
+	var health_ui_scene = load("res://health_ui.tscn")
+	if health_ui_scene:
+		health_ui = health_ui_scene.instantiate()
+		get_tree().root.add_child(health_ui)
+		print("Health UI loaded successfully")
+	else:
+		print("Warning: Could not load health_ui.tscn")
 
 func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""
@@ -273,6 +297,10 @@ func _physics_process(delta):
 	
 	# Apply movement
 	var current_speed = sprint_speed if Input.is_action_pressed("ui_shift") else move_speed
+	
+	# Apply hunger speed penalty
+	if health_hunger_system:
+		current_speed *= health_hunger_system.get_movement_speed_multiplier()
 	
 	if direction:
 		velocity.x = direction.x * current_speed

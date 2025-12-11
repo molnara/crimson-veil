@@ -6,6 +6,19 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-10 18:00] [MAJOR] Added health/hunger system - stats, regeneration, movement penalties
+[2024-12-10 18:00] [MAJOR] Health regenerates only when hunger > 70 (well-fed bonus)
+[2024-12-10 18:00] [MINOR] Hunger depletes over ~8 minutes (0.2/second configurable rate)
+[2024-12-10 18:00] [MINOR] Movement speed reduced 30% when hunger < 30
+[2024-12-10 18:00] [MAJOR] Added health/hunger UI - bars in top-left with well-fed indicator
+[2024-12-10 18:00] [MAJOR] Added eating system - click food in inventory to restore hunger
+[2024-12-10 18:00] [MINOR] Food values: strawberries 10-35, mushrooms 15-40 hunger
+[2024-12-10 18:00] [MINOR] Food items show green tint and tooltips in inventory
+[2024-12-10 18:00] [FEATURE] Created player.tscn - player scene with integrated health system
+[2024-12-10 18:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added feature implementation workflow
+[2024-12-10 18:00] [MINOR] Updated DEVELOPMENT_GUIDE.md - added "request files first" workflow
+[2024-12-10 18:00] [MINOR] Updated DEVELOPMENT_GUIDE.md - added health system to file index
+[2024-12-10 18:00] [MINOR] Updated DEVELOPMENT_GUIDE.md - added file index maintenance to commit checklist
 [2024-12-10 12:00] [MAJOR] Added biome generation configuration - exposed noise scales and thresholds in Inspector for biome size/shape control
 [2024-12-10 12:00] [MAJOR] Added biome-specific vegetation configuration - per-biome density controls in Inspector (forest trees, grassland strawberries, etc)
 [2024-12-10 12:00] [FEATURE] Guaranteed Grassland spawn zone - 100m radius around origin always Grassland (Valheim-style safe spawning)
@@ -24,7 +37,7 @@ Recent Changes (v0.3.0+):
 [2024-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
 [2024-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Â±500 for proper depth sorting
+[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Ã‚Â±500 for proper depth sorting
 [2024-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player

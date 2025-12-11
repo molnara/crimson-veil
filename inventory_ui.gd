@@ -8,6 +8,7 @@ Press Tab to toggle visibility
 """
 
 var inventory: Inventory
+var health_hunger_system: HealthHungerSystem
 
 # UI elements
 var background: Panel
@@ -18,6 +19,18 @@ var title_label: Label
 const GRID_COLUMNS = 8
 const SLOT_SIZE = 64
 const SLOT_SPACING = 4
+
+# Food values for eating system
+const FOOD_VALUES = {
+	"strawberry": 20,  # Generic strawberry (medium-sized)
+	"Small Strawberry": 10,
+	"Medium Strawberry": 20,
+	"Large Strawberry": 35,
+	"mushroom": 20,  # Generic mushroom (medium-sized)
+	"Small Mushroom": 15,
+	"Medium Mushroom": 25,
+	"Large Mushroom": 40
+}
 
 # Item icon colors (simple colored squares for now)
 const ITEM_COLORS = {
@@ -84,6 +97,11 @@ func set_inventory(inv: Inventory):
 		inventory.inventory_changed.connect(refresh_grid)
 		refresh_grid()
 
+func set_health_system(health_sys: HealthHungerSystem):
+	"""Connect to health/hunger system for eating"""
+	health_hunger_system = health_sys
+	print("DEBUG: Health system set in inventory UI: ", health_hunger_system != null)
+
 func refresh_grid():
 	"""Update the inventory grid display"""
 	if not inventory:
@@ -111,6 +129,9 @@ func create_item_slot(item_name: String, count: int):
 	var slot = PanelContainer.new()
 	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 	
+	# Make slot clickable
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	
 	# Slot background
 	var slot_style = StyleBoxFlat.new()
 	slot_style.bg_color = Color(0.2, 0.2, 0.2, 0.9)
@@ -119,11 +140,18 @@ func create_item_slot(item_name: String, count: int):
 	slot_style.border_width_right = 2
 	slot_style.border_width_top = 2
 	slot_style.border_width_bottom = 2
+	
+	# Check if item is food - add green tint
+	var is_food = item_name in FOOD_VALUES
+	if is_food:
+		slot_style.bg_color = Color(0.2, 0.25, 0.2, 0.9)  # Slight green tint for food
+	
 	slot.add_theme_stylebox_override("panel", slot_style)
 	
 	# Container for icon and count
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 2)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Let clicks pass through to slot
 	slot.add_child(vbox)
 	
 	# Item icon (colored square)
@@ -131,6 +159,7 @@ func create_item_slot(item_name: String, count: int):
 	icon.custom_minimum_size = Vector2(40, 40)
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon.color = ITEM_COLORS.get(item_name, Color.WHITE)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Let clicks pass through
 	vbox.add_child(icon)
 	
 	# Count label
@@ -141,10 +170,19 @@ func create_item_slot(item_name: String, count: int):
 	count_label.add_theme_color_override("font_color", Color.WHITE)
 	count_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	count_label.add_theme_constant_override("outline_size", 1)
+	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Let clicks pass through
 	vbox.add_child(count_label)
 	
 	# Item name on hover (tooltip)
-	slot.tooltip_text = item_name.capitalize()
+	if is_food:
+		var food_value = FOOD_VALUES[item_name]
+		slot.tooltip_text = "%s\n🍖 Restores %d hunger\n[Click to eat]" % [item_name.capitalize(), food_value]
+	else:
+		slot.tooltip_text = item_name.capitalize()
+	
+	# Connect click event for eating
+	if is_food:
+		slot.gui_input.connect(func(event): _on_slot_clicked(event, item_name))
 	
 	grid_container.add_child(slot)
 
@@ -173,3 +211,43 @@ func toggle_visibility():
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	else:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _on_slot_clicked(event: InputEvent, item_name: String):
+	"""Handle clicking on an inventory slot"""
+	print("DEBUG: Slot clicked for item: ", item_name)
+	if event is InputEventMouseButton and event.pressed:
+		print("DEBUG: Mouse button event - button: ", event.button_index)
+		# Left or right-click to eat food
+		if event.button_index == MOUSE_BUTTON_LEFT or event.button_index == MOUSE_BUTTON_RIGHT:
+			print("DEBUG: Click detected!")
+			try_eat_item(item_name)
+
+func try_eat_item(item_name: String) -> bool:
+	"""Try to eat a food item"""
+	print("DEBUG: Trying to eat item: ", item_name)
+	print("DEBUG: Health system exists: ", health_hunger_system != null)
+	print("DEBUG: Inventory exists: ", inventory != null)
+	print("DEBUG: Is food: ", item_name in FOOD_VALUES)
+	
+	if not health_hunger_system or not inventory:
+		print("ERROR: Missing health_hunger_system or inventory!")
+		return false
+	
+	if item_name not in FOOD_VALUES:
+		print("ERROR: Item is not food!")
+		return false
+	
+	var hunger_restore = FOOD_VALUES[item_name]
+	
+	# Try to eat the food
+	if health_hunger_system.eat_food(hunger_restore):
+		# Successfully ate - remove from inventory
+		inventory.remove_item(item_name, 1)
+		print("Ate %s, restored %d hunger" % [item_name, hunger_restore])
+		
+		# Refresh the grid
+		refresh_grid()
+		return true
+	else:
+		print("Already at full hunger!")
+		return false
