@@ -121,24 +121,24 @@ func _input(event):
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
-	# Toggle inventory with Tab key or Y button (Xbox)
+	# Toggle inventory with I key or Y button (Xbox)
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_TAB:
+		if event.keycode == KEY_I:
 			if inventory_ui:
 				inventory_ui.toggle_visibility()
-			print("Tab key pressed - Toggle inventory")
+			print("I key pressed - Toggle inventory")
 	
 	if event.is_action_pressed("toggle_inventory"):  # Y button on Xbox
 		if inventory_ui:
 			inventory_ui.toggle_visibility()
 		print("Toggle inventory")
 	
-	# Toggle crafting menu with R key or X button (Xbox)
+	# Toggle crafting menu with C key or X button (Xbox)
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_R:
+		if event.keycode == KEY_C:
 			if crafting_ui:
 				crafting_ui.toggle_visibility()
-			print("R key pressed - Toggle crafting")
+			print("C key pressed - Toggle crafting")
 	
 	if event.is_action_pressed("toggle_crafting"):  # X button on Xbox
 		if crafting_ui:
@@ -261,13 +261,16 @@ func setup_ui():
 	print("Crafting UI loaded successfully")
 	
 	# Load inventory UI
-	print("Creating inventory UI...")
-	inventory_ui = preload("res://inventory_ui.gd").new()
-	get_tree().root.add_child(inventory_ui)
-	inventory_ui.set_inventory(inventory)
-	print("DEBUG: health_hunger_system exists: ", health_hunger_system != null)
-	inventory_ui.set_health_system(health_hunger_system)  # Pass health system for eating
-	print("Inventory UI loaded successfully")
+	print("Loading inventory UI...")
+	var inventory_ui_scene = load("res://inventory_ui.tscn")
+	if inventory_ui_scene:
+		inventory_ui = inventory_ui_scene.instantiate()
+		get_tree().root.add_child(inventory_ui)
+		inventory_ui.set_inventory(inventory)
+		inventory_ui.set_health_system(health_hunger_system)
+		print("Inventory UI loaded successfully")
+	else:
+		print("ERROR: Could not load inventory_ui.tscn")
 	
 	# Load health UI
 	print("Creating health UI...")

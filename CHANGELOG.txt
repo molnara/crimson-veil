@@ -6,6 +6,18 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-11 19:30] [MAJOR] Implemented item stacking system - Phase 1 complete
+[2024-12-11 19:30] [FEATURE] Stack limits enforced - wood (100), stone (50), food (20), tools (1)
+[2024-12-11 19:30] [FEATURE] Stack count display - shows current/max (e.g., "50/100")
+[2024-12-11 19:30] [FEATURE] Visual "FULL" indicator - red text, red tint, red border on maxed stacks
+[2024-12-11 19:30] [FEATURE] "INVENTORY FULL!" notification - displays when trying to exceed limits
+[2024-12-11 19:30] [MAJOR] Created inventory_ui.tscn - proper scene structure for UI rendering
+[2024-12-11 19:30] [FEATURE] Auto-stack on pickup - items automatically merge with existing stacks
+[2024-12-11 19:30] [MINOR] 32 item type limit enforced (max different items in inventory)
+[2024-12-11 19:30] [MINOR] Updated keyboard controls - I for inventory, C for crafting (editor compatibility)
+[2024-12-11 19:30] [MINOR] Added inventory_full signal - triggers visual feedback on full stacks
+[2024-12-11 19:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added inventory_ui.tscn to file index
+[2024-12-11 19:30] [MINOR] Updated DEVELOPMENT_GUIDE.md - moved item stacking to "Currently Implemented"
 [2024-12-11 16:00] [MAJOR] Sprint planning session - defined "Storage & Organization" sprint with clear priorities
 [2024-12-11 16:00] [MAJOR] Updated ROADMAP.txt - reorganized with detailed sprint tasks (15 items across 3 priorities)
 [2024-12-11 16:00] [MINOR] Added sprint risk assessment to ROADMAP.txt (UI complexity, save compatibility, feature creep)
@@ -31,7 +43,7 @@ Recent Changes (v0.3.0+):
 [2024-12-11 14:30] [FEATURE] D-Pad mapped - Up=Building mode, Down=Cycle blocks
 [2024-12-11 14:30] [MINOR] Added apply_deadzone() function for smooth analog stick handling
 [2024-12-11 14:30] [MINOR] Controller and keyboard/mouse work simultaneously
-[2024-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe ↔ Pickaxe
+[2024-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe â†” Pickaxe
 [2024-12-11 14:30] [FEATURE] Updated project.godot with 16 new controller input actions
 [2024-12-11 14:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added controller support to file index and implemented features
 [2024-12-11 14:30] [FEATURE] Created XBOX_CONTROLLER_GUIDE.md - comprehensive setup and troubleshooting guide
@@ -78,7 +90,7 @@ Recent Changes (v0.3.0+):
 [2024-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
 [2024-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=±500 for proper depth sorting
+[2024-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Â±500 for proper depth sorting
 [2024-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2024-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2024-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player
