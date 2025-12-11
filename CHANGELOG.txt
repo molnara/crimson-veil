@@ -6,6 +6,7 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.3.0+):
 -------------------------
+[2024-12-11 02:00] [MAJOR] Refactored vegetation_spawner.gd - extracted tree generators to separate files (reduced from 2,075 to 1,457 lines)
 [2024-12-10 20:00] [MAJOR] Added grid-based inventory UI - 8x4 visual slots, Tab to toggle
 [2024-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2024-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
@@ -44,6 +45,7 @@ v0.3.0 (Current Release)
 - Settings menu with quality presets
 - Water plane with collision
 - Tool system (Axe/Pickaxe) with requirement checking and visual feedback
+- Modular vegetation system with extracted tree visual generators
 
 ---
 

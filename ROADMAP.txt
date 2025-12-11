@@ -69,6 +69,7 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+[X] Code refactoring - Extracted tree generators from vegetation_spawner (reduced from 2,075 to 1,457 lines)
 [X] Inventory UI - Grid-based visual inventory (Tab to toggle), 32 slots with item icons and counts
 [X] Crafting system - Recipe-based crafting with UI (Press R), 5 starter recipes (stone tools, campfire, torch, wood wall)
 [X] Perlin noise cloud system - Dual-layer noise for organic cloud shapes with Inspector parameters
@@ -98,11 +99,13 @@ DESIGN QUESTIONS / DECISIONS NEEDED
 
 TECHNICAL DEBT / REFACTORING
 -----------------------------
+[X] Code organization - Extracted large tree generators into modular files (COMPLETE)
 [ ] Multi-material terrain system - Replace vertex color tinting with proper material blending (chunk.gd)
 [ ] Collision edge-case handling - Sometimes trees fall through terrain on slopes
 [ ] Settings preset detection - "Custom" preset detection could be more robust
 [ ] Resource spawning optimization - Could batch-spawn resources instead of one-at-a-time
 [ ] Chunk unloading delay - Add graceful fade-out before unloading distant chunks
+[ ] Critter spawner refactoring - Could extract critter visual generators (same pattern as vegetation)
 
 
 BUGS / FIXES
