@@ -13,14 +13,14 @@ Budget: $34 ($20 SFX Engine + $14 Mubert)
 Timeline: 12-15 sessions (~24-30% capacity)
 
 DESIGN DECISIONS (LOCKED IN):
-âœ… Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
-âœ… Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
-âœ… Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-âœ… Music Variety: Day/Night Variation (2 tracks total)
+Ã¢Å“â€¦ Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
+Ã¢Å“â€¦ Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
+Ã¢Å“â€¦ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
+Ã¢Å“â€¦ Music Variety: Day/Night Variation (2 tracks total)
 
 PRIORITY 1 - Core Sound System (Foundation) [5 sessions]
 [X] Audio Manager Architecture [Sonnet] - Singleton with sound pooling, volume controls, pitch variation (COMPLETE 2025-12-11)
-[ ] AI Sound Generation & Import [Sonnet] - Generate 22 professional SFX using ElevenLabs/SFX Engine
+[X] AI Sound Generation & Import [Sonnet] - Generated 48 audio files (40 SFX + 8 music) via SFX Engine + Mubert (COMPLETE 2025-12-12)
 [ ] SFX Integration - Core Actions [Sonnet] - Wire harvesting, building, movement, UI sounds
 
 PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions]
@@ -34,11 +34,11 @@ PRIORITY 3 - Polish & Refinement (Optional) [2-4 sessions]
 [ ] Audio Balance Pass [Sonnet] - Test and adjust all volume levels across scenarios
 [ ] Controller Rumble [Sonnet] - Haptic feedback for harvesting, building, tree falling (OPTIONAL)
 
-AUDIO FILE MANIFEST (43 files total):
-- 22 SFX files (harvesting, movement, building, UI, container)
-- 2 Music tracks (day ambient, night ambient - 3 min each)
-- 8 Ambient files (wind, ocean, crickets, birds, etc)
-- 9 Additional UI sounds (warnings, feedback)
+AUDIO FILE MANIFEST (48 files total - ALL GENERATED):
+- 40 SFX files (harvesting: 6, movement: 12, building: 3, UI: 9, container: 2, ambient: 8)
+- 8 Music tracks (4 day ambient, 4 night ambient - 2 min each, WAV format)
+- Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
+- Actual budget: $22 (under $34 target by $12)
 
 
 NEXT UP (After v0.5.0)
@@ -58,7 +58,7 @@ HIGH PRIORITY:
 [ ] Workbench & Advanced Crafting [Sonnet] - DEFERRED FROM v0.5.0 - Workbench placement, proximity, recipes
 [ ] Inventory Organization [Sonnet] - DEFERRED FROM v0.5.0 - Sort, quick-stack, drag-and-drop, animations
 [ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers [Sonnet] - Stone â†’ Iron â†’ Steel progression path
+[ ] Tool tiers [Sonnet] - Stone Ã¢â€ â€™ Iron Ã¢â€ â€™ Steel progression path
 [ ] Durability system [Sonnet] - Tools degrade with use (creates resource sink)
 
 MEDIUM PRIORITY:
@@ -122,7 +122,7 @@ Commit: d53049d
 
 Pre-v0.4.0 Features:
 [X] Xbox controller support [Sonnet] - Full analog movement/camera, all buttons mapped
-[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe â†” Pickaxe
+[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe Ã¢â€ â€ Pickaxe
 [X] Valheim-style log breaking physics [Sonnet] - Trees break into 3-5 log pieces on impact
 [X] Impact-based tree shattering [Sonnet] - Logs spawn when fallen tree collides with terrain
 [X] Log despawn particles [Sonnet] - Brown particle "poof" effects when logs disappear
@@ -136,7 +136,7 @@ Pre-v0.4.0 Features:
 [X] Crafting system [Sonnet] - Recipe-based crafting with UI (Press R), 5 starter recipes
 [X] Perlin noise cloud system [Sonnet] - Dual-layer noise for organic cloud shapes
 [X] Enhanced crosshair [Sonnet] - Cross-shaped design with outline for visibility
-[X] Sun/moon depth sorting fix [Sonnet] - Repositioned celestial bodies to z=Â±500
+[X] Sun/moon depth sorting fix [Sonnet] - Repositioned celestial bodies to z=Ã‚Â±500
 [X] Tool system [Sonnet] - Axe/Pickaxe with requirement checking and visual feedback
 [X] Procedural world generation [Sonnet] - Chunk-based terrain with FastNoiseLite
 [X] Day/night cycle [Sonnet] - Time-based sky colors and celestial bodies
@@ -154,20 +154,20 @@ Pre-v0.4.0 Features:
 DESIGN QUESTIONS / DECISIONS NEEDED
 ------------------------------------
 v0.5.0 Sprint Decisions (Made):
-âœ… Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
-âœ… Music style: Pure ambient drone (meditative, cozy-lonely tone)
-âœ… Footsteps: Biome-aware (4 surfaces for immersion without complexity)
-âœ… Volume balance: Hybrid approach (realistic ambient, punchy actions)
-âœ… Budget: $34 investment for professional quality
-âœ… Music variety: Day/night variation (2 tracks, simple transition)
+Ã¢Å“â€¦ Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
+Ã¢Å“â€¦ Music style: Pure ambient drone (meditative, cozy-lonely tone)
+Ã¢Å“â€¦ Footsteps: Biome-aware (4 surfaces for immersion without complexity)
+Ã¢Å“â€¦ Volume balance: Hybrid approach (realistic ambient, punchy actions)
+Ã¢Å“â€¦ Budget: $34 investment for professional quality
+Ã¢Å“â€¦ Music variety: Day/night variation (2 tracks, simple transition)
 
 v0.4.0 Sprint Decisions (Made):
-âœ… Storage scope: Core + Polish approach (1 week timeline)
-âœ… Container UI: Click-to-transfer first, drag-and-drop later
-âœ… Container destruction: Harvestable (break to get materials back)
-âœ… Item stacking: Full implementation this sprint
-âœ… Workbench scope: Placement + proximity, defer recipe gating
-âœ… Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
+Ã¢Å“â€¦ Storage scope: Core + Polish approach (1 week timeline)
+Ã¢Å“â€¦ Container UI: Click-to-transfer first, drag-and-drop later
+Ã¢Å“â€¦ Container destruction: Harvestable (break to get materials back)
+Ã¢Å“â€¦ Item stacking: Full implementation this sprint
+Ã¢Å“â€¦ Workbench scope: Placement + proximity, defer recipe gating
+Ã¢Å“â€¦ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
 
 Future Decisions (Still Open) - Use [Opus] for complex design decisions:
 ? Should tools degrade/break or have infinite durability? (affects resource loops) [Opus]
@@ -226,41 +226,41 @@ POTENTIAL ISSUES (from Code Review - not yet confirmed):
 
 SPRINT RISK ASSESSMENT (v0.5.0 - Current)
 ------------------------------------------
-ðŸŸ¢ LOW RISK: Audio system isolation - Won't break existing gameplay systems
+Ã°Å¸Å¸Â¢ LOW RISK: Audio system isolation - Won't break existing gameplay systems
    Mitigation: Audio manager is separate AutoLoad, no gameplay logic dependencies
    
-ðŸŸ¡ MEDIUM RISK: AI generation quality variance
+Ã°Å¸Å¸Â¡ MEDIUM RISK: AI generation quality variance
    Mitigation: Use free tier for testing, upgrade only when satisfied with quality
    
-ðŸŸ¢ LOW RISK: Budget overrun ($34 target)
+Ã°Å¸Å¸Â¢ LOW RISK: Budget overrun ($34 target)
    Mitigation: SFX Engine is pay-per-credit (only buy what needed), Mubert is 1-month subscription
    
-ðŸŸ¢ LOW RISK: Integration complexity (many files to modify)
+Ã°Å¸Å¸Â¢ LOW RISK: Integration complexity (many files to modify)
    Mitigation: Start with one system (harvesting), test, then expand to others
    
-ðŸŸ¡ MEDIUM RISK: Music looping seamlessness
+Ã°Å¸Å¸Â¡ MEDIUM RISK: Music looping seamlessness
    Mitigation: Test loops extensively, use Mubert's loop-friendly generation
 
 
 SPRINT RISK ASSESSMENT (v0.4.0 - COMPLETED)
 --------------------------------------------
-âœ… HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
+Ã¢Å“â€¦ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
    Resolution: Scene-based architecture + click-to-transfer simplicity
    
-ðŸŸ¢ LOW RISK: Save compatibility for stacking changes
+Ã°Å¸Å¸Â¢ LOW RISK: Save compatibility for stacking changes
    Status: Design accommodates future save system
    
-ðŸŸ¢ LOW RISK: Controller UI navigation for containers
+Ã°Å¸Å¸Â¢ LOW RISK: Controller UI navigation for containers
    Status: Mouse/keyboard working, controller support deferred
    
-âœ… LOW RISK: Feature creep - MITIGATED
+Ã¢Å“â€¦ LOW RISK: Feature creep - MITIGATED
    Resolution: Stuck to acceptance criteria, deferred extras to backlog
 
 
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore â†’ Gather â†’ Craft â†’ Build â†’ Unlock new biomes â†’ Repeat
+- Core loop: Explore Ã¢â€ â€™ Gather Ã¢â€ â€™ Craft Ã¢â€ â€™ Build Ã¢â€ â€™ Unlock new biomes Ã¢â€ â€™ Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously

@@ -29,6 +29,9 @@ func _ready():
 	# Test 6: Test category volume calculation
 	test_category_volumes()
 	
+	# NEW: Test 7-13: Automatic audio playback tests
+	await test_sound_playback()
+	
 	print("\n============================================================")
 	print("ALL TESTS COMPLETED")
 	print("============================================================\n")
@@ -154,27 +157,159 @@ func test_category_volumes():
 	
 	print("")
 
+# Automatic audio playback tests
+func test_sound_playback():
+	print("\n============================================================")
+	print("AUDIO PLAYBACK TESTS (Listen for sounds!)")
+	print("============================================================\n")
+	
+	# Test 7: Harvesting sounds
+	print("[TEST 7] Testing harvesting sounds...")
+	print("  Playing axe_chop...")
+	AudioManager.play_sound("axe_chop", "sfx")
+	await get_tree().create_timer(1.5).timeout
+	
+	print("  Playing pickaxe_hit...")
+	AudioManager.play_sound("pickaxe_hit", "sfx")
+	await get_tree().create_timer(1.5).timeout
+	
+	print("  Playing mushroom_pick...")
+	AudioManager.play_sound("mushroom_pick", "sfx")
+	await get_tree().create_timer(1.5).timeout
+	print("  ✓ Harvesting sounds tested\n")
+	
+	# Test 8: Footstep variants
+	print("[TEST 8] Testing footstep variants...")
+	print("  Playing random grass footsteps (3 variants)...")
+	for i in range(4):
+		AudioManager.play_sound_variant("footstep_grass", 3, "sfx")
+		await get_tree().create_timer(0.4).timeout
+	print("  ✓ Footstep variants tested\n")
+	
+	# Test 9: Building sounds
+	print("[TEST 9] Testing building sounds...")
+	print("  Playing block_place...")
+	AudioManager.play_sound("block_place", "sfx")
+	await get_tree().create_timer(1.0).timeout
+	
+	print("  Playing block_remove...")
+	AudioManager.play_sound("block_remove", "sfx")
+	await get_tree().create_timer(1.5).timeout
+	print("  ✓ Building sounds tested\n")
+	
+	# Test 10: UI sounds
+	print("[TEST 10] Testing UI sounds...")
+	print("  Playing inventory_toggle...")
+	AudioManager.play_sound("inventory_toggle", "ui")
+	await get_tree().create_timer(1.0).timeout
+	
+	print("  Playing craft_complete...")
+	AudioManager.play_sound("craft_complete", "ui")
+	await get_tree().create_timer(1.5).timeout
+	print("  ✓ UI sounds tested\n")
+	
+	# Test 11: Container sounds
+	print("[TEST 11] Testing container sounds...")
+	print("  Playing chest_open...")
+	AudioManager.play_sound("chest_open", "sfx")
+	await get_tree().create_timer(1.5).timeout
+	
+	print("  Playing chest_close...")
+	AudioManager.play_sound("chest_close", "sfx")
+	await get_tree().create_timer(1.5).timeout
+	print("  ✓ Container sounds tested\n")
+	
+	# Test 12: Music tracks
+	print("[TEST 12] Testing music playback...")
+	print("  Playing ambient_day_1 with 2 second fade...")
+	AudioManager.play_music("ambient_day_1", 2.0)
+	await get_tree().create_timer(5.0).timeout
+	
+	print("  Crossfading to ambient_night_1...")
+	AudioManager.play_music("ambient_night_1", 2.0)
+	await get_tree().create_timer(5.0).timeout
+	
+	print("  Stopping music...")
+	AudioManager.stop_music(2.0)
+	await get_tree().create_timer(3.0).timeout
+	print("  ✓ Music system tested\n")
+	
+	# Test 13: Ambient loops
+	print("[TEST 13] Testing ambient loops...")
+	print("  Starting wind_light loop...")
+	AudioManager.play_ambient_loop("wind_light")
+	await get_tree().create_timer(3.0).timeout
+	
+	print("  Starting ocean_waves loop (layering)...")
+	AudioManager.play_ambient_loop("ocean_waves")
+	await get_tree().create_timer(3.0).timeout
+	
+	print("  Stopping wind_light...")
+	AudioManager.stop_ambient_loop("wind_light", 1.0)
+	await get_tree().create_timer(2.0).timeout
+	
+	print("  Stopping ocean_waves...")
+	AudioManager.stop_ambient_loop("ocean_waves", 1.0)
+	await get_tree().create_timer(2.0).timeout
+	print("  ✓ Ambient loops tested\n")
+	
+	print("\n============================================================")
+	print("ALL AUDIO TESTS COMPLETED!")
+	print("============================================================\n")
+	print("Press ESC to exit, or use manual test keys below...")
+
 # Manual tests (require audio files)
 func _input(event):
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
 			KEY_1:
-				print("\n[MANUAL TEST] Attempting to play 'test_sound'...")
-				AudioManager.play_sound("test_sound", "sfx")
-				print("  Note: Will warn if sound not found (expected before Task 1.2)\n")
+				print("\n[MANUAL TEST] Playing harvesting sounds...")
+				AudioManager.play_sound("axe_chop", "sfx")
+				await get_tree().create_timer(0.5).timeout
+				AudioManager.play_sound("pickaxe_hit", "sfx")
 			
 			KEY_2:
-				print("\n[MANUAL TEST] Attempting sound pool stress test...")
+				print("\n[MANUAL TEST] Sound pool stress test...")
 				print("  Playing 15 sounds rapidly (pool max = 10)...")
 				for i in range(15):
-					AudioManager.play_sound("test_sound", "sfx")
+					AudioManager.play_sound("axe_chop", "sfx")
 					await get_tree().create_timer(0.05).timeout
 				print("  Active sounds: %d" % AudioManager.get_active_sound_count())
-				print("  Note: Should see warnings about pool being full\n")
 			
 			KEY_3:
+				print("\n[MANUAL TEST] Testing all footstep surfaces...")
+				print("  Grass...")
+				AudioManager.play_sound_variant("footstep_grass", 3, "sfx")
+				await get_tree().create_timer(0.5).timeout
+				print("  Stone...")
+				AudioManager.play_sound_variant("footstep_stone", 3, "sfx")
+				await get_tree().create_timer(0.5).timeout
+				print("  Sand...")
+				AudioManager.play_sound_variant("footstep_sand", 3, "sfx")
+				await get_tree().create_timer(0.5).timeout
+				print("  Snow...")
+				AudioManager.play_sound_variant("footstep_snow", 3, "sfx")
+			
+			KEY_4:
+				print("\n[MANUAL TEST] Playing day music...")
+				AudioManager.play_music("ambient_day_1", 2.0)
+			
+			KEY_5:
+				print("\n[MANUAL TEST] Playing night music...")
+				AudioManager.play_music("ambient_night_1", 2.0)
+			
+			KEY_6:
+				print("\n[MANUAL TEST] Starting ambient loops...")
+				AudioManager.play_ambient_loop("wind_light")
+				AudioManager.play_ambient_loop("birds_day")
+			
+			KEY_7:
 				print("\n[MANUAL TEST] AudioManager status:")
 				AudioManager.print_status()
+			
+			KEY_8:
+				print("\n[MANUAL TEST] Run full audio test suite...")
+				test_sound_playback()
 			
 			KEY_0:
 				print("\n[MANUAL TEST] Stopping all audio...")
@@ -182,8 +317,13 @@ func _input(event):
 				print("  All audio stopped\n")
 
 func _exit_tree():
-	print("\n[INFO] Test script ending")
-	print("  Press 1: Test play_sound() (will warn until files exist)")
-	print("  Press 2: Test sound pool stress (15 sounds)")
-	print("  Press 3: Print AudioManager status")
+	print("\n[INFO] Manual test controls:")
+	print("  Press 1: Play harvesting sounds")
+	print("  Press 2: Sound pool stress test")
+	print("  Press 3: Test all footstep surfaces")
+	print("  Press 4: Play day music")
+	print("  Press 5: Play night music")
+	print("  Press 6: Start ambient loops")
+	print("  Press 7: Print AudioManager status")
+	print("  Press 8: Run full audio test suite")
 	print("  Press 0: Stop all audio\n")

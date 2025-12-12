@@ -109,15 +109,87 @@ func _create_music_player():
 
 func _load_sound_library():
 	"""Load all sound effects from res://audio/ directory"""
-	# NOTE: This will be populated in Task 1.2 when audio files are imported
-	# For now, we set up the structure
 	
-	# Structure will be:
-	# sounds["axe_chop"] = preload("res://audio/sfx/harvesting/axe_chop.wav")
-	# sounds["footstep_grass_1"] = preload("res://audio/sfx/movement/footstep_grass_1.wav")
-	# etc.
+	# ========== HARVESTING SOUNDS ==========
+	sounds["axe_chop"] = preload("res://audio/sfx/harvesting/axe_chop.wav")
+	sounds["pickaxe_hit"] = preload("res://audio/sfx/harvesting/pickaxe_hit.wav")
+	sounds["mushroom_pick"] = preload("res://audio/sfx/harvesting/mushroom_pick.wav")
+	sounds["strawberry_pick"] = preload("res://audio/sfx/harvesting/strawberry_pick.wav")
+	sounds["resource_break"] = preload("res://audio/sfx/harvesting/resource_break.wav")
+	sounds["wrong_tool"] = preload("res://audio/sfx/harvesting/wrong_tool.wav")
 	
-	print("[AudioManager] Sound library structure ready (files will be loaded in Task 1.2)")
+	# ========== MOVEMENT SOUNDS ==========
+	# Grass footsteps (3 variants)
+	sounds["footstep_grass_1"] = preload("res://audio/sfx/movement/footstep_grass_1.wav")
+	sounds["footstep_grass_2"] = preload("res://audio/sfx/movement/footstep_grass_2.wav")
+	sounds["footstep_grass_3"] = preload("res://audio/sfx/movement/footstep_grass_3.wav")
+	
+	# Stone footsteps (3 variants)
+	sounds["footstep_stone_1"] = preload("res://audio/sfx/movement/footstep_stone_1.wav")
+	sounds["footstep_stone_2"] = preload("res://audio/sfx/movement/footstep_stone_2.wav")
+	sounds["footstep_stone_3"] = preload("res://audio/sfx/movement/footstep_stone_3.wav")
+	
+	# Sand footsteps (3 variants)
+	sounds["footstep_sand_1"] = preload("res://audio/sfx/movement/footstep_sand_1.wav")
+	sounds["footstep_sand_2"] = preload("res://audio/sfx/movement/footstep_sand_2.wav")
+	sounds["footstep_sand_3"] = preload("res://audio/sfx/movement/footstep_sand_3.wav")
+	
+	# Snow footsteps (3 variants)
+	sounds["footstep_snow_1"] = preload("res://audio/sfx/movement/footstep_snow_1.wav")
+	sounds["footstep_snow_2"] = preload("res://audio/sfx/movement/footstep_snow_2.wav")
+	sounds["footstep_snow_3"] = preload("res://audio/sfx/movement/footstep_snow_3.wav")
+	
+	# ========== BUILDING SOUNDS ==========
+	sounds["block_place"] = preload("res://audio/sfx/building/block_place.wav")
+	sounds["block_remove"] = preload("res://audio/sfx/building/block_remove.wav")
+	sounds["build_mode_toggle"] = preload("res://audio/sfx/building/build_mode_toggle.wav")
+	
+	# ========== UI SOUNDS ==========
+	sounds["item_pickup"] = preload("res://audio/sfx/ui/item_pickup.wav")
+	sounds["inventory_toggle"] = preload("res://audio/sfx/ui/inventory_toggle.wav")
+	sounds["craft_complete"] = preload("res://audio/sfx/ui/craft_complete.wav")
+	sounds["craft_unavailable"] = preload("res://audio/sfx/ui/craft_unavailable.wav")
+	sounds["stack_full"] = preload("res://audio/sfx/ui/stack_full.wav")
+	sounds["tool_switch"] = preload("res://audio/sfx/ui/tool_switch.wav")
+	sounds["health_low"] = preload("res://audio/sfx/ui/health_low.wav")
+	sounds["hunger_warning"] = preload("res://audio/sfx/ui/hunger_warning.wav")
+	sounds["setting_click"] = preload("res://audio/sfx/ui/setting_click.wav")
+	
+	# ========== CONTAINER SOUNDS ==========
+	sounds["chest_open"] = preload("res://audio/sfx/container/chest_open.wav")
+	sounds["chest_close"] = preload("res://audio/sfx/container/chest_close.wav")
+	
+	# ========== AMBIENT LOOPS ==========
+	sounds["wind_light"] = preload("res://audio/sfx/ambient/wind_light.wav")
+	sounds["wind_strong"] = preload("res://audio/sfx/ambient/wind_strong.wav")
+	sounds["ocean_waves"] = preload("res://audio/sfx/ambient/ocean_waves.wav")
+	sounds["crickets_night"] = preload("res://audio/sfx/ambient/crickets_night.wav")
+	sounds["birds_day"] = preload("res://audio/sfx/ambient/birds_day.wav")
+	sounds["frogs_night"] = preload("res://audio/sfx/ambient/frogs_night.wav")
+	sounds["leaves_rustle"] = preload("res://audio/sfx/ambient/leaves_rustle.wav")
+	sounds["thunder_distant"] = preload("res://audio/sfx/ambient/thunder_distant.wav")
+	
+	# ========== MUSIC TRACKS ==========
+	# Day ambient tracks
+	sounds["ambient_day_1"] = preload("res://audio/music/ambient_day_1.wav")
+	sounds["ambient_day_2"] = preload("res://audio/music/ambient_day_2.wav")
+	sounds["ambient_day_3"] = preload("res://audio/music/ambient_day_3.wav")
+	sounds["ambient_day_4"] = preload("res://audio/music/ambient_day_4.wav")
+	
+	# Night ambient tracks
+	sounds["ambient_night_1"] = preload("res://audio/music/ambient_night_1.wav")
+	sounds["ambient_night_2"] = preload("res://audio/music/ambient_night_2.wav")
+	sounds["ambient_night_3"] = preload("res://audio/music/ambient_night_3.wav")
+	sounds["ambient_night_4"] = preload("res://audio/music/ambient_night_4.wav")
+	
+	print("[AudioManager] Loaded %d sounds:" % sounds.size())
+	print("  - 6 harvesting sounds")
+	print("  - 12 footstep sounds (4 surfaces × 3 variants)")
+	print("  - 3 building sounds")
+	print("  - 9 UI sounds")
+	print("  - 2 container sounds")
+	print("  - 8 ambient loops")
+	print("  - 8 music tracks (4 day + 4 night)")
 
 # ============================================================================
 # PRIMARY PLAYBACK API
