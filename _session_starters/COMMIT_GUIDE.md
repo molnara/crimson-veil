@@ -10,8 +10,7 @@ I will create and share:
 
 1. **COMMIT_MESSAGE.txt** - Ready-to-use commit message
 2. **SESSION_START.md** - Updated with sprint progress
-3. **ROADMAP.txt** - Tasks marked complete
-4. **CHANGELOG.txt** (optional) - New entry if significant milestone
+3. **ROADMAP.txt** - Tasks marked complete (if applicable)
 
 ---
 
@@ -43,7 +42,7 @@ Implements Task 3.1 - UI Sounds from v0.5.0 sprint
 
 ---
 
-## 🔄 Your Workflow
+## 📄 Your Workflow
 
 After I generate the commit files:
 
@@ -75,15 +74,10 @@ git push
 - Task completion status
 - Known issues
 
-### ROADMAP.txt
+### ROADMAP.txt (if applicable)
 - Task checkmarks [x]
 - Sprint progress count
 - Completion timestamps
-
-### CHANGELOG.txt (if exists)
-- New entry with timestamp
-- Changes summary
-- Task reference
 
 ---
 
@@ -117,6 +111,27 @@ git push
 - Tell me what changed
 - I'll create appropriate commit message
 - You handle the rest
+
+---
+
+## 🔍 Finding Change History
+
+**For detailed changelog:**
+```bash
+# View recent commits
+git log --oneline -10
+
+# View commits for specific version
+git log --oneline --grep="v0.5"
+
+# View changes in last commit
+git diff HEAD~1
+
+# View specific commit
+git show <commit-hash>
+```
+
+**Git is your source of truth** - No separate CHANGELOG.txt needed!
 
 ---
 

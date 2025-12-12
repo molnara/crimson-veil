@@ -43,7 +43,7 @@ None currently blocking - sprint progressing smoothly!
 **When you say "Generate a commit":**
 1. Create COMMIT_MESSAGE.txt
 2. Update SESSION_START.md
-3. Update ROADMAP.txt
+3. Update ROADMAP.txt (if tasks completed)
 4. Share via present_files
 
 **For code files:**
@@ -59,7 +59,27 @@ None currently blocking - sprint progressing smoothly!
 **Core gameplay:** player.gd, inventory.gd, crafting_system.gd, building_system.gd
 
 **Need full context?** → Upload SESSION_START.md instead  
-**Need file locations?** → Upload FILE_INDEX.md
+**Need file locations?** → Upload FILE_INDEX.md  
+**Need terminal commands?** → See COMMANDS.md
+
+---
+
+## ⚙️ Quick Commands
+
+**See COMMANDS.md for full reference**
+
+```bash
+# Run game
+godot --path . world.tscn
+
+# Commit workflow
+git add .
+git commit -F COMMIT_MESSAGE.txt
+git push
+
+# View recent commits
+git log --oneline -10
+```
 
 ---
 

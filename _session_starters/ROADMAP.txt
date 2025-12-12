@@ -100,48 +100,30 @@ SOMEDAY/MAYBE (Ideas to explore)
 - Voice acting [Opus] - NPC dialogue, ambient storytelling
 
 
-COMPLETED (Recent)
+COMPLETED SPRINTS
 ------------------
-v0.5.0 IN PROGRESS (December 12, 2025) - "Atmosphere & Audio"
-Sprint Progress: 8/13 tasks (62%)
+For detailed changelog, use: git log --oneline --grep="v0\.[0-9]"
 
-[X] Container Sounds [Sonnet] - chest_open/close integration with audio feedback
-[X] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration
-[X] Ambient Environmental Sounds [Sonnet] - Biome-aware ambient loops with occasional/rare frequency system
-[X] Music Manager & AI Music System [Sonnet] - Day/night music rotation with smart track variety and crossfades
-[X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footstep system with steep slope detection
-[X] SFX Integration - Harvesting Sounds [Sonnet] - Wired harvesting, tool switch, resource break sounds
-[X] AI Sound Generation & Import [Sonnet] - 48 audio files generated via SFX Engine + Mubert
-[X] Audio Manager Architecture [Sonnet] - Singleton with sound pooling, volume controls, pitch variation
+v0.5.0 IN PROGRESS (December 2025) - "Atmosphere & Audio"
+Sprint Progress: 8/13 tasks (62%)
+Commit: [in progress]
 
 v0.4.0 RELEASE (December 12, 2025) - "Storage & Organization"
 Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
 Commit: d53049d
+Key Features: Container system, dual-panel UI, item stacking, chest placement/interaction
 
-[X] Container UI [Sonnet] - Dual-panel interface with click/shift-click transfers (Phase 2 COMPLETE)
-[X] UI state management [Sonnet] - Suppression/restoration when container opens/closes
-[X] B button container close [Sonnet] - Controller quick exit
-[X] Scene-based container UI [Sonnet] - container_ui.tscn for easier visual editing
-[X] Container placement system [Sonnet] - Chests placeable as building blocks (10 wood cost)
-[X] Container interaction [Sonnet] - E key or A button opens chest within 3m, context-sensitive A button
-[X] Container highlighting [Sonnet] - Green outline when looking at chest (Layer 3 collision)
-[X] Container removal warning [Sonnet] - Dialog confirms removal when chest has items
-[X] Independent container inventories [Sonnet] - Each chest has own 32-slot Inventory instance
-[X] Low-poly chest visual [Sonnet] - Procedural mesh with 16x16 wood/metal texture
-[X] D-Pad input conflict resolved [Sonnet] - Removed D-Pad from movement, dedicated to building controls
-[X] Item stacking system [Sonnet] - Stack limits enforced (wood: 100, stone: 50, food: 20, tools: 1)
-[X] Stack count display [Sonnet] - Shows "current/max" format, red "FULL" indicator when maxed
-[X] Inventory full notification [Sonnet] - On-screen alert when trying to exceed stack limits
-[X] Inventory UI scene [Sonnet] - Created inventory_ui.tscn for proper rendering
+v0.3.0 RELEASE (December 2025) - "Building & Crafting"
+Commit: [see git log]
+Key Features: Building system, crafting recipes, tool system
 
-v0.3.0 (December 10, 2025) - "Crafting & Building"
-[X] Building system [Sonnet] - Block placement with preview and validation
-[X] Crafting system [Sonnet] - Recipe database and resource consumption
-[X] Harvest highlight system [Sonnet] - Green outline for correct tool, red for wrong tool
-[X] Sun/moon rendering fix [Sonnet] - Moved to z=±500 for proper depth sorting
-[X] Crosshair enhancement [Sonnet] - Cross-shaped with outline for better visibility
-[X] Tree visual extraction [Sonnet] - Extracted to tree_visual.gd (reduced vegetation_spawner.gd from 2,075 to 1,457 lines)
-[X] Minimal tool system [Sonnet] - Axe/Pickaxe with requirement checking and visual indicators
+v0.2.0 RELEASE (December 2025) - "World Generation"
+Commit: [see git log]
+Key Features: Chunk-based terrain, biome system, procedural resources
+
+v0.1.0 RELEASE (December 2025) - "Foundation"
+Commit: [see git log]
+Key Features: Player movement, camera, basic inventory
 
 
 DESIGN QUESTIONS / DECISIONS NEEDED
@@ -263,7 +245,6 @@ Notes:
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
 - Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
-- v0.4.0 Released: Storage Containers & Item Stacking (11/15 sprint tasks - 73% complete)
 - v0.5.0 Current: Sound & Music System (8/13 tasks complete - 62% complete)
 - Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
 

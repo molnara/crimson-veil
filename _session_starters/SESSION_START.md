@@ -4,11 +4,12 @@
 
 ---
 
-## 🎯 Current Sprint: v0.5.0 "Atmosphere & Audio"
+## 📊 Sprint Progress
 
+**Sprint:** v0.5.0 "Atmosphere & Audio"  
 **Status:** 8/13 tasks complete (62%)  
-**Timeline:** 12-15 sessions (~7-10 days)  
-**Budget:** $22 actual (under target by $12)  
+**Budget:** $22 / $34 target (under by $12)  
+**Timeline:** Session 8 of 12-15 (~7-10 days)  
 **Model:** Sonnet (standard implementation)
 
 ### ✅ Completed This Sprint
@@ -21,12 +22,30 @@
 - [x] Building Sounds (Task 2.4)
 - [x] Container Sounds (Task 2.5)
 
-### 🎯 Next Up
+### 🎯 Remaining Tasks
 - [ ] UI Sounds (inventory, crafting, pickup, warnings)
 - [ ] Settings Menu - Audio Controls (volume sliders)
 - [ ] Sound Variation System (pitch/volume randomization)
 - [ ] Audio Balance Pass (test all scenarios)
 - [ ] Controller Rumble (optional haptic feedback)
+
+---
+
+## 🎯 Next Session Priority
+
+**Recommended:** UI Sounds implementation
+
+**Files needed:**
+- `audio_manager.gd` - Add UI sound category
+- `inventory_ui.gd` - Play inventory_toggle, item_pickup sounds
+- `crafting_ui.gd` - Play craft_complete, craft_fail sounds
+- `player.gd` - Play pickup sounds on item collection
+
+**Audio assets ready:**
+- `ui/inventory_open.wav`, `ui/inventory_close.wav`
+- `ui/craft_complete.wav`, `ui/craft_fail.wav`
+- `ui/item_pickup.wav`
+- `ui/warning_*.wav` (3 variations)
 
 ---
 
@@ -100,7 +119,7 @@ When you say **"Generate a commit"**, I will:
 
 1. **Create COMMIT_MESSAGE.txt** - Ready-to-use commit message
 2. **Update SESSION_START.md** - Sprint progress, recent changes
-3. **Update ROADMAP.txt** - Mark tasks complete
+3. **Update ROADMAP.txt** - Mark tasks complete (if applicable)
 4. **Share files** - Use present_files tool
 
 **You then:**
@@ -147,7 +166,9 @@ When you say **"Generate a commit"**, I will:
 
 ---
 
-## ⚙️ Quick Commands (Testing)
+## ⚙️ Quick Commands
+
+**See COMMANDS.md for full reference**
 
 ```bash
 # Run game
@@ -155,6 +176,11 @@ godot --path . world.tscn
 
 # Test audio
 godot --path . audio_manager_test.tscn
+
+# Commit workflow
+git add .
+git commit -F COMMIT_MESSAGE.txt
+git push
 ```
 
 ---
