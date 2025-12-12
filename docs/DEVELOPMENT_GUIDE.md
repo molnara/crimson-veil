@@ -15,17 +15,49 @@
 
 ## Session Start Checklist
 
+### Upload-Based Workflow (Recommended)
 
-1. **Read SESSION_START.md** - Current sprint status, recent changes, quick context
-2. **Read FILE_INDEX.md** - Complete map of all project files and their locations
-3. **Read ROADMAP.txt** - Full sprint details and backlog
-4. **Read CHANGELOG.txt** - Detailed change history
-5. **Request specific files as needed** - This DEVELOPMENT_GUIDE.md, architecture docs, code files
+**User uploads context files at session start based on task complexity:**
+
+**For Quick Tasks (Bug Fixes, Small Changes):**
+1. Upload: QUICK_START.md (minimal context, ~200 lines)
+2. Upload: [specific file to modify]
+3. Start work immediately
+
+**For Standard Features:**
+1. Upload: SESSION_START_UPLOAD.md (full context, ~330 lines)  
+2. Upload: [relevant code files]
+3. Optional: ROADMAP.txt, CHANGELOG.txt for planning context
+
+**For Architecture/Planning:**
+1. Upload: SESSION_START_UPLOAD.md
+2. Upload: ROADMAP.txt  
+3. Upload: docs/ARCHITECTURE.md or this DEVELOPMENT_GUIDE.md
+4. Optional: CODE_REVIEW.md for quality context
+
+**For Commit Preparation:**
+1. Upload: All modified files
+2. Upload: SESSION_START_UPLOAD.md or QUICK_START.md
+3. Upload: CHANGELOG.txt
+4. Request commit package generation
+
+### Session Start Files (in _session_starters/)
+
+| File | Lines | Use When |
+|------|-------|----------|
+| **QUICK_START.md** | ~200 | Quick tasks, bug fixes, continuing current sprint |
+| **SESSION_START_UPLOAD.md** | ~330 | Full context needed, new features, planning |
+| **FILE_INDEX.md** | ~590 | Reference for file locations (optional) |
+| **ROADMAP.txt** | ~350 | Sprint planning, feature prioritization |
+| **CHANGELOG.txt** | ~200 | Recent history context |
+
+### Model Selection
+
 6. **Assess feature complexity** - Decide Sonnet vs Opus:
    - Implementation work, bug fixes, single-file changes → **Sonnet**
    - Architecture decisions, code reviews, multi-system refactoring → **Opus**
 
-**Note:** Claude only sees SESSION_START.md, FILE_INDEX.md, ROADMAP.txt, and CHANGELOG.txt automatically. All other files (including this DEVELOPMENT_GUIDE.md) must be explicitly uploaded when needed.
+**Note:** User explicitly uploads context files each session. Claude requests additional files as needed (architecture docs, specific code files, etc.).
 
 ---
 
@@ -72,12 +104,11 @@ With a fresh weekly reset, you can complete approximately:
 
 ### Session Efficiency Tips
 
-1. **Always upload DEVELOPMENT_GUIDE.md first** - Provides full context
-2. **Request specific files before suggesting code** - Prevents integration issues
+1. **Choose the right context file** - QUICK_START.md for speed, SESSION_START_UPLOAD.md for completeness
+2. **Upload specific files only** - Request additional files as needed rather than uploading everything
 3. **One feature per session** - Clean commits, focused work
-
-1. **Request this DEVELOPMENT_GUIDE.md when needed** - Provides full project context and architecture
-2. **Always check FILE_INDEX.md first** - Know which files exist and where to find them
+4. **Always check FILE_INDEX.md first** - Know which files exist and where to find them (optional upload)
+5. **Request this DEVELOPMENT_GUIDE.md when needed** - Provides full project context and architecture
 
 ### Development Velocity (Actual Data)
 
@@ -102,12 +133,6 @@ Add design question: [question]
 Show roadmap priorities
 What should I work on next?
 ```
-
-
-Ready to continue development!
-```
-
-This ensures every session starts with full context.
 
 ---
 

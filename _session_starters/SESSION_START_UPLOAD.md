@@ -58,7 +58,7 @@ NOT THIS:
 [entire file from line 1 to end, all 500 lines]
 ```
 
-**Option 2: Explanation Without Code**
+**Option 2: Request Upload**
 ```
 "I need to see player.gd first. Please upload it."
 ```
@@ -67,24 +67,26 @@ There is NO option 3. No partial updates exist.
 
 ---
 
-## ⚠️ File Location Rules
+## ⚠️ File Upload Guide
 
-**Claude can ONLY see these 4 files automatically:**
-- SESSION_START.md (this file)
-- FILE_INDEX.md (complete file map)
-- ROADMAP.txt (feature planning)
-- CHANGELOG.txt (change history)
+**You've uploaded these context files this session:**
+- SESSION_START.md or SESSION_START_UPLOAD.md (this file)
+- FILE_INDEX.md (optional - complete file map)
+- ROADMAP.txt (optional - feature planning)
+- CHANGELOG.txt (optional - change history)
 
-**Everything else is in Git Repo and requires upload.**
+**Everything else requires separate upload when needed.**
 
-When Claude needs files, Claude will say:
+**When Claude needs additional files, Claude will say:**
 ```
 I need to see:
-- scripts/player/player.gd
-- docs/ARCHITECTURE.md
+- scripts/building/building_system.gd
+- scripts/audio/audio_manager.gd
 
 Please upload these files.
 ```
+
+**Then you upload just those specific files.**
 
 ---
 
@@ -207,10 +209,10 @@ godot --path . audio_manager_test.tscn
 
 ## 📚 Where to Find Things
 
-**Need architecture info?** → Request docs/ARCHITECTURE.md  
-**Need coding conventions?** → Request docs/STYLE_GUIDE.md  
-**Need implementation details?** → Request docs/TECHNICAL_DETAILS.md  
-**Need to see code files?** → Check FILE_INDEX.md, then request specific files
+**Need architecture info?** → Upload docs/ARCHITECTURE.md  
+**Need coding conventions?** → Upload docs/STYLE_GUIDE.md  
+**Need implementation details?** → Upload docs/TECHNICAL_DETAILS.md  
+**Need to see code files?** → Check FILE_INDEX.md, then upload specific files
 
 **See FILE_INDEX.md for complete file map!**
 
@@ -232,8 +234,8 @@ Example:
 
 **Step 2: Read Each File Completely**
 ```
-Use view tool to read ENTIRE file:
-- view /mnt/project/CHANGELOG.txt (all lines)
+Use view tool to read ENTIRE uploaded file:
+- view /mnt/user-data/uploads/CHANGELOG.txt (all lines)
 - view /mnt/user-data/uploads/building_system.gd (all lines)
 ```
 
@@ -260,7 +262,7 @@ Checklist for EACH file:
 ```
 Use present_files tool with exact filenames:
 - CHANGELOG.txt (not CHANGELOG_CLEAN.txt)
-- SESSION_START.md (not SESSION_START_UPDATED.md)
+- SESSION_START_UPLOAD.md (not SESSION_START_NEW.md)
 ```
 
 ### Common Mistakes to AVOID
@@ -296,9 +298,9 @@ Use present_files tool with exact filenames:
 
 **Never output corrupted characters:**
 ```
-❌ ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ (should be →)
-❌ ÃƒÆ'Ã¢â‚¬â€ (should be ×)
-❌ Ãƒâ€šÃ‚Â° (should be °)
+❌ Ãƒâ€šÃ‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ (should be →)
+❌ ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â— (should be ×)
+❌ ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â° (should be °)
 ```
 
 ---
@@ -317,13 +319,41 @@ Use present_files tool with exact filenames:
 ## 💡 Session Start Checklist
 
 When starting a session, Claude should:
-1. ✅ Read SESSION_START.md (this file)
-2. ✅ Read FILE_INDEX.md (file locations)
-3. ✅ Check ROADMAP.txt if planning features
-4. ✅ Check CHANGELOG.txt for recent context
-5. ✅ Request specific files as needed
-6. ✅ Never assume access to files not in Project
+1. ✅ Read SESSION_START_UPLOAD.md (this file)
+2. ✅ Read FILE_INDEX.md (file locations) if uploaded
+3. ✅ Check ROADMAP.txt if planning features (if uploaded)
+4. ✅ Check CHANGELOG.txt for recent context (if uploaded)
+5. ✅ Request specific code files as needed
+6. ✅ Wait for user to upload requested files
 7. ✅ **Remember: COMPLETE FILES ONLY when outputting**
+
+---
+
+## 📦 Typical Upload Patterns
+
+### Quick Bug Fix
+```
+Upload: [buggy_file.gd]
+Context: None needed
+```
+
+### Feature Implementation
+```
+Upload: SESSION_START_UPLOAD.md, [feature_file.gd]
+Context: Current sprint info + implementation target
+```
+
+### Architecture Planning
+```
+Upload: SESSION_START_UPLOAD.md, ROADMAP.txt, docs/ARCHITECTURE.md
+Context: Full planning context
+```
+
+### Commit Preparation
+```
+Upload: All modified files + SESSION_START_UPLOAD.md + CHANGELOG.txt
+Context: Ready to generate commit files
+```
 
 ---
 
