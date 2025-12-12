@@ -27,8 +27,8 @@
    - Brief reminder of next priorities
 5. **Show the quick commands list below**
 6. **Assess feature complexity** - Decide Sonnet vs Opus:
-   - Implementation work, bug fixes, single-file changes Ã¢â€ â€™ **Sonnet**
-   - Architecture decisions, code reviews, multi-system refactoring Ã¢â€ â€™ **Opus**
+   - Implementation work, bug fixes, single-file changes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ **Sonnet**
+   - Architecture decisions, code reviews, multi-system refactoring ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ **Opus**
 
 ---
 
@@ -107,17 +107,17 @@ What should I work on next?
 
 **Example Session Start Output:**
 ```
-Ã°Å¸Å½Â¯ CURRENT SPRINT: Storage & Organization
-- Priority 1: Storage Containers Ã¢Å“â€œ (complete)
-- Priority 2: Inventory Improvements Ã¢Å“â€œ (complete)
+ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¯ CURRENT SPRINT: Storage & Organization
+- Priority 1: Storage Containers ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ (complete)
+- Priority 2: Inventory Improvements ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ (complete)
 - Priority 3: Workbench Foundation (next up) [Sonnet]
 
-Ã°Å¸â€œÂ RECENT CHANGES:
+ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â RECENT CHANGES:
 [2025-12-12 05:50] [DOC] Added AI model annotations to ROADMAP.txt
 [2025-12-12 05:45] [DOC] Created AI_USAGE_ANALYSIS.md
 [2025-12-11 21:00] [MAJOR] Container UI Phase 2 complete
 
-Ã°Å¸Ââ€º KNOWN ISSUES:
+ÃƒÂ°Ã…Â¸Ã‚ÂÃ¢â‚¬Âº KNOWN ISSUES:
 - Tree falling physics occasionally glitches on steep terrain
 - Potential: Race condition if container destroyed while UI open
 
@@ -159,13 +159,13 @@ This ensures every session starts with full context.
 
 ### Examples:
 
-**Ã¢ÂÅ’ BAD - Suggesting code immediately:**
+**ÃƒÂ¢Ã‚ÂÃ…â€™ BAD - Suggesting code immediately:**
 ```
 User: "Add a sleep system"
 Claude: "Here's a sleep system implementation..."
 ```
 
-**Ã¢Å“â€¦ GOOD - Request files first:**
+**ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ GOOD - Request files first:**
 ```
 User: "Add a sleep system"
 Claude: "To implement a sleep system, I'll need to analyze:
@@ -183,7 +183,7 @@ Could you upload these three files so I can see how they're currently structured
 - Produces working code on first try
 - Keeps documentation up-to-date for future sessions
 
-**Ã¢Å“â€¦ GOOD - Including documentation update:**
+**ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ GOOD - Including documentation update:**
 ```
 User: "Add a sleep system"
 Claude: 
@@ -226,7 +226,7 @@ This ensures future development sessions can easily find and work with the sleep
 - Move previous sprint items to "Planned/Incomplete" if deferred
 - Add any new systems to relevant sections
 
-**4. vX.X.X_IMPLEMENTATION_GUIDE.md** - Complete implementation details ⭐ CRITICAL
+**4. vX.X.X_IMPLEMENTATION_GUIDE.md** - Complete implementation details â­ CRITICAL
 - **All AI generation prompts** (if using AI tools)
 - **Code snippets and references** for key implementations
 - **Tool setup instructions** with exact steps
@@ -280,7 +280,7 @@ Notes: Implementation details
 ## File Structure
 ```
 res://
-└── [Complete directory tree]
+â””â”€â”€ [Complete directory tree]
 ```
 
 ## Workflow Checklist
@@ -302,11 +302,11 @@ Phase 1:
 **Problem:** Sprint planning documents show WHAT to build, but not HOW to build it.
 
 **Solution:** Implementation guides capture:
-- ✅ Exact AI prompts (copy-paste ready)
-- ✅ Tool setup steps (no searching docs)
-- ✅ Code patterns to follow (consistency)
-- ✅ File organization (clear structure)
-- ✅ Quality criteria (acceptance tests)
+- âœ… Exact AI prompts (copy-paste ready)
+- âœ… Tool setup steps (no searching docs)
+- âœ… Code patterns to follow (consistency)
+- âœ… File organization (clear structure)
+- âœ… Quality criteria (acceptance tests)
 
 **Without implementation guide:** Developer wastes time reconstructing decisions, searching for tools, trial-and-error with prompts.
 
@@ -358,7 +358,7 @@ After sprint planning is approved:
 - **Genre**: Open-world survival/crafting with exploration and base-building
 - **Core Pillars**: 
   - Progression through biome exploration and resource gathering
-  - Satisfying crafting loops (gather Ã¢â€ â€™ craft Ã¢â€ â€™ unlock new areas/tools)
+  - Satisfying crafting loops (gather ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ craft ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ unlock new areas/tools)
   - Environmental storytelling through procedural world generation
   - Cozy base-building with functional purpose
 - **Visual Style**: 
@@ -401,13 +401,13 @@ After sprint planning is approved:
 - **Health/Hunger**: Stat management, regeneration when well-fed, movement penalties, eating system
 - **Storage Containers**: Placeable chests (10 wood) with independent 32-slot inventories, 3m interaction range, green highlight, removal warnings
 - **Container UI**: Dual-panel interface with click/shift-click transfers, centered layout, UI suppression, ESC/B button to close, auto-close at 5m
+- **Audio Manager**: Centralized audio system (AutoLoad singleton) with sound pooling (max 10 concurrent), 5 volume categories (Master/SFX/Music/Ambient/UI), pitch variation (0.9-1.1x), music crossfading, ambient loop management
 
 ### Currently In Development (Atmosphere & Audio Sprint - v0.5.0)
-- **Audio Manager System**: Centralized audio with sound pooling, volume controls, pitch variation
-- **Sound Effects**: 22 AI-generated SFX (harvesting, movement, building, UI, containers)
-- **Music System**: Day/night ambient tracks with crossfade system
-- **Ambient Sounds**: Environmental layers (wind, ocean, wildlife) for atmosphere
-- **Audio Settings**: Volume sliders and mute toggles in settings menu
+- **Sound Effects**: 22 AI-generated SFX (harvesting, movement, building, UI, containers) - pending generation
+- **Music System**: Day/night ambient tracks with crossfade system - manager ready, tracks pending
+- **Ambient Sounds**: Environmental layers (wind, ocean, wildlife) for atmosphere - pending generation
+- **Audio Settings**: Volume sliders and mute toggles in settings menu - API ready, UI pending
 
 ### Technical Debt (From Code Review - 2025-12-11)
 HIGH PRIORITY:
@@ -450,7 +450,7 @@ MEDIUM PRIORITY:
 ### Core Architecture
 - **Chunk-based world**: ChunkManager orchestrates terrain generation, VegetationSpawner populates
 - **Component systems**: Player has child nodes for HarvestingSystem, BuildingSystem, Inventory
-- **Resource inheritance**: HarvestableResource base class Ã¢â€ â€™ HarvestableTree/Mushroom/Strawberry
+- **Resource inheritance**: HarvestableResource base class ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ HarvestableTree/Mushroom/Strawberry
 - **Signal-driven communication**: Harvest completion signals trigger inventory updates and particle spawning
 - **Modular visual generators**: Tree creation delegated to separate visual generator classes (TreeVisual, PineTreeVisual, PalmTreeVisual)
 - **Container architecture**: StorageContainer extends Node3D, has own Inventory instance, emits interaction signals
@@ -596,7 +596,7 @@ When suggesting new features, always include:
 "Add stone walls for base building. Players want protection from future threats (base-building pillar). Like Valheim's walls but snapped to grid. Medium scope - needs collision, placement validation, cost balancing. Should require significant stone investment to prevent trivializing defense."
 
 ### Bad Example
-"Add walls" Ã¢â€ â€™ Missing motivation, scope, balance considerations
+"Add walls" ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Missing motivation, scope, balance considerations
 
 ## Quick Reference
 
@@ -604,155 +604,192 @@ When suggesting new features, always include:
 
 This index helps you find and upload the right files for your task. Files are organized by system/purpose.
 
+**IMPORTANT - Godot .uid Files:**
+- Every .gd and .tscn file has a corresponding .uid file (e.g., `audio_manager.gd.uid`)
+- These are Godot's unique asset identifiers - **ALWAYS commit them with their parent files**
+- When `git status` shows .uid files, include them in your commit
+- Missing .uid files can cause Godot project corruption
+
 #### Core Systems (Always Needed)
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ ROADMAP.txt                   [Features, priorities, completed items]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ CHANGELOG.txt                 [Session-by-session change history]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ CODE_REVIEW.md                [Codebase analysis from Opus 4.5 review]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ AI_USAGE_ANALYSIS.md          [AI capacity planning & usage tracking]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ world.gd                      [Scene root, system initialization]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ player.gd                     [Input, movement, camera, controller support, UI state management]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ player.tscn                   [Player scene with health system, camera, collision]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ project.godot                 [Godot project config]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ DEVELOPMENT_GUIDE.md          [This file - architecture & conventions]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ ROADMAP.txt                   [Features, priorities, completed items]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ CHANGELOG.txt                 [Session-by-session change history]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ CODE_REVIEW.md                [Codebase analysis from Opus 4.5 review]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ AI_USAGE_ANALYSIS.md          [AI capacity planning & usage tracking]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ world.gd                      [Scene root, system initialization]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ player.gd                     [Input, movement, camera, controller support, UI state management]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ player.tscn                   [Player scene with health system, camera, collision]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ project.godot                 [Godot project config]
 ```
 
 **When to upload:**
-- Starting any session Ã¢â€ â€™ DEVELOPMENT_GUIDE.md (always)
-- Sprint planning Ã¢â€ â€™ ROADMAP.txt + AI_USAGE_ANALYSIS.md
-- Checking recent work Ã¢â€ â€™ CHANGELOG.txt
-- Capacity planning Ã¢â€ â€™ AI_USAGE_ANALYSIS.md
-- Code quality concerns Ã¢â€ â€™ CODE_REVIEW.md
-- Adding controller support Ã¢â€ â€™ project.godot (for input actions)
-- Modifying input mappings Ã¢â€ â€™ project.godot
-- Player input/movement Ã¢â€ â€™ player.gd
+- Starting any session ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ DEVELOPMENT_GUIDE.md (always)
+- Sprint planning ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ROADMAP.txt + AI_USAGE_ANALYSIS.md
+- Checking recent work ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ CHANGELOG.txt
+- Capacity planning ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ AI_USAGE_ANALYSIS.md
+- Code quality concerns ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ CODE_REVIEW.md
+- Adding controller support ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ project.godot (for input actions)
+- Modifying input mappings ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ project.godot
+- Player input/movement ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ player.gd
+- Player input/movement → player.gd
+- Audio system modifications → audio_manager.gd
+
+#### Audio Systems
+```
+res://
+├── audio_manager.gd              [AutoLoad singleton - sound pooling, volume control, music/ambient systems]
+├── audio_manager_test.gd         [Test suite for audio system verification]
+├── audio_manager_test.tscn       [Test scene with attached test script]
+└── audio/ (pending Task 1.2)
+    ├── sfx/
+    │   ├── harvesting/           [Axe, pickaxe, mushroom, strawberry, resource_break, wrong_tool]
+    │   ├── movement/             [Footsteps: grass/stone/sand/snow variants 1-3]
+    │   ├── building/             [Block place/remove, build mode toggle]
+    │   ├── ui/                   [Inventory, crafting, stack full, tool switch, warnings]
+    │   └── container/            [Chest open/close]
+    ├── music/                    [Day/night ambient tracks]
+    └── ambient/                  [Wind, ocean, crickets, birds, frogs, leaves, thunder]
+```
+
+**When to upload:**
+- Audio system modifications → audio_manager.gd
+- Testing audio → audio_manager_test.gd
+- Adding new sounds → audio_manager.gd (to update sound library)
+- Music/ambient changes → audio_manager.gd
+- Volume control UI → audio_manager.gd + settings_menu.gd
+
+**Note on .uid files:**
+- Every .gd and .tscn file has a corresponding .uid file (Godot asset tracking)
+- Always commit .uid files along with their parent files
+- Example: When committing audio_manager_test.gd, also commit audio_manager_test.gd.uid
 
 #### World Generation
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ chunk_manager.gd              [Terrain generation, chunk loading]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ chunk.gd                      [Individual chunk meshes, biomes]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ water_plane.gd                [Infinite ocean plane]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ chunk_manager.gd              [Terrain generation, chunk loading]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ chunk.gd                      [Individual chunk meshes, biomes]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ water_plane.gd                [Infinite ocean plane]
 ```
 
 #### Vegetation System (Modular - Upload Only What You Need)
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ vegetation_spawner.gd         [Large - main spawner, delegates to visuals]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ vegetation/visuals/
-    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ tree_visual.gd            [Oak/deciduous trees]
-    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ pine_tree_visual.gd       [Pine/conifer trees]
-    Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ palm_tree_visual.gd       [Palm trees]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ vegetation_spawner.gd         [Large - main spawner, delegates to visuals]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ vegetation/visuals/
+    ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ tree_visual.gd            [Oak/deciduous trees]
+    ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ pine_tree_visual.gd       [Pine/conifer trees]
+    ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ palm_tree_visual.gd       [Palm trees]
 ```
 
 **When to upload:**
-- Modifying oak trees Ã¢â€ â€™ `tree_visual.gd` only
-- Adding new tree type Ã¢â€ â€™ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
-- Adjusting density Ã¢â€ â€™ `vegetation_spawner.gd` only
-- Understanding system Ã¢â€ â€™ `DEVELOPMENT_GUIDE.md` has full explanation
+- Modifying oak trees ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `tree_visual.gd` only
+- Adding new tree type ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Pick one as template + `vegetation_spawner.gd` + `mesh_builder.gd`
+- Adjusting density ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `vegetation_spawner.gd` only
+- Understanding system ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `DEVELOPMENT_GUIDE.md` has full explanation
 
 #### Harvestable Resources
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_resource.gd       [Base class for all collectibles]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_tree.gd           [Tree physics, falling, log spawning]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_mushroom.gd       [Mushroom variants, glow effects]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvestable_strawberry.gd     [Strawberry bushes, size variants]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ log_piece.gd                  [Log physics debris, timed despawn, particles]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ resource_node.gd              [Generic resource node]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_resource.gd       [Base class for all collectibles]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_tree.gd           [Tree physics, falling, log spawning]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_mushroom.gd       [Mushroom variants, glow effects]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvestable_strawberry.gd     [Strawberry bushes, size variants]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ log_piece.gd                  [Log physics debris, timed despawn, particles]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ resource_node.gd              [Generic resource node]
 ```
 
 **When to upload:**
-- Adding new resource type Ã¢â€ â€™ `harvestable_resource.gd` (base class)
-- Modifying tree behavior/physics Ã¢â€ â€™ `harvestable_tree.gd`
-- Changing log despawn/particles Ã¢â€ â€™ `log_piece.gd`
-- Bug with mushrooms Ã¢â€ â€™ `harvestable_mushroom.gd` only
+- Adding new resource type ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `harvestable_resource.gd` (base class)
+- Modifying tree behavior/physics ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `harvestable_tree.gd`
+- Changing log despawn/particles ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `log_piece.gd`
+- Bug with mushrooms ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `harvestable_mushroom.gd` only
 
 #### Player Systems
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvesting_system.gd          [Raycast, progress, harvesting, container detection]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ building_system.gd            [Block placement, preview, container placement]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ tool_system.gd                [Tool management, requirements]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ inventory.gd                  [Item storage, signals, stacking logic]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ crafting_system.gd            [Recipe management]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ health_hunger_system.gd       [Stats, regeneration, hunger depletion, movement penalties]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvesting_system.gd          [Raycast, progress, harvesting, container detection]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ building_system.gd            [Block placement, preview, container placement]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ tool_system.gd                [Tool management, requirements]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ inventory.gd                  [Item storage, signals, stacking logic]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ crafting_system.gd            [Recipe management]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_hunger_system.gd       [Stats, regeneration, hunger depletion, movement penalties]
 ```
 
 **When to upload:**
-- Adding new tool Ã¢â€ â€™ `tool_system.gd`
-- New building block Ã¢â€ â€™ `building_system.gd`
-- New recipe Ã¢â€ â€™ `crafting_system.gd`
-- Health/hunger mechanics Ã¢â€ â€™ `health_hunger_system.gd`
-- Food system Ã¢â€ â€™ `health_hunger_system.gd` + `inventory_ui.gd`
-- Item stacking Ã¢â€ â€™ `inventory.gd` + `inventory_ui.gd`
+- Adding new tool ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `tool_system.gd`
+- New building block ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `building_system.gd`
+- New recipe ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `crafting_system.gd`
+- Health/hunger mechanics ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd`
+- Food system ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `health_hunger_system.gd` + `inventory_ui.gd`
+- Item stacking ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `inventory.gd` + `inventory_ui.gd`
 
 #### Storage & Interaction Systems
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ storage_container.gd          [Container logic, inventory management, interaction]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ storage_container.tscn        [Container scene with collision and mesh]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_warning_ui.gd       [Destruction warning dialog for full containers]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.gd               [Dual-panel container interface, scene-based]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.tscn             [Container UI scene - centered layout]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ workbench.gd                  [Workbench proximity detection, recipe gating - PLANNED]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ workbench.tscn                [Workbench scene - PLANNED]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ storage_container.gd          [Container logic, inventory management, interaction]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ storage_container.tscn        [Container scene with collision and mesh]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ container_warning_ui.gd       [Destruction warning dialog for full containers]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ container_ui.gd               [Dual-panel container interface, scene-based]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ container_ui.tscn             [Container UI scene - centered layout]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ workbench.gd                  [Workbench proximity detection, recipe gating - PLANNED]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ workbench.tscn                [Workbench scene - PLANNED]
 ```
 
 **When to upload:**
-- Adding container features Ã¢â€ â€™ `storage_container.gd`
-- Container visuals Ã¢â€ â€™ `storage_container.gd` + `pixel_texture_generator.gd`
-- Container UI modifications Ã¢â€ â€™ `container_ui.gd` + `container_ui.tscn`
-- Container removal Ã¢â€ â€™ `building_system.gd` + `container_warning_ui.gd`
-- Workbench features Ã¢â€ â€™ `workbench.gd`
-- Proximity detection Ã¢â€ â€™ `workbench.gd` + `crafting_system.gd`
+- Adding container features ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `storage_container.gd`
+- Container visuals ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `storage_container.gd` + `pixel_texture_generator.gd`
+- Container UI modifications ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `container_ui.gd` + `container_ui.tscn`
+- Container removal ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `building_system.gd` + `container_warning_ui.gd`
+- Workbench features ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `workbench.gd`
+- Proximity detection ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `workbench.gd` + `crafting_system.gd`
 
 #### UI Systems
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvest_ui.gd                 [Progress bar, target display]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ harvest_ui.tscn               [Harvest UI scene]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ inventory_ui.gd               [Grid inventory display, stacking UI, full notifications]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ inventory_ui.tscn             [Inventory UI scene - proper rendering structure]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.gd               [Dual-panel container interface, scene-based]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ container_ui.tscn             [Container UI scene - centered layout]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ crafting_ui.gd                [Recipe UI, crafting interface, workbench requirements]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ health_ui.gd                  [Health/hunger bars, well-fed indicator]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ health_ui.tscn                [UI scene for health display]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ settings_menu.gd              [Graphics/game settings]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvest_ui.gd                 [Progress bar, target display]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ harvest_ui.tscn               [Harvest UI scene]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ inventory_ui.gd               [Grid inventory display, stacking UI, full notifications]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ inventory_ui.tscn             [Inventory UI scene - proper rendering structure]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ container_ui.gd               [Dual-panel container interface, scene-based]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ container_ui.tscn             [Container UI scene - centered layout]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ crafting_ui.gd                [Recipe UI, crafting interface, workbench requirements]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_ui.gd                  [Health/hunger bars, well-fed indicator]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ health_ui.tscn                [UI scene for health display]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ settings_menu.gd              [Graphics/game settings]
 ```
 
 **When to upload:**
-- Inventory features/eating Ã¢â€ â€™ `inventory_ui.gd` + `inventory_ui.tscn`
-- Container UI modifications Ã¢â€ â€™ `container_ui.gd` + `container_ui.tscn`
-- Crafting UI changes Ã¢â€ â€™ `crafting_ui.gd`
+- Inventory features/eating ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `inventory_ui.gd` + `inventory_ui.tscn`
+- Container UI modifications ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `container_ui.gd` + `container_ui.tscn`
+- Crafting UI changes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `crafting_ui.gd`
 
 #### Environment & Visuals
 ```
 res://
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ day_night_cycle.gd            [Large - time, sun/moon, clouds, lighting]
-Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ critter_spawner.gd            [Large - wildlife spawning, behavior - candidate for refactoring]
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ pixel_texture_generator.gd    [16x16 texture generation]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ day_night_cycle.gd            [Large - time, sun/moon, clouds, lighting]
+ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ critter_spawner.gd            [Large - wildlife spawning, behavior - candidate for refactoring]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ pixel_texture_generator.gd    [16x16 texture generation]
 ```
 
 **When to upload:**
-- Day/night adjustments Ã¢â€ â€™ `day_night_cycle.gd`
-- New critter type Ã¢â€ â€™ `critter_spawner.gd`
-- Texture changes Ã¢â€ â€™ `pixel_texture_generator.gd`
+- Day/night adjustments ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `day_night_cycle.gd`
+- New critter type ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `critter_spawner.gd`
+- Texture changes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `pixel_texture_generator.gd`
 
 #### Utilities & Shared Code
 ```
 res://
-Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ core/
-    Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ mesh_builder.gd           [Shared mesh utilities (add_box, create_cylinder, finalize_mesh)]
-    Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ settings_manager.gd       [Save/load settings, apply runtime changes]
+ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ core/
+    ÃƒÂ¢Ã¢â‚¬ÂÃ…â€œÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ mesh_builder.gd           [Shared mesh utilities (add_box, create_cylinder, finalize_mesh)]
+    ÃƒÂ¢Ã¢â‚¬ÂÃ¢â‚¬ÂÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ÃƒÂ¢Ã¢â‚¬ÂÃ¢â€šÂ¬ settings_manager.gd       [Save/load settings, apply runtime changes]
 ```
 
 **When to upload:**
-- Creating procedural meshes Ã¢â€ â€™ `mesh_builder.gd`
-- New tree/critter visual Ã¢â€ â€™ `mesh_builder.gd` (for utilities)
-- Container/workbench meshes Ã¢â€ â€™ `mesh_builder.gd` + specific file
+- Creating procedural meshes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `mesh_builder.gd`
+- New tree/critter visual ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `mesh_builder.gd` (for utilities)
+- Container/workbench meshes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ `mesh_builder.gd` + specific file
 
 ---
 
@@ -997,7 +1034,7 @@ IMPACT levels:
 
 **Important**: CHANGELOG.txt, ROADMAP.txt, and DEVELOPMENT_GUIDE.md are only modified when preparing a commit, not during development. This keeps files clean and only shows "official" committed changes.
 
-### CHANGELOG Ã¢â€ â€ Git Sync
+### CHANGELOG ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â Git Sync
 
 Each commit should correspond to one development session. This keeps CHANGELOG and git history aligned.
 
@@ -1044,7 +1081,9 @@ When user says they want to commit:
 - [ ] **For small/medium files (<800 lines)**: Copy all modified .gd files to outputs
 - [ ] Copy all new .gd files to outputs (with proper folder structure)
 - [ ] Copy all modified .tscn files to outputs
+- [ ] Copy all new .tscn files to outputs (including test scenes)
 - [ ] Copy project.godot if modified
+- [ ] **IMPORTANT**: Include .uid files for all new .gd and .tscn files (Godot asset tracking)
 
 **Git Workflow:**
 - [ ] **Verify on correct branch** (feature/v0.X.0-name for sprint work, or main for hotfixes)
@@ -1052,6 +1091,7 @@ When user says they want to commit:
 - [ ] **Use CHANGELOG entries as commit message body** (keeps git history in sync)
 - [ ] Provide git commit message suggestion (following conventional commits format)
 - [ ] List all files that need to be staged and committed
+- [ ] **Don't forget .uid files** - Check `git status` for any untracked .uid files
 - [ ] **If completing sprint**: Provide merge-to-main workflow commands
 - [ ] **If completing sprint**: Provide version tag command
 
@@ -1123,31 +1163,31 @@ This allows easy copy-paste of each code block directly into the source file at 
 - Atmospheric without being oppressive
 
 ### Avoid These Anti-Patterns
-- Ã¢Å“â€” Punishing difficulty (not Dark Souls, not survival horror)
-- Ã¢Å“â€” Overwhelming UI/systems (keep it simple and clean)
-- Ã¢Å“â€” Tedious grinding (gathering should feel satisfying, not repetitive)
-- Ã¢Å“â€” Complex crafting trees (Valheim-simple, not Factorio-complex)
-- Ã¢Å“â€” Time pressure mechanics (let player explore at their own pace)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Punishing difficulty (not Dark Souls, not survival horror)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Overwhelming UI/systems (keep it simple and clean)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Tedious grinding (gathering should feel satisfying, not repetitive)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Complex crafting trees (Valheim-simple, not Factorio-complex)
+- ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Time pressure mechanics (let player explore at their own pace)
 
 ## Git Branching Strategy
 
 ### Strategy: GitHub Flow (Simplified)
 
 **Why GitHub Flow:**
-- ✅ Simple and lightweight for solo development
-- ✅ Works great with AI-assisted sessions
-- ✅ Sprint-based feature isolation
-- ✅ Clean, maintainable history
-- ✅ Easy to understand and follow
+- âœ… Simple and lightweight for solo development
+- âœ… Works great with AI-assisted sessions
+- âœ… Sprint-based feature isolation
+- âœ… Clean, maintainable history
+- âœ… Easy to understand and follow
 
 ### Branch Structure
 
 ```
 main (production-ready releases)
-  ↓
-  ├─ feature/v0.5.0-audio-system (current sprint)
-  ├─ feature/v0.6.0-workbench (next sprint)
-  └─ hotfix/container-crash (emergency fixes)
+  â†“
+  â”œâ”€ feature/v0.5.0-audio-system (current sprint)
+  â”œâ”€ feature/v0.6.0-workbench (next sprint)
+  â””â”€ hotfix/container-crash (emergency fixes)
 ```
 
 ---
@@ -1158,11 +1198,11 @@ main (production-ready releases)
 **Purpose:** Stable, release-ready code only
 
 **Rules:**
-- ✅ Only merge completed, tested features
-- ✅ Every merge = potential release
-- ✅ Tagged with version numbers (v0.4.0, v0.5.0)
-- ❌ Never commit directly to main
-- ❌ No work-in-progress code
+- âœ… Only merge completed, tested features
+- âœ… Every merge = potential release
+- âœ… Tagged with version numbers (v0.4.0, v0.5.0)
+- âŒ Never commit directly to main
+- âŒ No work-in-progress code
 
 #### 2. `feature/*` - Sprint Development Branches
 **Purpose:** Develop sprint features in isolation
@@ -1193,9 +1233,9 @@ hotfix/container-null-crash
 ```
 
 **When to Use:**
-- ⚠️ Game-breaking bugs
-- ⚠️ Save file corruption
-- ⚠️ Critical performance issues
+- âš ï¸ Game-breaking bugs
+- âš ï¸ Save file corruption
+- âš ï¸ Critical performance issues
 
 ---
 
@@ -1463,27 +1503,27 @@ Thumbs.db
 
 ### Benefits of This Strategy
 
-1. ✅ **Clean main** - Always playable/deployable
-2. ✅ **Sprint isolation** - Work without breaking production
-3. ✅ **Easy rollback** - Revert entire sprints if needed
-4. ✅ **Clear history** - Squash merges keep main clean
-5. ✅ **Version tracking** - Tags mark all releases
-6. ✅ **AI-friendly** - Sessions map to commits naturally
-7. ✅ **Simple** - Only 2 branch types needed
+1. âœ… **Clean main** - Always playable/deployable
+2. âœ… **Sprint isolation** - Work without breaking production
+3. âœ… **Easy rollback** - Revert entire sprints if needed
+4. âœ… **Clear history** - Squash merges keep main clean
+5. âœ… **Version tracking** - Tags mark all releases
+6. âœ… **AI-friendly** - Sessions map to commits naturally
+7. âœ… **Simple** - Only 2 branch types needed
 
 ---
 
 ### Branch Lifecycle Visualization
 
 ```
-main:     o─────────o─────────────o─────────o
-          │         │             │         │
-          │         v0.4.0        v0.4.1    v0.5.0
-          │
-          ├─feature/v0.5.0──o──o──o──o──o──┤
-          │                         (squash merge)
-          │
-          └─hotfix/crash─o─┤
+main:     oâ”€â”€â”€â”€â”€â”€â”€â”€â”€oâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€oâ”€â”€â”€â”€â”€â”€â”€â”€â”€o
+          â”‚         â”‚             â”‚         â”‚
+          â”‚         v0.4.0        v0.4.1    v0.5.0
+          â”‚
+          â”œâ”€feature/v0.5.0â”€â”€oâ”€â”€oâ”€â”€oâ”€â”€oâ”€â”€oâ”€â”€â”¤
+          â”‚                         (squash merge)
+          â”‚
+          â””â”€hotfix/crashâ”€oâ”€â”¤
                      (fast-forward merge)
 ```
 
@@ -1505,7 +1545,7 @@ main:     o─────────o─────────────o�
 - **Target**: Keep files under 500 lines when possible
 - **Warning threshold**: 800+ lines (consider refactoring)
 - **Critical threshold**: 1500+ lines (definitely refactor)
-- **Extraction pattern**: Large mesh generators (300+ lines) Ã¢â€ â€™ separate visual generator files
+- **Extraction pattern**: Large mesh generators (300+ lines) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ separate visual generator files
 
 ### Context Window Optimization
 - Prefer reading focused files over large monoliths
