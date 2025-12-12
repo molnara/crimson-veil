@@ -9,28 +9,31 @@ AI MODEL GUIDE
 CURRENT SPRINT: "Atmosphere & Audio" (v0.5.0 - 7-10 days) - Planned 2025-12-11
 ----------------------------------------------------------
 Sprint Goal: Implement professional-quality sound system and ambient music using AI generation
-Budget: $34 ($20 SFX Engine + $14 Mubert)
+Budget: $22 actual ($8 SFX Engine + $14 Mubert - saved $12)
 Timeline: 12-15 sessions (~24-30% capacity)
 
 DESIGN DECISIONS (LOCKED IN):
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Music Variety: Day/Night Variation (2 tracks total)
+✓ Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
+✓ Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
+✓ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
+✓ Music Variety: Day/Night Variation (8 tracks: 4 day + 4 night)
 
-PRIORITY 1 - Core Sound System (Foundation) [5 sessions]
+PRIORITY 1 - Core Sound System (Foundation) [5 sessions] - COMPLETE
 [X] Audio Manager Architecture [Sonnet] - Singleton with sound pooling, volume controls, pitch variation (COMPLETE 2025-12-11)
 [X] AI Sound Generation & Import [Sonnet] - Generated 48 audio files (40 SFX + 8 music) via SFX Engine + Mubert (COMPLETE 2025-12-12)
-[X] SFX Integration - Core Actions [Sonnet] - Wire harvesting, building, movement, UI sounds (COMPLETE 2025-12-12)
+[X] SFX Integration - Harvesting Sounds [Sonnet] - Wire harvesting, tool switch, resource break, log despawn (COMPLETE 2025-12-12)
 
-PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions]
-[ ] Music Manager & AI Music Generation [Sonnet] - Day/night ambient tracks via Mubert, crossfade system
+PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions] - IN PROGRESS
+[X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footsteps with steep slope detection (COMPLETE 2025-12-12)
+[ ] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration
+[ ] UI Sounds [Sonnet] - inventory_toggle, craft_complete, pickup, warnings integration
+[ ] Container Sounds [Sonnet] - chest_open, chest_close integration
+[ ] Music Manager & AI Music System [Sonnet] - Day/night ambient tracks, crossfade system
 [ ] Ambient Environmental Sounds [Sonnet] - Wind, ocean, wildlife layers (8 ambient loops)
-[ ] UI & Feedback Sounds [Sonnet] - Crafting, health/hunger warnings, settings clicks
 
 PRIORITY 3 - Polish & Refinement (Optional) [2-4 sessions]
 [ ] Settings Menu - Audio Controls [Sonnet] - Volume sliders, mute toggles, test buttons
-[ ] Sound Variation System [Sonnet] - Pitch/volume randomization, multiple footstep variants
+[ ] Sound Variation System [Sonnet] - Pitch/volume randomization enhancements
 [ ] Audio Balance Pass [Sonnet] - Test and adjust all volume levels across scenarios
 [ ] Controller Rumble [Sonnet] - Haptic feedback for harvesting, building, tree falling (OPTIONAL)
 
@@ -39,6 +42,8 @@ AUDIO FILE MANIFEST (48 files total - ALL GENERATED):
 - 8 Music tracks (4 day ambient, 4 night ambient - 2 min each, WAV format)
 - Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
 - Actual budget: $22 (under $34 target by $12)
+
+SPRINT PROGRESS: 4/13 tasks complete (31%)
 
 
 NEXT UP (After v0.5.0)
@@ -58,7 +63,7 @@ HIGH PRIORITY:
 [ ] Workbench & Advanced Crafting [Sonnet] - DEFERRED FROM v0.5.0 - Workbench placement, proximity, recipes
 [ ] Inventory Organization [Sonnet] - DEFERRED FROM v0.5.0 - Sort, quick-stack, drag-and-drop, animations
 [ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers [Sonnet] - Stone ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Iron ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Steel progression path
+[ ] Tool tiers [Sonnet] - Stone → Iron → Steel progression path
 [ ] Durability system [Sonnet] - Tools degrade with use (creates resource sink)
 
 MEDIUM PRIORITY:
@@ -97,6 +102,14 @@ SOMEDAY/MAYBE (Ideas to explore)
 
 COMPLETED (Recent)
 ------------------
+v0.5.0 IN PROGRESS (December 12, 2025) - "Atmosphere & Audio"
+Sprint Progress: 4/13 tasks (31%)
+
+[X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footstep system with steep slope detection
+[X] SFX Integration - Harvesting Sounds [Sonnet] - Wired harvesting, tool switch, resource break sounds
+[X] AI Sound Generation & Import [Sonnet] - 48 audio files generated via SFX Engine + Mubert
+[X] Audio Manager Architecture [Sonnet] - Singleton with sound pooling, volume controls, pitch variation
+
 v0.4.0 RELEASE (December 12, 2025) - "Storage & Organization"
 Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
 Commit: d53049d
@@ -122,52 +135,44 @@ Commit: d53049d
 
 Pre-v0.4.0 Features:
 [X] Xbox controller support [Sonnet] - Full analog movement/camera, all buttons mapped
-[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬Â Pickaxe
+[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe ↔ Pickaxe
 [X] Valheim-style log breaking physics [Sonnet] - Trees break into 3-5 log pieces on impact
-[X] Impact-based tree shattering [Sonnet] - Logs spawn when fallen tree collides with terrain
-[X] Log despawn particles [Sonnet] - Brown particle "poof" effects when logs disappear
-[X] Removed tree stumps [Sonnet] - Clean world, better performance, avoids clutter issues
-[X] Health/hunger system [Sonnet] - Stats management, regeneration when well-fed, eating from inventory
-[X] Biome configuration system [Sonnet] - Inspector controls for biome size and vegetation densities
-[X] Guaranteed Grassland spawn zone [Sonnet] - Valheim-style safe spawn with configurable radius
-[X] Biome-specific vegetation distributions [Sonnet] - Each biome has unique tree types
-[X] Code refactoring [Sonnet] - Extracted tree generators from vegetation_spawner
-[X] Inventory UI [Sonnet] - Grid-based visual inventory (Tab to toggle), 32 slots
-[X] Crafting system [Sonnet] - Recipe-based crafting with UI (Press R), 5 starter recipes
-[X] Perlin noise cloud system [Sonnet] - Dual-layer noise for organic cloud shapes
-[X] Enhanced crosshair [Sonnet] - Cross-shaped design with outline for visibility
-[X] Sun/moon depth sorting fix [Sonnet] - Repositioned celestial bodies to z=Ãƒâ€šÃ‚Â±500
-[X] Tool system [Sonnet] - Axe/Pickaxe with requirement checking and visual feedback
-[X] Procedural world generation [Sonnet] - Chunk-based terrain with FastNoiseLite
-[X] Day/night cycle [Sonnet] - Time-based sky colors and celestial bodies
-[X] Harvestable resources [Sonnet] - Trees, strawberries, mushrooms with proper collision
-[X] Harvest particles [Sonnet] - Minecraft-style pixel "poof" effects when gathering
-[X] Harvest UI feedback [Sonnet] - Progress bar and resource name display
-[X] Tree falling physics [Sonnet] - Trees tip over when chopped down (Valheim-style)
-[X] Resource night glow [Sonnet] - Mushrooms and strawberries emit light at night
-[X] Critter spawning [Sonnet] - Rabbits, deer, birds, lizards, crabs with procedural placement
-[X] Settings menu [Sonnet] - Resolution, fullscreen, vsync, MSAA, quality presets
-[X] Water plane [Sonnet] - Infinite ocean with collision for walking
-[X] Visual polish [Sonnet] - Clouds, crosshair, harvest highlights, tree physics
+[X] Impact-based log shattering [Sonnet] - Log counts vary by tree type (normal: 3-5, pine: 4-6, palm: 2-3)
+[X] Log despawn effects [Sonnet] - Brown particle "poof" with 1-4s randomized lifetimes
+[X] Health/hunger system [Sonnet] - Stats, regeneration, movement penalties (well-fed bonus at hunger > 70)
+[X] Health/hunger UI [Sonnet] - Bars in top-left with well-fed indicator
+[X] Eating system [Sonnet] - Click food in inventory to restore hunger (strawberries: 10-35, mushrooms: 15-40)
+[X] Food tooltips [Sonnet] - Green tint and tooltips show food items in inventory
+[X] Biome generation configuration [Sonnet] - Exposed noise scales and thresholds in Inspector
+[X] Biome-specific vegetation [Sonnet] - Per-biome density controls (forest trees, grassland strawberries)
+[X] Guaranteed Grassland spawn [Sonnet] - 100m radius around origin (Valheim-style safe spawning)
+[X] Grid-based inventory UI [Sonnet] - 8x4 visual slots, Tab to toggle
+[X] Crafting system [Sonnet] - 5 starter recipes with UI (Press R to open)
+[X] Cloud system rewrite [Sonnet] - Perlin noise for organic shapes, no straight edges
+[X] Harvest highlight system [Sonnet] - Green outline for correct tool, red for wrong tool
+[X] Sun/moon rendering fix [Sonnet] - Moved to z=±500 for proper depth sorting
+[X] Crosshair enhancement [Sonnet] - Cross-shaped with outline for better visibility
+[X] Tree visual extraction [Sonnet] - Extracted to tree_visual.gd (reduced vegetation_spawner.gd from 2,075 to 1,457 lines)
+[X] Minimal tool system [Sonnet] - Axe/Pickaxe with requirement checking and visual indicators
 
 
 DESIGN QUESTIONS / DECISIONS NEEDED
 ------------------------------------
 v0.5.0 Sprint Decisions (Made):
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Music style: Pure ambient drone (meditative, cozy-lonely tone)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Footsteps: Biome-aware (4 surfaces for immersion without complexity)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Volume balance: Hybrid approach (realistic ambient, punchy actions)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Budget: $34 investment for professional quality
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Music variety: Day/night variation (2 tracks, simple transition)
+✓ Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
+✓ Music style: Pure ambient drone (meditative, cozy-lonely tone)
+✓ Footsteps: Biome-aware (4 surfaces for immersion without complexity)
+✓ Volume balance: Hybrid approach (realistic ambient, punchy actions)
+✓ Budget: $22 investment for professional quality (saved $12)
+✓ Music variety: Day/night variation (8 tracks: 4 day + 4 night)
 
 v0.4.0 Sprint Decisions (Made):
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Storage scope: Core + Polish approach (1 week timeline)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Container UI: Click-to-transfer first, drag-and-drop later
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Container destruction: Harvestable (break to get materials back)
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Item stacking: Full implementation this sprint
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Workbench scope: Placement + proximity, defer recipe gating
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
+✓ Storage scope: Core + Polish approach (1 week timeline)
+✓ Container UI: Click-to-transfer first, drag-and-drop later
+✓ Container destruction: Harvestable (break to get materials back)
+✓ Item stacking: Full implementation this sprint
+✓ Workbench scope: Placement + proximity, defer recipe gating
+✓ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
 
 Future Decisions (Still Open) - Use [Opus] for complex design decisions:
 ? Should tools degrade/break or have infinite durability? (affects resource loops) [Opus]
@@ -226,47 +231,47 @@ POTENTIAL ISSUES (from Code Review - not yet confirmed):
 
 SPRINT RISK ASSESSMENT (v0.5.0 - Current)
 ------------------------------------------
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¢ LOW RISK: Audio system isolation - Won't break existing gameplay systems
+🟢 LOW RISK: Audio system isolation - Won't break existing gameplay systems
    Mitigation: Audio manager is separate AutoLoad, no gameplay logic dependencies
    
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¡ MEDIUM RISK: AI generation quality variance
+🟡 MEDIUM RISK: AI generation quality variance
    Mitigation: Use free tier for testing, upgrade only when satisfied with quality
    
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¢ LOW RISK: Budget overrun ($34 target)
+🟢 LOW RISK: Budget overrun ($22 actual vs $34 target)
    Mitigation: SFX Engine is pay-per-credit (only buy what needed), Mubert is 1-month subscription
    
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¢ LOW RISK: Integration complexity (many files to modify)
+🟢 LOW RISK: Integration complexity (many files to modify)
    Mitigation: Start with one system (harvesting), test, then expand to others
    
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¡ MEDIUM RISK: Music looping seamlessness
+🟡 MEDIUM RISK: Music looping seamlessness
    Mitigation: Test loops extensively, use Mubert's loop-friendly generation
 
 
 SPRINT RISK ASSESSMENT (v0.4.0 - COMPLETED)
 --------------------------------------------
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
+✓ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
    Resolution: Scene-based architecture + click-to-transfer simplicity
    
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¢ LOW RISK: Save compatibility for stacking changes
+🟢 LOW RISK: Save compatibility for stacking changes
    Status: Design accommodates future save system
    
-ÃƒÂ°Ã…Â¸Ã…Â¸Ã‚Â¢ LOW RISK: Controller UI navigation for containers
+🟢 LOW RISK: Controller UI navigation for containers
    Status: Mouse/keyboard working, controller support deferred
    
-ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ LOW RISK: Feature creep - MITIGATED
+✓ LOW RISK: Feature creep - MITIGATED
    Resolution: Stuck to acceptance criteria, deferred extras to backlog
 
 
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Gather ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Craft ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Build ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Unlock new biomes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Repeat
+- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
 - Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
 - v0.4.0 Released: Storage Containers & Item Stacking (11/15 sprint tasks - 73% complete)
-- v0.5.0 Current: Sound & Music System (12-15 sessions estimated, $34 budget)
+- v0.5.0 Current: Sound & Music System (4/13 tasks complete - 31% complete)
 - Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
 
 AI MODEL USAGE SUMMARY:

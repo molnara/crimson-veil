@@ -17,6 +17,11 @@ const CONTAINER_INTERACTION_RANGE: float = 3.0  # Shorter range for containers v
 var is_flying: bool = false  # Fly/noclip mode toggle
 var current_container: Node = null  # Container player is looking at
 
+# Footstep system
+var footstep_timer: float = 0.0
+const WALK_FOOTSTEP_INTERVAL: float = 0.45  # Seconds between steps when walking
+const SPRINT_FOOTSTEP_INTERVAL: float = 0.28  # Seconds between steps when sprinting
+
 # UI state tracking (for container suppression)
 var ui_state_before_container = {
 	"inventory_was_visible": false,
@@ -324,6 +329,60 @@ func setup_ui():
 	else:
 		print("ERROR: Could not load container_ui.tscn")
 
+func _get_terrain_surface() -> String:
+	"""Detect surface type under player for footstep sounds"""
+	# Get chunk manager (should be autoload, fallback to finding in tree)
+	var chunk_manager = get_node_or_null("/root/ChunkManager")
+	if not chunk_manager:
+		# Fallback: try to find it in the scene tree
+		chunk_manager = get_tree().root.get_node_or_null("World/ChunkManager")
+	
+	if not chunk_manager:
+		return "grass"  # Safe fallback
+	
+	# Get player's world position
+	var world_x = global_position.x
+	var world_z = global_position.z
+	
+	# Calculate biome (mirrors chunk.gd logic exactly)
+	var base_noise = chunk_manager.noise.get_noise_2d(world_x, world_z)
+	var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
+	var moisture = chunk_manager.moisture_noise.get_noise_2d(world_x, world_z)
+	
+	# Determine biome using ChunkManager thresholds
+	# NOTE: We don't check spawn zone override here - footsteps should match VISUAL biome
+	# (Spawn zone only affects terrain generation in chunk.gd, not audio feedback)
+	
+	# TRANSITION SMOOTHING: Add small buffer zones to prevent harsh audio transitions
+	# Smaller buffer (0.03) for natural feel in both directions
+	const TRANSITION_BUFFER: float = 0.03  # 3% buffer zone (~2-4 meters)
+	
+	# Ocean/Beach (with extended transition zone)
+	if base_noise < (chunk_manager.beach_threshold + TRANSITION_BUFFER):
+		if base_noise < chunk_manager.ocean_threshold:
+			return "sand"  # Ocean (wading sounds)
+		else:
+			return "sand"  # Beach (extended slightly into grassland for smooth transition)
+	
+	# Mountain/Snow
+	elif base_noise > (chunk_manager.mountain_threshold - TRANSITION_BUFFER):
+		if temperature < chunk_manager.snow_temperature:
+			return "snow"  # Snow biome
+		else:
+			return "stone"  # Mountain
+	
+	# Mid-level biomes
+	else:
+		# Hot and dry = desert
+		if temperature > chunk_manager.desert_temperature and moisture < chunk_manager.desert_moisture:
+			return "stone"  # Desert (rocky/hard ground)
+		# Wet = forest
+		elif moisture > chunk_manager.forest_moisture:
+			return "grass"  # Forest
+		# Default = grassland
+		else:
+			return "grass"  # Grassland
+
 func get_container_at_cursor() -> Node:
 	"""Raycast for containers on Layer 3 within 3m range"""
 	var space_state = get_world_3d().direct_space_state
@@ -521,6 +580,34 @@ func _physics_process(delta):
 	
 	# Move with slide
 	move_and_slide()
+	
+	# === FOOTSTEP SYSTEM ===
+	# Play footsteps when: (on floor OR on steep slope) + moving + not flying
+	# Steep slope detection: if Y velocity is small, we're probably on ground even if angle > floor_max_angle
+	# Relaxed thresholds to catch sliding on steep banks and slopes
+	var is_grounded = is_on_floor() or (abs(velocity.y) < 3.5 and velocity.length() > 0.3)
+	
+	if is_grounded and not is_flying and direction.length() > 0.1:
+		# Determine footstep interval based on movement speed
+		var is_sprinting_now = Input.is_action_pressed("ui_shift") or Input.is_action_pressed("controller_sprint")
+		var footstep_interval = SPRINT_FOOTSTEP_INTERVAL if is_sprinting_now else WALK_FOOTSTEP_INTERVAL
+		
+		# Update footstep timer
+		footstep_timer += delta
+		
+		# Play footstep when timer exceeds interval
+		if footstep_timer >= footstep_interval:
+			# Detect surface type
+			var surface = _get_terrain_surface()
+			
+			# Play footstep sound variant
+			AudioManager.play_sound_variant("footstep_%s" % surface, 3, "sfx", true, false)
+			
+			# Reset timer
+			footstep_timer = 0.0
+	else:
+		# Reset timer when not moving (prevents immediate sound when starting to walk)
+		footstep_timer = 0.0
 	
 	# If we're stuck on a small obstacle and moving, try to step up
 	if is_on_wall() and direction.length() > 0:

@@ -6,6 +6,20 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.5.0+):
 -------------------------
+[2025-12-12 04:45] [MAJOR] Task 2.1 complete - Movement sounds (footsteps) fully implemented
+[2025-12-12 04:45] [FEATURE] Biome-aware footstep system with 4 surface types (grass, stone, sand, snow)
+[2025-12-12 04:45] [FEATURE] Footstep timing: 0.45s walk interval, 0.28s sprint interval
+[2025-12-12 04:45] [FEATURE] 12 footstep audio variants (3 per surface) with automatic pitch variation
+[2025-12-12 04:45] [FEATURE] Dual ground detection: floor check + velocity-based steep slope support
+[2025-12-12 04:45] [FEATURE] Works on slopes up to 80° (beyond floor_max_angle limit)
+[2025-12-12 04:45] [FEATURE] Smooth biome transitions with 3% buffer zones (2-4 meter transition)
+[2025-12-12 04:45] [FIX] Beach spawn zone override removed - footsteps now match visual biome
+[2025-12-12 04:45] [FIX] Steep slope detection using velocity thresholds (y < 3.5, length > 0.3)
+[2025-12-12 04:45] [FIX] Biome transition buffer tuned for natural feel in both directions
+[2025-12-12 04:45] [MINOR] Added footstep timer variables (walk/sprint intervals)
+[2025-12-12 04:45] [MINOR] Added _get_terrain_surface() method with noise-based biome detection
+[2025-12-12 04:45] [MINOR] Integrated footstep logic in _physics_process() after move_and_slide()
+[2025-12-12 04:45] [MINOR] Footsteps respect grounded state, flying mode, and movement direction
 [2025-12-12 08:30] [MAJOR] Task 1.3 complete - Harvesting Sound Integration complete
 [2025-12-12 08:30] [FEATURE] Harvesting sounds integrated - axe_chop on trees, pickaxe_hit on rocks, mushroom/strawberry pick sounds
 [2025-12-12 08:30] [FEATURE] Resource break sound plays on harvest completion for all resource types
@@ -70,17 +84,18 @@ Version History:
 v0.5.0 (In Progress) - December 2025 - "Atmosphere & Audio"
 Sprint Goal: Implement professional-quality sound system and ambient music
 Timeline: 7-10 days (12-15 sessions, ~24-30% Sonnet capacity)
-Budget: $34 ($20 SFX Engine + $14 Mubert 1-month subscription)
+Budget: $22 actual ($8 SFX Engine + $14 Mubert - saved $12)
 
 SPRINT PLAN:
 Priority 1 - Core Sound System (5 sessions):
 - Audio manager architecture with sound pooling and volume controls
-- AI sound generation (22 professional SFX via ElevenLabs/SFX Engine)
+- AI sound generation (48 professional audio files via SFX Engine + Mubert)
 - SFX integration (harvesting, movement, building, UI, containers)
 
 Priority 2 - Music & Ambient System (5-6 sessions):
+- Movement sounds (footsteps) - biome-aware with steep slope detection
 - Music manager with crossfade system
-- AI music generation (2 ambient tracks: day/night via Mubert)
+- AI music generation (8 ambient tracks: 4 day + 4 night via Mubert)
 - Ambient environmental sounds (wind, ocean, wildlife - 8 loops)
 - UI & feedback sounds (crafting, health/hunger warnings)
 
@@ -94,252 +109,47 @@ DESIGN DECISIONS:
 ✓ Music Style: Pure ambient drone (minimal, atmospheric, non-intrusive)
 ✓ Footstep Complexity: Biome-aware (4 surfaces: grass, stone, sand, snow)
 ✓ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-✓ Music Variety: Day/night variation (2 tracks total)
-✓ Budget Approach: $34 investment for professional commercial-licensed audio
+✓ Music Variety: Day/night variation (8 tracks total - 4 day, 4 night)
+✓ Budget Approach: $22 investment for professional commercial-licensed audio
 
-AUDIO FILE MANIFEST (43 files):
-- 22 SFX files (harvesting, movement, building, UI, container)
-- 2 Music tracks (day ambient, night ambient - 3 minutes each)
-- 8 Ambient files (wind, ocean, crickets, birds, leaves, thunder)
-- 9 Additional UI sounds (warnings, feedback, settings)
+AUDIO FILE MANIFEST (48 files total):
+- 40 SFX files (harvesting: 6, movement: 12, building: 3, UI: 9, container: 2, ambient: 8)
+- 8 Music tracks (4 day ambient, 4 night ambient - 2 min each, WAV format)
+- Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
 
-DEFERRED TO FUTURE SPRINTS:
-- Workbench system (placement, proximity detection, recipe gating)
-- Inventory organization (sort/quick-stack, drag-and-drop, container animations)
-- Expanded crafting recipes (tool tiers, furniture, storage upgrades)
+FEATURES COMPLETED:
+✓ Audio Manager - Sound pooling, volume categories, pitch variation (Task 1.1)
+✓ AI Sound Generation - 48 audio files generated and imported (Task 1.2)
+✓ Harvesting SFX - Axe, pickaxe, mushroom/strawberry picking, tool switch (Task 1.3)
+✓ Movement Sounds - Biome-aware footsteps with steep slope detection (Task 2.1)
 
----
+PROGRESS: 4/13 tasks complete (31%)
 
-v0.4.0 (commit: d53049d) - December 12, 2025 - "Storage & Organization"
+
+v0.4.0 (Released December 12, 2025) - "Storage & Organization"
 Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
+Commit: d53049d
 
-MAJOR FEATURES:
-- Storage container system with placeable chests (10 wood cost)
-- Dual-panel container UI with click-to-transfer and shift+click for full stacks
-- Item stacking (wood: 100, stone: 50, food: 20, tools: 1) with visual feedback
-- UI state management (suppression/restoration when container opens/closes)
-- Comprehensive code review by Claude Opus 4.5 (Grade: A)
-- DEVELOPMENT_GUIDE.md modernization and AI capacity planning documentation
+Features Implemented:
+- Container system with dual-panel UI
+- Independent container inventories (32 slots each)
+- Click/shift-click transfer mechanics
+- Item stacking system with max limits
+- Container placement and removal
+- Low-poly chest visual with highlighting
+- Container interaction (E key / A button)
+- B button quick close
+- UI state management
+- Full Xbox controller support
+- Tool cycling improvements
+- Valheim-style log breaking physics
+- Health/hunger system
+- Settings menu
+- Biome configuration controls
+- Code organization improvements
 
-CONTAINER SYSTEM:
-- Placeable chests via building mode (Tab/D-Pad to cycle to Chest block)
-- Independent 32-slot inventory per chest
-- E key or A button opens chest (3m interaction range)
-- Green highlight when looking at containers
-- Container removal warnings for full chests (prevents accidental item loss)
-- Layer 3 collision for clean raycast detection
-- Low-poly chest mesh (0.9x0.7x0.8m) with 16x16 pixel texture
-- Context-sensitive A button (container interaction priority over jump)
+[Complete feature list in ROADMAP.txt COMPLETED section]
 
-CONTAINER UI:
-- Scene-based dual-panel interface (container_ui.tscn)
-- Player inventory LEFT, container RIGHT (Minecraft/Terraria convention)
-- Click to transfer 1 item between inventories
-- Shift+click to transfer full stack
-- Stack limit display (e.g., "50/100") with visual FULL indicators
-- Error notifications ("Inventory full!", "Container full!")
-- Partial transfer feedback ("Transferred 15/20")
-- Perfectly centered on screen with professional styling
-- ESC or B button to close
-- Auto-close at 5m distance
-- UI suppression (inventory/crafting hidden during container interaction)
-- Input blocking (I/C/Y/X disabled while container open)
-- Smart UI restoration (previous state restored on close)
-
-ITEM STACKING:
-- Stack limits enforced per item type (wood: 100, stone: 50, food: 20, tools: 1)
-- Auto-stack on pickup (items merge with existing stacks)
-- Stack count display in inventory UI
-- Visual "FULL" indicators (red text, red tint, red border on maxed stacks)
-- "INVENTORY FULL!" notification when trying to exceed limits
-- Created inventory_ui.tscn for proper scene-based rendering
-
-DOCUMENTATION & PLANNING:
-- Created AI_USAGE_ANALYSIS.md with capacity calculations and tracking templates
-- Added "AI Model Usage & Capacity Planning" section to DEVELOPMENT_GUIDE.md
-- Added Project Statistics table to DEVELOPMENT_GUIDE.md
-- Documented Sonnet vs Opus usage patterns and weekly capacity
-- Added AI model annotations [Sonnet]/[Opus] to all ROADMAP.txt tasks
-- DEVELOPMENT_GUIDE.md cleanup (removed line counts, fixed encoding, consolidated sections)
-- Added Technical Debt section with prioritized refactoring tasks
-- Created CODE_REVIEW.md from comprehensive Opus 4.5 codebase analysis
-
-CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
-[2025-12-12 06:15] [DOC] Added commit hashes to Version History (v0.2.0: cc9669a, v0.3.0: aecc232)
-[2025-12-12 06:15] [DOC] Added "CHANGELOG → Git Sync" workflow section to DEVELOPMENT_GUIDE.md
-[2025-12-12 06:15] [DOC] Updated commit checklist to include using CHANGELOG as commit message
-[2025-12-12 06:15] [DOC] Added v0.2.0 description to Version History
-[2025-12-12 06:00] [DOC] Fixed date typo in Technical Debt section (2024 -> 2025)
-[2025-12-12 06:00] [DOC] Updated example session output to current sprint (Storage & Organization)
-[2025-12-12 06:00] [DOC] Added cross-reference to AI_USAGE_ANALYSIS.md in capacity planning section
-[2025-12-12 06:00] [DOC] Expanded "When to upload" guidance for documentation files
-[2025-12-12 05:50] [DOC] Added AI model annotations [Sonnet]/[Opus] to all ROADMAP.txt tasks
-[2025-12-12 05:50] [DOC] Added "AI MODEL GUIDE" section to ROADMAP.txt header
-[2025-12-12 05:50] [DOC] Added "AI MODEL USAGE SUMMARY" to ROADMAP.txt footer
-[2025-12-12 05:50] [DOC] Added quarterly architecture review task to technical debt
-[2025-12-12 05:45] [DOC] Created AI_USAGE_ANALYSIS.md - baseline metrics, capacity calculations, efficiency observations
-[2025-12-12 05:45] [DOC] Added AI_USAGE_ANALYSIS.md to file index in DEVELOPMENT_GUIDE.md
-[2025-12-12 05:30] [DOC] Added "AI Model Usage & Capacity Planning" section to DEVELOPMENT_GUIDE.md
-[2025-12-12 05:30] [DOC] Added Project Statistics table at top of DEVELOPMENT_GUIDE.md
-[2025-12-12 05:30] [DOC] Added model selection guidance to Session Start Checklist (step 6)
-[2025-12-12 05:30] [DOC] Documented Sonnet vs Opus usage patterns and weekly capacity
-[2025-12-12 05:30] [DOC] Added feature size estimation table (Small/Medium/Large)
-[2025-12-12 05:30] [DOC] Added session efficiency tips based on 4-day development analysis
-[2025-12-12 05:30] [DOC] Documented actual development velocity (81 commits in 4 days)
-[2025-12-12 05:30] [DOC] Fixed Unicode characters throughout DEVELOPMENT_GUIDE.md (arrows, checkmarks, etc.)
-[2025-12-11 23:45] [DOC] Major DEVELOPMENT_GUIDE.md cleanup and modernization
-[2025-12-11 23:45] [DOC] Removed line counts from file index (too cumbersome to maintain)
-[2025-12-11 23:45] [DOC] Consolidated duplicate Storage & Interaction Systems sections
-[2025-12-11 23:45] [DOC] Fixed Unicode encoding issues (garbled characters → clean symbols)
-[2025-12-11 23:45] [DOC] Added missing files to index: container_warning_ui.gd, CODE_REVIEW.md
-[2025-12-11 23:45] [DOC] Added Technical Debt section with HIGH/MEDIUM priorities from code review
-[2025-12-11 23:45] [DOC] Added potential bugs to Known Issues (race condition, input blocking)
-[2025-12-11 23:45] [DOC] Updated refactoring thresholds: 1000 → 800 lines (more practical)
-[2025-12-11 23:45] [DOC] Reduced DEVELOPMENT_GUIDE.md from ~950 to ~650 lines
-[2025-12-11 22:30] [MAJOR] Comprehensive code review completed by Claude Opus 4.5
-[2025-12-11 22:30] [DOC] Created CODE_REVIEW.md - Full codebase analysis with architecture review, file-by-file analysis, and recommendations
-[2025-12-11 22:30] [DOC] Updated ROADMAP.txt - Added code review recommendations to Technical Debt section
-[2025-12-11 22:30] [PLANNING] Added HIGH PRIORITY refactoring tasks: critter visual extraction, ITEM_COLORS consolidation, container null safety
-[2025-12-11 22:30] [PLANNING] Added MEDIUM PRIORITY tasks: input handling consolidation, cloud system extraction, debug output toggle
-[2025-12-11 22:30] [PLANNING] Added LOW PRIORITY tasks: block rotation, LOD for distant trees
-[2025-12-11 22:30] [PLANNING] Added potential issues to BUGS section: container race condition, broad input blocking
-[2025-12-11 21:00] [MAJOR] Container UI - Phase 2 complete! (Priority 1 - 7/7 tasks COMPLETE!)
-[2025-12-11 21:00] [MAJOR] Created container_ui.tscn - scene-based dual-panel interface structure
-[2025-12-11 21:00] [MAJOR] Updated container_ui.gd - converted to scene-based architecture (~420 lines, -100 lines procedural code)
-[2025-12-11 21:00] [FEATURE] Centered UI layout - CenterContainer ensures perfect screen centering
-[2025-12-11 21:00] [FEATURE] Swapped panel order - player inventory on LEFT (Minecraft/Terraria convention), container on RIGHT
-[2025-12-11 21:00] [FEATURE] Click-to-transfer - single click transfers 1 item between inventories
-[2025-12-11 21:00] [FEATURE] Shift+click transfers all - transfers entire stack with visual feedback
-[2025-12-11 21:00] [FEATURE] Stack display integration - shows current/max (e.g., "50/100") with FULL indicators
-[2025-12-11 21:00] [FEATURE] UI suppression system - inventory/crafting/harvest UIs hidden when container open
-[2025-12-11 21:00] [FEATURE] Input blocking - I/C/Y/X keys disabled while container UI visible
-[2025-12-11 21:00] [FEATURE] Smart UI restoration - previous UI visibility state restored on container close
-[2025-12-11 21:00] [FEATURE] B button closes container - controller sprint button provides quick exit
-[2025-12-11 21:00] [FEATURE] ESC closes container - keyboard escape provides quick exit
-[2025-12-11 21:00] [FEATURE] Error notifications - displays "Inventory full!", "Container full!" with 2-second visibility
-[2025-12-11 22:30] [FEATURE] Partial transfer feedback - shows "Transferred 15/20" when destination fills up
-[2025-12-11 21:00] [FEATURE] Auto-close on distance - UI closes if player moves >5m from container
-[2025-12-11 21:00] [FEATURE] Hint label - displays "ESC TO CLOSE • CLICK TO TRANSFER 1 • SHIFT+CLICK TO TRANSFER ALL"
-[2025-12-11 21:00] [MINOR] Extended player.gd - UI state management, suppression/restoration functions (+85 lines)
-[2025-12-11 21:00] [MINOR] Applied professional styling - borders (3px), rounded corners (8px), semi-transparent backgrounds
-[2025-12-11 21:00] [MINOR] Scene-based architecture - follows project pattern (inventory_ui.tscn, harvest_ui.tscn, health_ui.tscn)
-[2025-12-11 21:00] [FIX] Fixed hint text cutoff - full instruction text now visible at top center
-[2025-12-11 21:00] [FIX] Fixed competing UI overlays - only one UI visible at a time (container takes priority)
-[2025-12-11 21:00] [FIX] Fixed inventory debug text visibility - harvest_ui properly hidden during container interaction
-[2025-12-11 21:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added container_ui.tscn to file index, updated line counts
-[2025-12-11 21:00] [MAJOR] Updated ROADMAP.txt - marked Container UI as complete, Priority 1 fully complete (7/7)
-[2025-12-11 10:54] [MAJOR] Container placement system - Phase 1 complete (Priority 1 - 6/7 tasks)
-[2025-12-11 10:54] [MAJOR] Created storage_container.gd - placeable chests with independent inventories (~280 lines)
-[2025-12-11 10:54] [FEATURE] Chest block type - costs 10 wood, placed via building mode (Tab/D-Pad to cycle)
-[2025-12-11 10:54] [FEATURE] Low-poly chest mesh - 0.9x0.7x0.8m procedural geometry with proper ground placement
-[2025-12-11 10:54] [FEATURE] Chest texture - 16x16 pixel texture with wood planks, metal straps, and keyhole
-[2025-12-11 10:54] [FEATURE] Container interaction - E key or A button opens chest (3m range, context-sensitive)
-[2025-12-11 10:54] [FEATURE] Green highlight system - chests show outline when player looks at them
-[2025-12-11 10:54] [FEATURE] Layer 3 collision - containers use separate layer for clean raycast detection
-[2025-12-11 10:54] [FEATURE] Independent inventory - each chest has own 32-slot Inventory instance
-[2025-12-11 10:54] [MAJOR] Container removal warning - modal dialog prevents accidental deletion of full chests
-[2025-12-11 10:54] [MAJOR] Created container_warning_ui.gd - "Remove Anyway" confirmation dialog (~130 lines)
-[2025-12-11 10:54] [FEATURE] Container destruction - empty chests refund 10 wood, full chests require confirmation
-[2025-12-11 10:54] [MINOR] Context-sensitive A button - container interaction takes priority over jump
-[2025-12-11 10:54] [MINOR] Extended harvesting_system.gd - container raycast and highlighting (+130 lines)
-[2025-12-11 10:54] [MINOR] Extended building_system.gd - container placement and warning integration (+95 lines)
-[2025-12-11 10:54] [MINOR] Extended player.gd - container detection and interaction (+65 lines)
-[2025-12-11 10:54] [MINOR] Extended pixel_texture_generator.gd - chest texture generation (+60 lines)
-[2025-12-11 10:54] [FIX] Fixed D-Pad input conflict - removed D-Pad from movement, now dedicated to building controls
-[2025-12-11 10:54] [FIX] Fixed floating chests - containers now sit properly on ground instead of hovering
-[2025-12-11 10:54] [MINOR] Added debug output for container interaction - console shows detection and opening
-[2025-12-11 19:30] [MAJOR] Implemented item stacking system - Phase 1 complete
-[2025-12-11 19:30] [FEATURE] Stack limits enforced - wood (100), stone (50), food (20), tools (1)
-[2025-12-11 19:30] [FEATURE] Stack count display - shows current/max (e.g., "50/100")
-[2025-12-11 19:30] [FEATURE] Visual "FULL" indicator - red text, red tint, red border on maxed stacks
-[2025-12-11 19:30] [FEATURE] "INVENTORY FULL!" notification - displays when trying to exceed limits
-[2025-12-11 19:30] [MAJOR] Created inventory_ui.tscn - proper scene structure for UI rendering
-[2025-12-11 19:30] [FEATURE] Auto-stack on pickup - items automatically merge with existing stacks
-[2025-12-11 19:30] [MINOR] 32 item type limit enforced (max different items in inventory)
-[2025-12-11 19:30] [MINOR] Updated keyboard controls - I for inventory, C for crafting (editor compatibility)
-[2025-12-11 19:30] [MINOR] Added inventory_full signal - triggers visual feedback on full stacks
-[2025-12-11 19:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added inventory_ui.tscn to file index
-[2025-12-11 19:30] [MINOR] Updated DEVELOPMENT_GUIDE.md - moved item stacking to "Currently Implemented"
-[2025-12-11 16:00] [MAJOR] Sprint planning session - defined "Storage & Organization" sprint with clear priorities
-[2025-12-11 16:00] [MAJOR] Updated ROADMAP.txt - reorganized with detailed sprint tasks (15 items across 3 priorities)
-[2025-12-11 16:00] [MINOR] Added sprint risk assessment to ROADMAP.txt (UI complexity, save compatibility, feature creep)
-[2025-12-11 16:00] [MINOR] Documented sprint design decisions (click-to-transfer UI, harvestable containers, full stacking)
-[2025-12-11 16:00] [FEATURE] Defined storage container system architecture - placeable chests with independent inventories
-[2025-12-11 16:00] [FEATURE] Defined item stacking system - wood (100), stone: (50), food (20) stack limits
-[2025-12-11 16:00] [FEATURE] Defined workbench system - proximity-based recipe unlocking (5m radius)
-[2025-12-11 16:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added storage/workbench systems to file index
-[2025-12-11 16:00] [MINOR] Added new collision layer (Layer 3) for interactive objects to architecture
-[2025-12-11 16:00] [MINOR] Added storage balance values - container slots (32/64), interaction range (3m), stack sizes
-[2025-12-11 16:00] [MINOR] Added container architecture patterns - signal-driven interaction, inventory management
-[2025-12-11 16:00] [MINOR] Added upload strategies for storage sprint tasks (4 new workflows)
-[2025-12-11 16:00] [MINOR] Added common tasks guide for containers, workbenches, and item stacking
-[2025-12-11 16:00] [MINOR] Updated file size reference - DEVELOPMENT_GUIDE.md now ~950 lines
-[2025-12-11 16:00] [PLANNING] Defined sprint scope - Core + Polish approach (1 week timeline, 15 tasks)
-[2025-12-11 16:00] [PLANNING] Deferred to next sprint - sort/quick-stack, workbench recipes, animations, drag-and-drop
-[2025-12-11 14:30] [MAJOR] Added full Xbox controller support - movement, camera, and all actions
-[2025-12-11 14:30] [FEATURE] Left stick controls movement with 0.15 deadzone (replaces WASD)
-[2025-12-11 14:30] [FEATURE] Right stick controls camera with configurable sensitivity (replaces mouse)
-[2025-12-11 14:30] [FEATURE] Face buttons mapped - A=Jump, B=Sprint, X=Crafting, Y=Inventory
-[2025-12-11 14:30] [FEATURE] Triggers mapped - RT=Harvest/Build, LT=Cancel/Remove (supports both button and axis modes)
-[2025-12-11 14:30] [FEATURE] Bumpers cycle tools - RB/LB cycle between Axe and Pickaxe
-[2025-12-11 14:30] [FEATURE] D-Pad mapped - Up=Building mode, Down=Cycle blocks
-[2025-12-11 14:30] [MINOR] Added apply_deadzone() function for smooth analog stick handling
-[2025-12-11 14:30] [MINOR] Controller and keyboard/mouse work simultaneously
-[2025-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe ↔ Pickaxe
-[2025-12-11 14:30] [FEATURE] Updated project.godot with 16 new controller input actions
-[2025-12-11 14:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added controller support to file index and implemented features
-[2025-12-11 06:44] [MAJOR] Added Valheim-style log breaking system - trees shatter into physics-enabled logs on impact
-[2025-12-11 06:44] [FEATURE] Logs spawn 3-5 pieces based on tree type (normal 3-5, pine 4-6, palm 2-3)
-[2025-12-11 06:44] [FEATURE] Logs scatter with physics based on impact angle and surface normal
-[2025-12-11 06:44] [FEATURE] Log despawn with brown particle "poof" effect (1-4 second randomized lifetimes)
-[2025-12-11 06:44] [MINOR] Improved tree impact detection - signal-based + manual polling + backup timer
-[2025-12-11 06:44] [FIX] Fixed log collision - using CylinderShape3D for proper rolling physics
-[2025-12-11 06:44] [FIX] Fixed tree breaking timing - waits for tree to settle before spawning logs
-[2025-12-11 06:44] [FEATURE] Created log_piece.gd - handles log lifetime, physics, and particle despawn
-[2025-12-10 18:00] [MAJOR] Added health/hunger system - stats, regeneration, movement penalties
-[2025-12-10 18:00] [MAJOR] Health regenerates only when hunger > 70 (well-fed bonus)
-[2025-12-10 18:00] [MINOR] Hunger depletes over ~8 minutes (0.2/second configurable rate)
-[2025-12-10 18:00] [MINOR] Movement speed reduced 30% when hunger < 30
-[2025-12-10 18:00] [MAJOR] Added health/hunger UI - bars in top-left with well-fed indicator
-[2025-12-10 18:00] [MAJOR] Added eating system - click food in inventory to restore hunger
-[2025-12-10 18:00] [MINOR] Food values: strawberries 10-35, mushrooms 15-40 hunger
-[2025-12-10 18:00] [MINOR] Food items show green tint and tooltips in inventory
-[2025-12-10 18:00] [FEATURE] Created player.tscn - player scene with integrated health system
-[2025-12-10 18:00] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added feature implementation workflow
-[2025-12-10 18:00] [MINOR] Updated DEVELOPMENT_GUIDE.md - added "request files first" workflow
-[2025-12-10 18:00] [MINOR] Updated DEVELOPMENT_GUIDE.md - added health system to file index
-[2025-12-10 18:00] [MINOR] Updated DEVELOPMENT_GUIDE.md - added file index maintenance to commit checklist
-[2025-12-10 12:00] [MAJOR] Added biome generation configuration - exposed noise scales and thresholds in Inspector for biome size/shape control
-[2025-12-10 12:00] [MAJOR] Added biome-specific vegetation configuration - per-biome density controls in Inspector (forest trees, grassland strawberries, etc)
-[2025-12-10 12:00] [FEATURE] Guaranteed Grassland spawn zone - 100m radius around origin always Grassland (Valheim-style safe spawning)
-[2025-12-10 12:00] [MINOR] Added spawn_zone_radius export variable (50-300m configurable radius)
-[2025-12-10 12:00] [MINOR] Added temperature_scale, moisture_scale controls for biome size tuning
-[2025-12-10 12:00] [MINOR] Added configurable biome thresholds (ocean/beach/mountain/snow/desert/forest levels)
-[2025-12-10 12:00] [MAJOR] Biome-specific vegetation distributions - forests now oak-only with increased mushrooms, grasslands feature strawberries, mountains have sparse pines
-[2025-12-10 12:00] [MINOR] Removed pine trees from forests (forests now 100% oak trees for distinct identity)
-[2025-12-10 12:00] [MINOR] Removed strawberries from forests (now grassland-exclusive resource)
-[2025-12-10 12:00] [MINOR] Added sparse pine trees to mountains (25% density to reduce barren feel)
-[2025-12-10 12:00] [MINOR] Increased mushroom spawn in forests (0.50 vs 0.35 - signature forest resource)
-[2025-12-10 12:00] [MINOR] Increased strawberry spawn in grasslands (0.55 vs 0.40 - signature grassland resource)
-[2025-12-10 12:00] [MINOR] Updated ROADMAP.txt - added biome configuration options as high priority
-[2025-12-11 02:00] [MAJOR] Refactored vegetation_spawner.gd - extracted tree generators to separate files (reduced from 2,075 to 1,457 lines)
-[2025-12-10 20:00] [MAJOR] Added grid-based inventory UI - 8x4 visual slots, Tab to toggle
-[2025-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
-[2025-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
-[2025-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2025-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=±500 for proper depth sorting
-[2025-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
-[2025-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
-[2025-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player
-[2025-12-10 20:15] [FIX] Fixed crab spawning bug - crabs now spawn on beach biomes with proper height threshold
-[2025-12-10 19:45] [FIX] Fixed rock nighttime glow - rocks now glow blue-gray at night like other resources
-[2025-12-10 18:30] [MINOR] Updated ROADMAP.txt - organized priorities, added bugs, moved tool system to completed
-[2025-12-10 17:15] [MINOR] Updated DEVELOPMENT_GUIDE.md - clarified commit workflow
-[2025-12-10 16:45] [MINOR] Added real-time tool indicator updates when cycling tools
-[2025-12-10 16:30] [MINOR] Added visual indicator (red text) when wrong tool equipped
-[2025-12-10 16:00] [MAJOR] Added minimal tool system - Axe/Pickaxe with requirement checking
-[2025-12-10 15:30] - Created ROADMAP.txt with current features and planned work
-[2025-12-10 15:35] - Created CHANGELOG.txt to track session changes
 
 v0.3.0 (commit: aecc232) - December 9, 2025
 - Procedural world generation with 7 biomes
