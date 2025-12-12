@@ -34,6 +34,12 @@ None currently blocking - sprint progressing smoothly!
 
 ## 🤖 What I Do
 
+**⚠️ CRITICAL RULE:**
+- **Never start coding until you say "proceed"**
+- I discuss approach, ask clarifying questions, review files
+- You confirm the plan, then say "proceed"
+- Only then do I output code or describe changes
+
 **When you say "Generate a commit":**
 1. Create COMMIT_MESSAGE.txt
 2. Update SESSION_START.md

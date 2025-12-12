@@ -161,10 +161,15 @@ godot --path . audio_manager_test.tscn
 
 ## 💡 Session Workflow
 
+**⚠️ CRITICAL RULE: Never start coding until you say "proceed"**
+
 **Starting work:**
 1. Upload SESSION_START.md (this file)
 2. Upload specific code files you're working on
 3. I request any other files I need
+4. I discuss the approach, ask clarifying questions
+5. **You review the plan and say "proceed"**
+6. Only then do I output code or describe changes
 
 **During work:**
 - I describe code changes
