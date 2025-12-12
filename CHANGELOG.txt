@@ -6,6 +6,29 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.5.0+):
 -------------------------
+[2025-12-12 18:45] [POLISH] Reduced ambient sound volumes by ~30% for more subtle atmosphere
+[2025-12-12 18:45] [MINOR] Updated VOLUME_ADJUSTMENTS in ambient_manager.gd (wind, birds, crickets quieter)
+[2025-12-12 18:30] [MAJOR] Task 2.3 complete - Ambient Environmental Sound System implemented
+[2025-12-12 18:30] [FEATURE] Biome-aware ambient loops with 6 biome configurations (Grassland, Forest, Beach, Mountain, Desert, Snow)
+[2025-12-12 18:30] [FEATURE] Occasional/rare frequency system prevents audio spam (20%-60% play chance)
+[2025-12-12 18:30] [FEATURE] Time-based ambient layers (birds day, crickets/frogs night)
+[2025-12-12 18:30] [FEATURE] Smart timer system - 15-30s play duration, 45-90s silence between
+[2025-12-12 18:30] [FEATURE] Custom volume per sound type for perfect balance
+[2025-12-12 18:30] [FEATURE] Smooth biome transitions with 2-second fade-outs
+[2025-12-12 18:30] [FEATURE] 10-second startup delay after game launch
+[2025-12-12 18:30] [FEATURE] Dynamic biome detection every 2 seconds
+[2025-12-12 18:30] [MINOR] Created ambient_manager.gd AutoLoad (~400 lines)
+[2025-12-12 18:30] [DOC] Created AMBIENT_MANAGER_README.md comprehensive documentation
+[2025-12-12 18:00] [MAJOR] Task 2.2 complete - Music Manager & AI Music System implemented
+[2025-12-12 18:00] [FEATURE] Day/night music rotation with 4 tracks each (8 total)
+[2025-12-12 18:00] [FEATURE] Smart track variety system - prevents repetition, never plays same twice in a row
+[2025-12-12 18:00] [FEATURE] Smooth 1-hour crossfade transitions at dawn/dusk (5:30-6:30 AM/PM)
+[2025-12-12 18:00] [FEATURE] 30-second crossfade duration for seamless transitions
+[2025-12-12 18:00] [FEATURE] 8-second startup delay for calm intro before music
+[2025-12-12 18:00] [FEATURE] Autonomous operation - monitors day/night cycle automatically
+[2025-12-12 18:00] [FEATURE] History-based rotation - tracks last 2 played tracks
+[2025-12-12 18:00] [MINOR] Created music_manager.gd AutoLoad (~250 lines)
+[2025-12-12 18:00] [DOC] Created MUSIC_MANAGER_README.md comprehensive documentation
 [2025-12-12 09:15] [FIX] Removed log despawn sound - eliminated resource_break audio spam when multiple logs disappear
 [2025-12-12 09:15] [POLISH] Log despawn now silent - particle effects remain, audio removed for better balance
 [2025-12-12 09:15] [MINOR] Updated log_piece.gd - removed AudioManager.play_sound() call from despawn() function
@@ -14,7 +37,7 @@ Recent Changes (v0.5.0+):
 [2025-12-12 04:45] [FEATURE] Footstep timing: 0.45s walk interval, 0.28s sprint interval
 [2025-12-12 04:45] [FEATURE] 12 footstep audio variants (3 per surface) with automatic pitch variation
 [2025-12-12 04:45] [FEATURE] Dual ground detection: floor check + velocity-based steep slope support
-[2025-12-12 04:45] [FEATURE] Works on slopes up to 80Â° (beyond floor_max_angle limit)
+[2025-12-12 04:45] [FEATURE] Works on slopes up to 80Ã‚Â° (beyond floor_max_angle limit)
 [2025-12-12 04:45] [FEATURE] Smooth biome transitions with 3% buffer zones (2-4 meter transition)
 [2025-12-12 04:45] [FIX] Beach spawn zone override removed - footsteps now match visual biome
 [2025-12-12 04:45] [FIX] Steep slope detection using velocity thresholds (y < 3.5, length > 0.3)
@@ -35,14 +58,14 @@ Recent Changes (v0.5.0+):
 [2025-12-12 08:30] [MINOR] Updated log_piece.gd - added resource_break sound on log despawn
 [2025-12-12 08:30] [MINOR] Added helper methods to harvesting_system.gd - is_looking_at_resource(), is_looking_at_container()
 [2025-12-12 08:30] [FIX] Tree falling physics improved - faster, more reliable falling behavior
-[2025-12-12 08:30] [FIX] Reduced damping (linear: 2.5â†’0.8, angular: 3.5â†’1.2) for dramatic falls
-[2025-12-12 08:30] [FIX] Increased gravity (1.5â†’2.0) and initial forces (push: 8â†’15, torque: 12â†’20)
-[2025-12-12 08:30] [FIX] More aggressive impact detection (wait: 1.5sâ†’0.5s, velocity threshold more lenient)
-[2025-12-12 08:30] [FIX] Backup timer reduced (2.5sâ†’2.0s) ensures trees always break within 2 seconds
+[2025-12-12 08:30] [FIX] Reduced damping (linear: 2.5Ã¢â€ â€™0.8, angular: 3.5Ã¢â€ â€™1.2) for dramatic falls
+[2025-12-12 08:30] [FIX] Increased gravity (1.5Ã¢â€ â€™2.0) and initial forces (push: 8Ã¢â€ â€™15, torque: 12Ã¢â€ â€™20)
+[2025-12-12 08:30] [FIX] More aggressive impact detection (wait: 1.5sÃ¢â€ â€™0.5s, velocity threshold more lenient)
+[2025-12-12 08:30] [FIX] Backup timer reduced (2.5sÃ¢â€ â€™2.0s) ensures trees always break within 2 seconds
 [2025-12-12 02:10] [MAJOR] Task 1.2 complete - AI Sound Generation & Import complete
 [2025-12-12 02:10] [MAJOR] Generated 48 audio files - 40 SFX + 8 music tracks using SFX Engine + Mubert
 [2025-12-12 02:10] [FEATURE] Harvesting sounds - 6 files (axe_chop, pickaxe_hit, mushroom_pick, strawberry_pick, resource_break, wrong_tool)
-[2025-12-12 02:10] [FEATURE] Movement sounds - 12 footstep files (grass, stone, sand, snow Ã— 3 variants each)
+[2025-12-12 02:10] [FEATURE] Movement sounds - 12 footstep files (grass, stone, sand, snow Ãƒâ€” 3 variants each)
 [2025-12-12 02:10] [FEATURE] Building sounds - 3 files (block_place, block_remove, build_mode_toggle)
 [2025-12-12 02:10] [FEATURE] UI sounds - 9 files (inventory, crafting, pickup, warnings, health/hunger alerts)
 [2025-12-12 02:10] [FEATURE] Container sounds - 2 files (chest_open, chest_close)
@@ -109,11 +132,11 @@ Priority 3 - Polish & Refinement (2-4 sessions):
 - Controller rumble (optional - tree falling, harvesting feedback)
 
 DESIGN DECISIONS:
-âœ“ Music Style: Pure ambient drone (minimal, atmospheric, non-intrusive)
-âœ“ Footstep Complexity: Biome-aware (4 surfaces: grass, stone, sand, snow)
-âœ“ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-âœ“ Music Variety: Day/night variation (8 tracks total - 4 day, 4 night)
-âœ“ Budget Approach: $22 investment for professional commercial-licensed audio
+Ã¢Å“â€œ Music Style: Pure ambient drone (minimal, atmospheric, non-intrusive)
+Ã¢Å“â€œ Footstep Complexity: Biome-aware (4 surfaces: grass, stone, sand, snow)
+Ã¢Å“â€œ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
+Ã¢Å“â€œ Music Variety: Day/night variation (8 tracks total - 4 day, 4 night)
+Ã¢Å“â€œ Budget Approach: $22 investment for professional commercial-licensed audio
 
 AUDIO FILE MANIFEST (48 files total):
 - 40 SFX files (harvesting: 6, movement: 12, building: 3, UI: 9, container: 2, ambient: 8)
@@ -121,10 +144,10 @@ AUDIO FILE MANIFEST (48 files total):
 - Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
 
 FEATURES COMPLETED:
-âœ“ Audio Manager - Sound pooling, volume categories, pitch variation (Task 1.1)
-âœ“ AI Sound Generation - 48 audio files generated and imported (Task 1.2)
-âœ“ Harvesting SFX - Axe, pickaxe, mushroom/strawberry picking, tool switch (Task 1.3)
-âœ“ Movement Sounds - Biome-aware footsteps with steep slope detection (Task 2.1)
+Ã¢Å“â€œ Audio Manager - Sound pooling, volume categories, pitch variation (Task 1.1)
+Ã¢Å“â€œ AI Sound Generation - 48 audio files generated and imported (Task 1.2)
+Ã¢Å“â€œ Harvesting SFX - Axe, pickaxe, mushroom/strawberry picking, tool switch (Task 1.3)
+Ã¢Å“â€œ Movement Sounds - Biome-aware footsteps with steep slope detection (Task 2.1)
 
 PROGRESS: 4/13 tasks complete (31%)
 

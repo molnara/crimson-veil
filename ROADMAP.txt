@@ -13,10 +13,10 @@ Budget: $22 actual ($8 SFX Engine + $14 Mubert - saved $12)
 Timeline: 12-15 sessions (~24-30% capacity)
 
 DESIGN DECISIONS (LOCKED IN):
-âœ“ Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
-âœ“ Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
-âœ“ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-âœ“ Music Variety: Day/Night Variation (8 tracks: 4 day + 4 night)
+Ã¢Å“â€œ Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
+Ã¢Å“â€œ Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
+Ã¢Å“â€œ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
+Ã¢Å“â€œ Music Variety: Day/Night Variation (8 tracks: 4 day + 4 night)
 
 PRIORITY 1 - Core Sound System (Foundation) [5 sessions] - COMPLETE
 [X] Audio Manager Architecture [Sonnet] - Singleton with sound pooling, volume controls, pitch variation (COMPLETE 2025-12-11)
@@ -28,8 +28,8 @@ PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions] - IN PROGRESS
 [ ] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration
 [ ] UI Sounds [Sonnet] - inventory_toggle, craft_complete, pickup, warnings integration
 [ ] Container Sounds [Sonnet] - chest_open, chest_close integration
-[ ] Music Manager & AI Music System [Sonnet] - Day/night ambient tracks, crossfade system
-[ ] Ambient Environmental Sounds [Sonnet] - Wind, ocean, wildlife layers (8 ambient loops)
+[X] Music Manager & AI Music System [Sonnet] - Day/night ambient tracks, crossfade system, smart rotation (COMPLETE 2025-12-12)
+[X] Ambient Environmental Sounds [Sonnet] - Biome-aware ambient loops with occasional/rare frequency (COMPLETE 2025-12-12)
 
 PRIORITY 3 - Polish & Refinement (Optional) [2-4 sessions]
 [ ] Settings Menu - Audio Controls [Sonnet] - Volume sliders, mute toggles, test buttons
@@ -43,7 +43,7 @@ AUDIO FILE MANIFEST (48 files total - ALL GENERATED):
 - Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
 - Actual budget: $22 (under $34 target by $12)
 
-SPRINT PROGRESS: 4/13 tasks complete (31%)
+SPRINT PROGRESS: 6/13 tasks complete (46%)
 
 
 NEXT UP (After v0.5.0)
@@ -63,7 +63,7 @@ HIGH PRIORITY:
 [ ] Workbench & Advanced Crafting [Sonnet] - DEFERRED FROM v0.5.0 - Workbench placement, proximity, recipes
 [ ] Inventory Organization [Sonnet] - DEFERRED FROM v0.5.0 - Sort, quick-stack, drag-and-drop, animations
 [ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers [Sonnet] - Stone â†’ Iron â†’ Steel progression path
+[ ] Tool tiers [Sonnet] - Stone Ã¢â€ â€™ Iron Ã¢â€ â€™ Steel progression path
 [ ] Durability system [Sonnet] - Tools degrade with use (creates resource sink)
 
 MEDIUM PRIORITY:
@@ -103,8 +103,10 @@ SOMEDAY/MAYBE (Ideas to explore)
 COMPLETED (Recent)
 ------------------
 v0.5.0 IN PROGRESS (December 12, 2025) - "Atmosphere & Audio"
-Sprint Progress: 4/13 tasks (31%)
+Sprint Progress: 6/13 tasks (46%)
 
+[X] Ambient Environmental Sounds [Sonnet] - Biome-aware ambient loops with occasional/rare frequency system
+[X] Music Manager & AI Music System [Sonnet] - Day/night music rotation with smart track variety and crossfades
 [X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footstep system with steep slope detection
 [X] SFX Integration - Harvesting Sounds [Sonnet] - Wired harvesting, tool switch, resource break sounds
 [X] AI Sound Generation & Import [Sonnet] - 48 audio files generated via SFX Engine + Mubert
@@ -135,7 +137,7 @@ Commit: d53049d
 
 Pre-v0.4.0 Features:
 [X] Xbox controller support [Sonnet] - Full analog movement/camera, all buttons mapped
-[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe â†” Pickaxe
+[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe Ã¢â€ â€ Pickaxe
 [X] Valheim-style log breaking physics [Sonnet] - Trees break into 3-5 log pieces on impact
 [X] Impact-based log shattering [Sonnet] - Log counts vary by tree type (normal: 3-5, pine: 4-6, palm: 2-3)
 [X] Log despawn effects [Sonnet] - Brown particle "poof" with 1-4s randomized lifetimes
@@ -150,7 +152,7 @@ Pre-v0.4.0 Features:
 [X] Crafting system [Sonnet] - 5 starter recipes with UI (Press R to open)
 [X] Cloud system rewrite [Sonnet] - Perlin noise for organic shapes, no straight edges
 [X] Harvest highlight system [Sonnet] - Green outline for correct tool, red for wrong tool
-[X] Sun/moon rendering fix [Sonnet] - Moved to z=Â±500 for proper depth sorting
+[X] Sun/moon rendering fix [Sonnet] - Moved to z=Ã‚Â±500 for proper depth sorting
 [X] Crosshair enhancement [Sonnet] - Cross-shaped with outline for better visibility
 [X] Tree visual extraction [Sonnet] - Extracted to tree_visual.gd (reduced vegetation_spawner.gd from 2,075 to 1,457 lines)
 [X] Minimal tool system [Sonnet] - Axe/Pickaxe with requirement checking and visual indicators
@@ -159,20 +161,20 @@ Pre-v0.4.0 Features:
 DESIGN QUESTIONS / DECISIONS NEEDED
 ------------------------------------
 v0.5.0 Sprint Decisions (Made):
-âœ“ Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
-âœ“ Music style: Pure ambient drone (meditative, cozy-lonely tone)
-âœ“ Footsteps: Biome-aware (4 surfaces for immersion without complexity)
-âœ“ Volume balance: Hybrid approach (realistic ambient, punchy actions)
-âœ“ Budget: $22 investment for professional quality (saved $12)
-âœ“ Music variety: Day/night variation (8 tracks: 4 day + 4 night)
+Ã¢Å“â€œ Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
+Ã¢Å“â€œ Music style: Pure ambient drone (meditative, cozy-lonely tone)
+Ã¢Å“â€œ Footsteps: Biome-aware (4 surfaces for immersion without complexity)
+Ã¢Å“â€œ Volume balance: Hybrid approach (realistic ambient, punchy actions)
+Ã¢Å“â€œ Budget: $22 investment for professional quality (saved $12)
+Ã¢Å“â€œ Music variety: Day/night variation (8 tracks: 4 day + 4 night)
 
 v0.4.0 Sprint Decisions (Made):
-âœ“ Storage scope: Core + Polish approach (1 week timeline)
-âœ“ Container UI: Click-to-transfer first, drag-and-drop later
-âœ“ Container destruction: Harvestable (break to get materials back)
-âœ“ Item stacking: Full implementation this sprint
-âœ“ Workbench scope: Placement + proximity, defer recipe gating
-âœ“ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
+Ã¢Å“â€œ Storage scope: Core + Polish approach (1 week timeline)
+Ã¢Å“â€œ Container UI: Click-to-transfer first, drag-and-drop later
+Ã¢Å“â€œ Container destruction: Harvestable (break to get materials back)
+Ã¢Å“â€œ Item stacking: Full implementation this sprint
+Ã¢Å“â€œ Workbench scope: Placement + proximity, defer recipe gating
+Ã¢Å“â€œ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
 
 Future Decisions (Still Open) - Use [Opus] for complex design decisions:
 ? Should tools degrade/break or have infinite durability? (affects resource loops) [Opus]
@@ -232,41 +234,41 @@ POTENTIAL ISSUES (from Code Review - not yet confirmed):
 
 SPRINT RISK ASSESSMENT (v0.5.0 - Current)
 ------------------------------------------
-ðŸŸ¢ LOW RISK: Audio system isolation - Won't break existing gameplay systems
+Ã°Å¸Å¸Â¢ LOW RISK: Audio system isolation - Won't break existing gameplay systems
    Mitigation: Audio manager is separate AutoLoad, no gameplay logic dependencies
    
-ðŸŸ¡ MEDIUM RISK: AI generation quality variance
+Ã°Å¸Å¸Â¡ MEDIUM RISK: AI generation quality variance
    Mitigation: Use free tier for testing, upgrade only when satisfied with quality
    
-ðŸŸ¢ LOW RISK: Budget overrun ($22 actual vs $34 target)
+Ã°Å¸Å¸Â¢ LOW RISK: Budget overrun ($22 actual vs $34 target)
    Mitigation: SFX Engine is pay-per-credit (only buy what needed), Mubert is 1-month subscription
    
-ðŸŸ¢ LOW RISK: Integration complexity (many files to modify)
+Ã°Å¸Å¸Â¢ LOW RISK: Integration complexity (many files to modify)
    Mitigation: Start with one system (harvesting), test, then expand to others
    
-ðŸŸ¡ MEDIUM RISK: Music looping seamlessness
+Ã°Å¸Å¸Â¡ MEDIUM RISK: Music looping seamlessness
    Mitigation: Test loops extensively, use Mubert's loop-friendly generation
 
 
 SPRINT RISK ASSESSMENT (v0.4.0 - COMPLETED)
 --------------------------------------------
-âœ“ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
+Ã¢Å“â€œ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
    Resolution: Scene-based architecture + click-to-transfer simplicity
    
-ðŸŸ¢ LOW RISK: Save compatibility for stacking changes
+Ã°Å¸Å¸Â¢ LOW RISK: Save compatibility for stacking changes
    Status: Design accommodates future save system
    
-ðŸŸ¢ LOW RISK: Controller UI navigation for containers
+Ã°Å¸Å¸Â¢ LOW RISK: Controller UI navigation for containers
    Status: Mouse/keyboard working, controller support deferred
    
-âœ“ LOW RISK: Feature creep - MITIGATED
+Ã¢Å“â€œ LOW RISK: Feature creep - MITIGATED
    Resolution: Stuck to acceptance criteria, deferred extras to backlog
 
 
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore â†’ Gather â†’ Craft â†’ Build â†’ Unlock new biomes â†’ Repeat
+- Core loop: Explore Ã¢â€ â€™ Gather Ã¢â€ â€™ Craft Ã¢â€ â€™ Build Ã¢â€ â€™ Unlock new biomes Ã¢â€ â€™ Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
