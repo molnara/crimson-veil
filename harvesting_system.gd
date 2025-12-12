@@ -98,102 +98,142 @@ func update_raycast():
 	# Check for resources (Layer 2, 5m range)
 	var space_state = player.get_world_3d().direct_space_state
 	var from = camera.global_position
-	var to = from - camera.global_transform.basis.z * raycast_distance
+	var to = from + camera.global_transform.basis.z * -raycast_distance
 	
-	# Create raycast query parameters
 	var query = PhysicsRayQueryParameters3D.create(from, to)
-	query.collision_mask = 2  # Layer 2 for resources
-	query.collide_with_areas = false
-	query.collide_with_bodies = true
+	query.collision_mask = 2  # Layer 2 - harvestable resources
 	
 	var result = space_state.intersect_ray(query)
 	
-	var new_target: HarvestableResource = null
-	if result and result.collider is HarvestableResource:
-		new_target = result.collider as HarvestableResource
-	
-	# Update target if changed
-	if new_target != current_target:
-		# Remove highlight from old target
+	if result:
+		var collider = result.collider
+		if collider is HarvestableResource:
+			# Found a new target
+			if collider != current_target:
+				# Remove highlight from old target
+				if current_target:
+					remove_highlight(current_target)
+				
+				# Set new target
+				current_target = collider
+				
+				# Add highlight to new target
+				add_highlight(current_target)
+				
+				emit_signal("target_changed", current_target)
+				update_ui()
+	else:
+		# No target found
 		if current_target:
 			remove_highlight(current_target)
-		
-		# Don't cancel if we just completed a harvest
-		if just_completed_harvest:
-			just_completed_harvest = false
-		# Cancel harvest if we were harvesting something else
-		elif is_harvesting and current_target != null:
-			cancel_harvest()
-		
-		current_target = new_target
-		
-		# Add highlight to new target
-		if current_target:
-			add_highlight(current_target)
-		
-		emit_signal("target_changed", current_target)
-		update_ui()
+			current_target = null
+			emit_signal("target_changed", null)
+			update_ui()
 
 func check_for_container() -> Node:
-	"""Check for containers at shorter range (3m)"""
+	"""Check if player is looking at a container (Layer 3, 3m range)"""
+	if camera == null:
+		return null
+	
 	var space_state = player.get_world_3d().direct_space_state
 	var from = camera.global_position
-	var to = from - camera.global_transform.basis.z * container_raycast_distance
+	var to = from + camera.global_transform.basis.z * -container_raycast_distance
 	
 	var query = PhysicsRayQueryParameters3D.create(from, to)
-	query.collision_mask = 4  # Layer 3 (2^2 = 4) - interactive objects
-	query.collide_with_areas = false
-	query.collide_with_bodies = true
+	query.collision_mask = 4  # Layer 3 - interactive objects (containers)
 	
 	var result = space_state.intersect_ray(query)
 	
-	if result and result.collider:
-		# The collider is the StaticBody3D child
-		var parent = result.collider.get_parent()
-		if parent and parent.has_method("open"):
-			return parent
+	if result:
+		var collider = result.collider
+		# Check if it's a storage container
+		if collider.has_method("open_container"):
+			return collider
 	
 	return null
 
 func add_container_highlight(container: Node):
-	"""Add green outline to container"""
+	"""Add green highlight to container"""
 	if not container or not outline_material:
 		return
 	
-	var mesh_instance = null
-	if container.has_method("get_mesh_instance"):
-		mesh_instance = container.get_mesh_instance()
-	
-	if not mesh_instance:
-		return
-	
-	# Create highlight material
-	var highlight_mat = outline_material.duplicate()
-	highlight_mat.set_shader_parameter("outline_color", CORRECT_TOOL_COLOR)  # Always green for containers
-	highlight_mat.set_shader_parameter("outline_width", OUTLINE_WIDTH)
-	
-	# Apply outline
-	mesh_instance.material_overlay = highlight_mat
-	
-	if not highlighted_meshes.has(mesh_instance):
-		highlighted_meshes.append(mesh_instance)
+	# Find mesh instances in container
+	var meshes = _find_mesh_instances(container)
+	for mesh_instance in meshes:
+		if mesh_instance:
+			mesh_instance.material_overlay = outline_material.duplicate()
+			mesh_instance.material_overlay.set_shader_parameter("outline_color", Color(0.2, 1.0, 0.3, 1.0))  # Green
+			mesh_instance.material_overlay.set_shader_parameter("outline_width", OUTLINE_WIDTH)
 
 func remove_container_highlight(container: Node):
-	"""Remove outline from container"""
+	"""Remove highlight from container"""
 	if not container:
 		return
 	
-	var mesh_instance = null
-	if container.has_method("get_mesh_instance"):
-		mesh_instance = container.get_mesh_instance()
-	
-	if not mesh_instance:
+	var meshes = _find_mesh_instances(container)
+	for mesh_instance in meshes:
+		if mesh_instance:
+			mesh_instance.material_overlay = null
+
+func add_highlight(resource: HarvestableResource):
+	"""Add colored outline to resource based on tool correctness"""
+	if not resource or not outline_material:
 		return
 	
-	mesh_instance.material_overlay = null
+	# Determine color based on tool requirement
+	var color = CORRECT_TOOL_COLOR
 	
-	if highlighted_meshes.has(mesh_instance):
-		highlighted_meshes.erase(mesh_instance)
+	if tool_system:
+		var resource_info = resource.get_info()
+		var resource_type = resource_info.get("type", "generic")
+		if not tool_system.can_harvest(resource_type):
+			color = WRONG_TOOL_COLOR
+	
+	# Find all mesh instances in the resource
+	var meshes = _find_mesh_instances(resource)
+	
+	for mesh_instance in meshes:
+		if mesh_instance:
+			# Create a duplicate material for this mesh
+			var mat = outline_material.duplicate()
+			mat.set_shader_parameter("outline_color", color)
+			mat.set_shader_parameter("outline_width", OUTLINE_WIDTH)
+			
+			mesh_instance.material_overlay = mat
+			highlighted_meshes.append(mesh_instance)
+
+func _find_mesh_instances(node: Node) -> Array[MeshInstance3D]:
+	"""Recursively find all MeshInstance3D children"""
+	var meshes: Array[MeshInstance3D] = []
+	
+	if node is MeshInstance3D:
+		meshes.append(node)
+	
+	for child in node.get_children():
+		meshes.append_array(_find_mesh_instances(child))
+	
+	return meshes
+
+func update_highlight_color():
+	"""Update highlight color based on current tool (called when tool changes)"""
+	if current_target:
+		# Remove and re-add highlight to update color
+		remove_highlight(current_target)
+		add_highlight(current_target)
+
+func remove_highlight(resource: HarvestableResource):
+	"""Remove outline from resource"""
+	if not resource:
+		return
+	
+	# Find all mesh instances and remove overlay
+	var meshes = _find_mesh_instances(resource)
+	
+	for mesh_instance in meshes:
+		if mesh_instance:
+			mesh_instance.material_overlay = null
+			if highlighted_meshes.has(mesh_instance):
+				highlighted_meshes.erase(mesh_instance)
 
 func start_harvest():
 	"""Start harvesting the current target"""
@@ -208,6 +248,9 @@ func start_harvest():
 		if not tool_system.can_harvest(resource_type):
 			var required_tool = tool_system.get_required_tool_name(resource_type)
 			print("Cannot harvest ", current_target.resource_name, " - requires ", required_tool)
+			
+			# AUDIO: Play wrong tool sound
+			AudioManager.play_sound("wrong_tool", "sfx")
 			return
 	
 	if current_target.start_harvest(player):
@@ -220,6 +263,36 @@ func start_harvest():
 		emit_signal("harvest_started", current_target)
 		update_ui()
 		print("Started harvesting: ", current_target.resource_name)
+		
+		# AUDIO: Play initial hit sound based on resource type
+		_play_harvest_hit_sound(current_target)
+
+func _play_harvest_hit_sound(resource: HarvestableResource):
+	"""Play the appropriate hit sound based on resource type"""
+	if not resource:
+		return
+	
+	var resource_info = resource.get_info()
+	var resource_type = resource_info.get("type", "generic")
+	
+	# Determine which sound to play
+	var sound_name = ""
+	match resource_type:
+		"wood":
+			sound_name = "axe_chop"
+		"stone", "ore":
+			sound_name = "pickaxe_hit"
+		"foliage":
+			# Check specific resource name for mushroom vs strawberry
+			if resource.resource_name.to_lower().contains("mushroom"):
+				sound_name = "mushroom_pick"
+			elif resource.resource_name.to_lower().contains("strawberry"):
+				sound_name = "strawberry_pick"
+			else:
+				sound_name = "mushroom_pick"  # Default for foliage
+	
+	if sound_name != "":
+		AudioManager.play_sound(sound_name, "sfx")
 
 func update_harvest_progress(delta: float):
 	"""Update the progress of the current harvest"""
@@ -272,6 +345,9 @@ func _on_tool_equipped(_tool):
 	update_ui()
 	# Update highlight color to match new tool
 	update_highlight_color()
+	
+	# AUDIO: Play tool switch sound
+	AudioManager.play_sound("tool_switch", "ui", false)
 
 func cancel_harvest():
 	"""Cancel the current harvest"""
@@ -298,128 +374,35 @@ func update_ui():
 			print("Hiding progress bar")
 	
 	if target_label:
-		if current_target:
-			# Show target name when looking at resource
-			var info = current_target.get_info()
-			target_label.text = info["name"]
-			target_label.visible = true
+		if current_target and not is_harvesting:
+			var resource_info = current_target.get_info()
+			var tool_required = resource_info.get("tool_required", "none")
 			
-			# Check if we have the right tool - color label red if not
-			if tool_system:
-				var resource_type = info.get("type", "generic")
-				var has_correct_tool = tool_system.can_harvest(resource_type)
-				
-				if has_correct_tool:
-					# White for correct tool
-					target_label.add_theme_color_override("font_color", Color.WHITE)
-				else:
-					# Red for wrong tool
-					target_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-					# Show required tool in the label
-					var required_tool = tool_system.get_required_tool_name(resource_type)
-					target_label.text = info["name"] + " (Requires " + required_tool + ")"
+			# Check if we have the right tool
+			var has_correct_tool = true
+			if tool_system and tool_required != "none":
+				var resource_type = resource_info.get("type", "generic")
+				has_correct_tool = tool_system.can_harvest(resource_type)
+			
+			# Update label
+			var label_text = resource_info.get("name", "Resource")
+			if not has_correct_tool and tool_system:
+				var required_tool = tool_system.get_required_tool_name(resource_info.get("type", "generic"))
+				label_text += " (Requires " + required_tool + ")"
+				target_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))  # Red
+			else:
+				target_label.remove_theme_color_override("font_color")
+			
+			target_label.text = label_text
+			target_label.visible = true
 		else:
 			target_label.visible = false
-	
-	# Debug
-	if progress_bar:
-		print("UI Update - Progress bar visible: ", progress_bar.visible, " is_harvesting: ", is_harvesting)
-
-func handle_input(event: InputEvent):
-	"""Handle input events for harvesting"""
-	# Start harvest on left click
-	if event.is_action_pressed("interact"):  # We'll need to add this action
-		if current_target and not is_harvesting:
-			start_harvest()
-	
-	# Cancel harvest on release or movement
-	if event.is_action_released("interact"):
-		if is_harvesting:
-			cancel_harvest()
 
 func is_looking_at_resource() -> bool:
 	"""Check if player is currently looking at a harvestable resource"""
 	return current_target != null
 
-func get_current_target() -> HarvestableResource:
-	"""Get the resource the player is currently looking at"""
-	return current_target
+func is_looking_at_container() -> bool:
+	"""Check if player is currently looking at a container"""
+	return current_container != null
 
-func add_highlight(resource: HarvestableResource):
-	"""Add outline highlight to a harvestable resource"""
-	if not outline_material or not resource:
-		return
-	
-	# Determine highlight color based on tool requirement
-	var has_correct_tool = true
-	if tool_system:
-		var info = resource.get_info()
-		var resource_type = info.get("type", "generic")
-		has_correct_tool = tool_system.can_harvest(resource_type)
-	
-	var highlight_color = CORRECT_TOOL_COLOR if has_correct_tool else WRONG_TOOL_COLOR
-	
-	# Find all mesh instances in the resource
-	var meshes = find_mesh_instances_recursive(resource)
-	
-	for mesh_instance in meshes:
-		if not mesh_instance or not mesh_instance.mesh:
-			continue
-		
-		# Create a duplicate outline material for this mesh
-		var outline_mat = outline_material.duplicate()
-		outline_mat.set_shader_parameter("outline_color", highlight_color)
-		outline_mat.set_shader_parameter("outline_width", OUTLINE_WIDTH)
-		
-		# Add outline as next pass (renders after main material)
-		var current_material = mesh_instance.get_surface_override_material(0)
-		if not current_material:
-			current_material = mesh_instance.mesh.surface_get_material(0)
-		
-		if current_material:
-			current_material.next_pass = outline_mat
-		
-		highlighted_meshes.append(mesh_instance)
-
-func remove_highlight(resource: HarvestableResource):
-	"""Remove outline highlight from a harvestable resource"""
-	if not resource:
-		return
-	
-	# Find all mesh instances in the resource
-	var meshes = find_mesh_instances_recursive(resource)
-	
-	for mesh_instance in meshes:
-		if not mesh_instance or not mesh_instance.mesh:
-			continue
-		
-		# Remove outline by clearing next_pass
-		var current_material = mesh_instance.get_surface_override_material(0)
-		if not current_material:
-			current_material = mesh_instance.mesh.surface_get_material(0)
-		
-		if current_material and current_material.next_pass:
-			current_material.next_pass = null
-		
-		# Remove from tracked list
-		if mesh_instance in highlighted_meshes:
-			highlighted_meshes.erase(mesh_instance)
-
-func find_mesh_instances_recursive(node: Node) -> Array[MeshInstance3D]:
-	"""Recursively find all MeshInstance3D children of a node"""
-	var meshes: Array[MeshInstance3D] = []
-	
-	if node is MeshInstance3D:
-		meshes.append(node)
-	
-	for child in node.get_children():
-		meshes.append_array(find_mesh_instances_recursive(child))
-	
-	return meshes
-
-func update_highlight_color():
-	"""Update the highlight color when tool changes (called by _on_tool_equipped)"""
-	if current_target:
-		# Remove and re-add highlight with new color
-		remove_highlight(current_target)
-		add_highlight(current_target)

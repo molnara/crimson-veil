@@ -38,6 +38,9 @@ func _process(delta):
 
 func despawn():
 	"""Despawn log with particle effect"""
+	# Play despawn sound effect
+	AudioManager.play_sound("resource_break", "sfx")
+	
 	# Save position and tree reference before we queue_free
 	var log_position = global_position
 	var scene_tree = get_tree()

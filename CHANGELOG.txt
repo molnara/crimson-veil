@@ -6,6 +6,22 @@ Format: [YYYY-MM-DD HH:MM] - Brief description of change
 
 Recent Changes (v0.5.0+):
 -------------------------
+[2025-12-12 08:30] [MAJOR] Task 1.3 complete - Harvesting Sound Integration complete
+[2025-12-12 08:30] [FEATURE] Harvesting sounds integrated - axe_chop on trees, pickaxe_hit on rocks, mushroom/strawberry pick sounds
+[2025-12-12 08:30] [FEATURE] Resource break sound plays on harvest completion for all resource types
+[2025-12-12 08:30] [FEATURE] Wrong tool sound provides immediate negative feedback
+[2025-12-12 08:30] [FEATURE] Tool switch sound on equipment change (no pitch variation for consistency)
+[2025-12-12 08:30] [FEATURE] Log despawn sound - each log piece plays "poof" sound when disappearing after 4 seconds
+[2025-12-12 08:30] [MINOR] Updated harvesting_system.gd - added 4 audio hooks (wrong tool, hit sound, resource break, tool switch)
+[2025-12-12 08:30] [MINOR] Updated harvestable_resource.gd - added resource_break sound on completion
+[2025-12-12 08:30] [MINOR] Updated harvestable_tree.gd - added resource_break sound to tree-specific completion
+[2025-12-12 08:30] [MINOR] Updated log_piece.gd - added resource_break sound on log despawn
+[2025-12-12 08:30] [MINOR] Added helper methods to harvesting_system.gd - is_looking_at_resource(), is_looking_at_container()
+[2025-12-12 08:30] [FIX] Tree falling physics improved - faster, more reliable falling behavior
+[2025-12-12 08:30] [FIX] Reduced damping (linear: 2.5→0.8, angular: 3.5→1.2) for dramatic falls
+[2025-12-12 08:30] [FIX] Increased gravity (1.5→2.0) and initial forces (push: 8→15, torque: 12→20)
+[2025-12-12 08:30] [FIX] More aggressive impact detection (wait: 1.5s→0.5s, velocity threshold more lenient)
+[2025-12-12 08:30] [FIX] Backup timer reduced (2.5s→2.0s) ensures trees always break within 2 seconds
 [2025-12-12 02:10] [MAJOR] Task 1.2 complete - AI Sound Generation & Import complete
 [2025-12-12 02:10] [MAJOR] Generated 48 audio files - 40 SFX + 8 music tracks using SFX Engine + Mubert
 [2025-12-12 02:10] [FEATURE] Harvesting sounds - 6 files (axe_chop, pickaxe_hit, mushroom_pick, strawberry_pick, resource_break, wrong_tool)
@@ -75,11 +91,11 @@ Priority 3 - Polish & Refinement (2-4 sessions):
 - Controller rumble (optional - tree falling, harvesting feedback)
 
 DESIGN DECISIONS:
-Ã¢Å“â€¦ Music Style: Pure ambient drone (minimal, atmospheric, non-intrusive)
-Ã¢Å“â€¦ Footstep Complexity: Biome-aware (4 surfaces: grass, stone, sand, snow)
-Ã¢Å“â€¦ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-Ã¢Å“â€¦ Music Variety: Day/night variation (2 tracks total)
-Ã¢Å“â€¦ Budget Approach: $34 investment for professional commercial-licensed audio
+✓ Music Style: Pure ambient drone (minimal, atmospheric, non-intrusive)
+✓ Footstep Complexity: Biome-aware (4 surfaces: grass, stone, sand, snow)
+✓ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
+✓ Music Variety: Day/night variation (2 tracks total)
+✓ Budget Approach: $34 investment for professional commercial-licensed audio
 
 AUDIO FILE MANIFEST (43 files):
 - 22 SFX files (harvesting, movement, building, UI, container)
@@ -150,7 +166,7 @@ DOCUMENTATION & PLANNING:
 
 CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-12 06:15] [DOC] Added commit hashes to Version History (v0.2.0: cc9669a, v0.3.0: aecc232)
-[2025-12-12 06:15] [DOC] Added "CHANGELOG Ã¢â€ â€™ Git Sync" workflow section to DEVELOPMENT_GUIDE.md
+[2025-12-12 06:15] [DOC] Added "CHANGELOG → Git Sync" workflow section to DEVELOPMENT_GUIDE.md
 [2025-12-12 06:15] [DOC] Updated commit checklist to include using CHANGELOG as commit message
 [2025-12-12 06:15] [DOC] Added v0.2.0 description to Version History
 [2025-12-12 06:00] [DOC] Fixed date typo in Technical Debt section (2024 -> 2025)
@@ -174,11 +190,11 @@ CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-11 23:45] [DOC] Major DEVELOPMENT_GUIDE.md cleanup and modernization
 [2025-12-11 23:45] [DOC] Removed line counts from file index (too cumbersome to maintain)
 [2025-12-11 23:45] [DOC] Consolidated duplicate Storage & Interaction Systems sections
-[2025-12-11 23:45] [DOC] Fixed Unicode encoding issues (garbled characters Ã¢â€ â€™ clean symbols)
+[2025-12-11 23:45] [DOC] Fixed Unicode encoding issues (garbled characters → clean symbols)
 [2025-12-11 23:45] [DOC] Added missing files to index: container_warning_ui.gd, CODE_REVIEW.md
 [2025-12-11 23:45] [DOC] Added Technical Debt section with HIGH/MEDIUM priorities from code review
 [2025-12-11 23:45] [DOC] Added potential bugs to Known Issues (race condition, input blocking)
-[2025-12-11 23:45] [DOC] Updated refactoring thresholds: 1000 Ã¢â€ â€™ 800 lines (more practical)
+[2025-12-11 23:45] [DOC] Updated refactoring thresholds: 1000 → 800 lines (more practical)
 [2025-12-11 23:45] [DOC] Reduced DEVELOPMENT_GUIDE.md from ~950 to ~650 lines
 [2025-12-11 22:30] [MAJOR] Comprehensive code review completed by Claude Opus 4.5
 [2025-12-11 22:30] [DOC] Created CODE_REVIEW.md - Full codebase analysis with architecture review, file-by-file analysis, and recommendations
@@ -203,7 +219,7 @@ CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-11 21:00] [FEATURE] Error notifications - displays "Inventory full!", "Container full!" with 2-second visibility
 [2025-12-11 22:30] [FEATURE] Partial transfer feedback - shows "Transferred 15/20" when destination fills up
 [2025-12-11 21:00] [FEATURE] Auto-close on distance - UI closes if player moves >5m from container
-[2025-12-11 21:00] [FEATURE] Hint label - displays "ESC TO CLOSE Ã¢â‚¬Â¢ CLICK TO TRANSFER 1 Ã¢â‚¬Â¢ SHIFT+CLICK TO TRANSFER ALL"
+[2025-12-11 21:00] [FEATURE] Hint label - displays "ESC TO CLOSE • CLICK TO TRANSFER 1 • SHIFT+CLICK TO TRANSFER ALL"
 [2025-12-11 21:00] [MINOR] Extended player.gd - UI state management, suppression/restoration functions (+85 lines)
 [2025-12-11 21:00] [MINOR] Applied professional styling - borders (3px), rounded corners (8px), semi-transparent backgrounds
 [2025-12-11 21:00] [MINOR] Scene-based architecture - follows project pattern (inventory_ui.tscn, harvest_ui.tscn, health_ui.tscn)
@@ -269,7 +285,7 @@ CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-11 14:30] [FEATURE] D-Pad mapped - Up=Building mode, Down=Cycle blocks
 [2025-12-11 14:30] [MINOR] Added apply_deadzone() function for smooth analog stick handling
 [2025-12-11 14:30] [MINOR] Controller and keyboard/mouse work simultaneously
-[2025-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe Ã¢â€ â€ Pickaxe
+[2025-12-11 14:30] [MINOR] Removed "None" tool from cycling - now only cycles Axe ↔ Pickaxe
 [2025-12-11 14:30] [FEATURE] Updated project.godot with 16 new controller input actions
 [2025-12-11 14:30] [MAJOR] Updated DEVELOPMENT_GUIDE.md - added controller support to file index and implemented features
 [2025-12-11 06:44] [MAJOR] Added Valheim-style log breaking system - trees shatter into physics-enabled logs on impact
@@ -311,7 +327,7 @@ CHANGES FROM v0.4.0 DEVELOPMENT (Dec 10-12, 2025):
 [2025-12-10 19:30] [MAJOR] Added crafting system - 5 starter recipes with UI (Press R to open)
 [2025-12-10 23:45] [MAJOR] Rewrote cloud system using Perlin noise - organic shapes, no straight edges
 [2025-12-10 23:40] [MINOR] Added cloud noise parameters to Inspector (5 adjustable settings)
-[2025-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=Ã‚Â±500 for proper depth sorting
+[2025-12-10 23:35] [FIX] Fixed sun/moon rendering order - moved to z=±500 for proper depth sorting
 [2025-12-10 23:15] [MINOR] Enhanced crosshair design - cross-shaped with outline for better visibility
 [2025-12-10 21:30] [FEATURE] Added harvest highlight system - green outline for correct tool, red for wrong tool
 [2025-12-10 20:45] [FIX] Fixed sun/moon size changing bug - celestial bodies now positioned relative to player

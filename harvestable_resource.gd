@@ -148,55 +148,56 @@ func find_day_night_cycle():
 			return
 
 func find_node_by_type(node: Node, type_name: String) -> Node:
-	"""Recursively search for a node by class name"""
-	if node.get_class() == type_name or (node.get_script() and node.get_script().get_global_name() == type_name):
+	"""Recursively search for node with specific script type name"""
+	if node.get_script() and node.get_script().get_global_name() == type_name:
 		return node
 	
 	for child in node.get_children():
-		var result = find_node_by_type(child, type_name)
-		if result:
-			return result
+		var found = find_node_by_type(child, type_name)
+		if found:
+			return found
 	
 	return null
 
 func _process(delta):
+	# Update nighttime glow
 	if enable_nighttime_glow and day_night_cycle:
 		update_nighttime_glow(delta)
 
 func update_nighttime_glow(delta: float):
-	"""Update emission based on time of day"""
-	if mesh_instances.is_empty():
-		return
+	"""Update emission glow based on time of day
 	
-	# Get night intensity (0.0 = day, 1.0 = night)
-	var night_intensity = 0.0
-	var time = day_night_cycle.get_time_of_day()
+	PERFORMANCE: This runs every frame for every resource with glow enabled
+	- Materials already duplicated in _ready()
+	- Just modifying emission parameters here (cheap)
+	"""
+	var time_of_day = day_night_cycle.time_of_day
 	
-	# Apply fade delay to transition times
-	# Positive delay = glow starts later (darker) and ends earlier (less time glowing)
-	var morning_end = 0.25 - glow_fade_delay  # Earlier morning end = glow stops sooner
-	var evening_start = 0.75 + glow_fade_delay  # Later evening start = glow starts later
+	# Calculate how dark it is (0.0 = day, 1.0 = night)
+	# Night is from 0.75 to 0.25 (sunset to sunrise)
+	var darkness = 0.0
 	
-	# Night is from 0.0-morning_end and evening_start-1.0
-	if time < morning_end:
-		# Early morning - fade out as sun rises
-		night_intensity = 1.0 - (time / morning_end)
-	elif time < evening_start:
-		# Day - no glow
-		night_intensity = 0.0
-	else:
-		# Evening - fade in as sun sets
-		night_intensity = (time - evening_start) / (1.0 - evening_start)
+	# Apply fade delay - positive delay means glow only when it gets darker
+	var adjusted_time = time_of_day + glow_fade_delay
+	if adjusted_time > 1.0:
+		adjusted_time -= 1.0
 	
-	# Add pulsing effect if enabled
+	if adjusted_time >= 0.75:
+		# Evening - fade in (0.75 -> 1.0 becomes 0.0 -> 1.0)
+		darkness = (adjusted_time - 0.75) / 0.25
+	elif adjusted_time <= 0.25:
+		# Night/Morning - stay at full or fade out (0.0 -> 0.25 becomes 1.0 -> 0.0)
+		darkness = 1.0 - (adjusted_time / 0.25)
+	
+	# Apply pulsing effect if enabled
 	if glow_pulse:
-		glow_pulse_time += delta
-		var pulse = 0.9 + sin(glow_pulse_time * 1.5) * 0.1  # Pulse between 0.9 and 1.0 (subtle)
-		night_intensity *= pulse
+		glow_pulse_time += delta * 0.5  # Slow pulse
+		var pulse = 0.85 + sin(glow_pulse_time) * 0.15  # Pulse between 0.7 and 1.0
+		darkness *= pulse
 	
-	# Apply emission to all mesh instances
+	# Apply glow to all mesh instances
 	for mesh_instance in mesh_instances:
-		apply_emission_to_mesh(mesh_instance, night_intensity)
+		apply_emission_to_mesh(mesh_instance, darkness)
 
 func apply_emission_to_mesh(mesh_instance: MeshInstance3D, intensity: float):
 	"""Apply emission to a mesh instance based on night intensity"""
@@ -285,6 +286,9 @@ func complete_harvest():
 	print("Harvested ", resource_name, " - Got ", drop_count, "x ", drop_item)
 	
 	emit_signal("harvested", drops)
+	
+	# AUDIO: Play resource break sound
+	AudioManager.play_sound("resource_break", "sfx")
 	
 	# Spawn break particles
 	spawn_break_particles()

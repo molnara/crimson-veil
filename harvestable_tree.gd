@@ -99,54 +99,60 @@ func _ready():
 			drop_amount_max = 10
 			mining_tool_required = "axe"
 	
-	# Cache all mesh instances for later fading
-	cache_mesh_instances(self)
-	
-	# NOW call parent _ready
+	# NOW call parent _ready which will use these properties
 	super._ready()
-
-func cache_mesh_instances(node: Node):
-	"""Recursively find and cache all MeshInstance3D children"""
-	if node is MeshInstance3D:
-		tree_meshes.append(node)
 	
-	for child in node.get_children():
-		cache_mesh_instances(child)
+	# Trees don't glow at night
+	enable_nighttime_glow = false
+	
+	# Cache tree meshes for visual effects
+	cache_tree_meshes()
+	
+	# Extract trunk dimensions from collision shape (if exists)
+	extract_trunk_dimensions()
+
+func cache_tree_meshes():
+	"""Cache all mesh instances for efficient access during effects"""
+	for child in get_children():
+		if child is MeshInstance3D:
+			tree_meshes.append(child)
+
+func extract_trunk_dimensions():
+	"""Extract trunk height and radius from collision shape for physics calculations"""
+	# Look for the trunk collision shape (should be first child CollisionShape3D)
+	for child in get_children():
+		if child is CollisionShape3D:
+			var shape = child.shape
+			if shape is CapsuleShape3D:
+				trunk_height = shape.height
+				trunk_radius = shape.radius
+				return
+			elif shape is CylinderShape3D:
+				trunk_height = shape.height
+				trunk_radius = shape.radius
+				return
 
 func start_harvest(player: Node3D) -> bool:
-	"""Override to calculate fall direction when harvest starts"""
-	if not is_being_harvested:
-		# Calculate fall direction (away from player)
+	"""Override to calculate fall direction away from player"""
+	# Store the direction away from player (for later falling)
+	if player:
 		var to_player = (player.global_position - global_position).normalized()
-		to_player.y = 0  # Keep it horizontal
-		fall_direction = -to_player  # Fall away from player
+		fall_direction = -to_player  # Opposite of player direction
+		fall_direction.y = 0  # Keep horizontal
+		fall_direction = fall_direction.normalized()
 	
 	return super.start_harvest(player)
 
-func update_harvest(delta: float) -> float:
-	"""Update harvest progress with shake effect"""
-	if not is_being_harvested:
-		return 0.0
-	
-	harvest_progress += delta / harvest_time
-	harvest_progress = clamp(harvest_progress, 0.0, 1.0)
-	
-	# Shake effect on each hit (when progress increases)
-	apply_hit_shake()
-	
-	# Don't auto-complete - let harvesting system handle it
-	return harvest_progress
-
 func apply_hit_shake():
-	"""Make tree shake when hit"""
+	"""Apply a shake effect when the tree is hit (called during harvesting)"""
 	if not is_being_harvested:
 		return
 	
-	# Quick shake using rotation
-	var shake_amount = 0.05  # Radians
-	var shake_speed = 30.0   # Speed of shake
-	var time = Time.get_ticks_msec() * 0.001
+	# Calculate shake based on harvest progress (more violent as tree gets weaker)
+	var shake_amount = 0.05 + (harvest_progress * 0.15)  # 0.05 to 0.2 radians
+	var shake_speed = 15.0 + (harvest_progress * 10.0)  # Speed up as progress increases
 	
+	var time = Time.get_ticks_msec() / 1000.0
 	rotation.z = original_rotation.z + sin(time * shake_speed) * shake_amount * (1.0 - harvest_progress)
 	rotation.x = original_rotation.x + cos(time * shake_speed * 0.7) * shake_amount * 0.5 * (1.0 - harvest_progress)
 
@@ -178,6 +184,9 @@ func complete_harvest():
 	}
 	
 	emit_signal("harvested", drops)
+	
+	# AUDIO: Play resource break sound (tree is fully chopped)
+	AudioManager.play_sound("resource_break", "sfx")
 	
 	# Reset harvest state
 	is_being_harvested = false
@@ -365,22 +374,22 @@ func spawn_single_log(
 	log.apply_torque_impulse(spin_torque)
 
 func get_trunk_material() -> Material:
-	"""Extract trunk material from tree meshes"""
-	if not physics_body or not is_instance_valid(physics_body):
-		return null
-	
-	# Find any mesh in the tree to get trunk material
-	for child in physics_body.get_children():
-		if child is MeshInstance3D:
-			var mesh_instance = child as MeshInstance3D
-			if mesh_instance.mesh and mesh_instance.mesh.get_surface_count() > 0:
+	"""Get the trunk material for log consistency"""
+	# Find trunk mesh (usually first mesh instance)
+	for mesh_instance in tree_meshes:
+		if mesh_instance and mesh_instance.mesh:
+			# Get first surface material
+			if mesh_instance.mesh.get_surface_count() > 0:
 				var mat = mesh_instance.get_surface_override_material(0)
 				if not mat:
 					mat = mesh_instance.mesh.surface_get_material(0)
 				if mat:
 					return mat
 	
-	return null
+	# Fallback: create basic brown material
+	var fallback = StandardMaterial3D.new()
+	fallback.albedo_color = Color(0.4, 0.25, 0.15)  # Brown
+	return fallback
 
 func convert_to_physics_body():
 	"""Convert the static tree to a physics-enabled falling tree
@@ -424,9 +433,9 @@ func convert_to_physics_body():
 	
 	# Configure physics properties
 	physics_body.mass = 100.0  # Heavy to prevent flying
-	physics_body.gravity_scale = 1.5  # Stronger gravity
-	physics_body.linear_damp = 2.5  # Air resistance
-	physics_body.angular_damp = 3.5  # Rotation damping
+	physics_body.gravity_scale = 2.0  # Stronger gravity for faster fall
+	physics_body.linear_damp = 0.8  # Less air resistance = faster fall
+	physics_body.angular_damp = 1.2  # Less rotation damping = tips faster
 	physics_body.contact_monitor = true
 	physics_body.max_contacts_reported = 10
 	physics_body.can_sleep = false  # Keep active while falling
@@ -475,8 +484,8 @@ func convert_to_physics_body():
 	collision_mask = 0
 	
 	# Calculate fall force direction
-	var fall_force = fall_direction * 8.0  # Gentle horizontal push
-	var fall_torque = Vector3(fall_direction.z, 0, -fall_direction.x).normalized() * 12.0  # Gentle tip
+	var fall_force = fall_direction * 15.0  # Stronger horizontal push
+	var fall_torque = Vector3(fall_direction.z, 0, -fall_direction.x).normalized() * 20.0  # Stronger tip
 	
 	# Apply the forces to make it fall
 	physics_body.apply_central_impulse(fall_force)
@@ -497,14 +506,14 @@ func _on_ground_impact(body: Node):
 	if has_hit_ground:
 		return  # Already processed impact
 	
-	# Ignore impacts in first 1.5 seconds (tree needs more time to actually fall)
-	if fall_timer < 1.5:
+	# Ignore impacts in first 0.5 seconds (tree needs some time to tip)
+	if fall_timer < 0.5:
 		return
 	
-	# Only detect impact if tree has slowed down significantly (nearly settled)
+	# Only detect impact if tree has slowed down (but not too much - be more lenient)
 	if physics_body and is_instance_valid(physics_body):
 		var velocity = physics_body.linear_velocity.length()
-		if velocity > 1.0:  # Still falling fast, wait for it to settle
+		if velocity > 2.0:  # Still falling fast, wait a bit
 			return
 	
 	# React to ANY collision (not just specific layers)
@@ -532,13 +541,13 @@ func _process(delta):
 	if is_falling and physics_body and is_instance_valid(physics_body):
 		fall_timer += delta
 		
-		# Manual collision detection - only when tree has SETTLED (low velocity)
-		if fall_timer > 1.5 and not has_hit_ground:
+		# Manual collision detection - check earlier and more frequently
+		if fall_timer > 0.5 and not has_hit_ground:
 			var velocity = physics_body.linear_velocity.length()
 			
-			# Only break if tree is colliding AND moving slowly (settled)
+			# Break if tree is colliding AND moving slowly (or stopped)
 			var colliding_bodies = physics_body.get_colliding_bodies()
-			if colliding_bodies.size() > 0 and velocity < 0.8:  # Must be nearly stopped
+			if colliding_bodies.size() > 0 and velocity < 1.5:  # More lenient threshold
 				has_hit_ground = true
 				
 				# Calculate impact position
@@ -554,9 +563,8 @@ func _process(delta):
 				queue_free()
 				return
 		
-		# Backup timer: If tree has been falling for >2.5 seconds, force break
-		if fall_timer > 2.5 and not has_hit_ground:
-			var velocity = physics_body.linear_velocity.length()
+		# Backup timer: If tree has been falling for >2 seconds, force break (reduced from 2.5)
+		if fall_timer > 2.0 and not has_hit_ground:
 			has_hit_ground = true
 			
 			# Calculate impact position
