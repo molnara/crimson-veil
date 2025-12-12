@@ -34,6 +34,18 @@ INTEGRATION:
 # Performance tab
 @onready var max_fps_option = $Panel/MarginContainer/VBoxContainer/TabContainer/Performance/VBoxContainer/MaxFPSOption
 
+# Audio tab
+@onready var master_slider = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/MasterSlider
+@onready var master_label = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/MasterLabel
+@onready var sfx_slider = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/SFXSlider
+@onready var sfx_label = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/SFXLabel
+@onready var music_slider = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/MusicSlider
+@onready var music_label = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/MusicLabel
+@onready var ambient_slider = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/AmbientSlider
+@onready var ambient_label = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/AmbientLabel
+@onready var ui_slider = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/UISlider
+@onready var ui_label = $Panel/MarginContainer/VBoxContainer/TabContainer/Audio/VBoxContainer/UILabel
+
 # Buttons
 @onready var apply_button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/ApplyButton
 @onready var cancel_button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/CancelButton
@@ -156,6 +168,27 @@ func load_current_settings():
 		_:
 			max_fps_option.selected = 4  # Unlimited
 	
+	# Audio settings
+	var master_vol = settings_manager.get_setting("audio", "master_volume")
+	master_slider.value = master_vol * 100.0
+	master_label.text = "Master Volume: %d%%" % (master_vol * 100)
+	
+	var sfx_vol = settings_manager.get_setting("audio", "sfx_volume")
+	sfx_slider.value = sfx_vol * 100.0
+	sfx_label.text = "SFX Volume: %d%%" % (sfx_vol * 100)
+	
+	var music_vol = settings_manager.get_setting("audio", "music_volume")
+	music_slider.value = music_vol * 100.0
+	music_label.text = "Music Volume: %d%%" % (music_vol * 100)
+	
+	var ambient_vol = settings_manager.get_setting("audio", "ambient_volume")
+	ambient_slider.value = ambient_vol * 100.0
+	ambient_label.text = "Ambient Volume: %d%%" % (ambient_vol * 100)
+	
+	var ui_vol = settings_manager.get_setting("audio", "ui_volume")
+	ui_slider.value = ui_vol * 100.0
+	ui_label.text = "UI Volume: %d%%" % (ui_vol * 100)
+	
 	updating_ui = false
 
 func connect_signals():
@@ -181,6 +214,13 @@ func connect_signals():
 	
 	# Performance settings
 	max_fps_option.item_selected.connect(_on_max_fps_changed)
+	
+	# Audio settings
+	master_slider.value_changed.connect(_on_master_volume_changed)
+	sfx_slider.value_changed.connect(_on_sfx_volume_changed)
+	music_slider.value_changed.connect(_on_music_volume_changed)
+	ambient_slider.value_changed.connect(_on_ambient_volume_changed)
+	ui_slider.value_changed.connect(_on_ui_volume_changed)
 
 func _on_resolution_changed(index: int):
 	if updating_ui:
@@ -252,6 +292,36 @@ func _on_max_fps_changed(index: int):
 		return
 	var fps_values = [30, 60, 120, 144, 0]  # 0 = unlimited
 	settings_manager.set_setting("performance", "max_fps", fps_values[index], false)
+
+func _on_master_volume_changed(value: float):
+	if updating_ui:
+		return
+	master_label.text = "Master Volume: %d%%" % value
+	settings_manager.set_setting("audio", "master_volume", value / 100.0, false)
+
+func _on_sfx_volume_changed(value: float):
+	if updating_ui:
+		return
+	sfx_label.text = "SFX Volume: %d%%" % value
+	settings_manager.set_setting("audio", "sfx_volume", value / 100.0, false)
+
+func _on_music_volume_changed(value: float):
+	if updating_ui:
+		return
+	music_label.text = "Music Volume: %d%%" % value
+	settings_manager.set_setting("audio", "music_volume", value / 100.0, false)
+
+func _on_ambient_volume_changed(value: float):
+	if updating_ui:
+		return
+	ambient_label.text = "Ambient Volume: %d%%" % value
+	settings_manager.set_setting("audio", "ambient_volume", value / 100.0, false)
+
+func _on_ui_volume_changed(value: float):
+	if updating_ui:
+		return
+	ui_label.text = "UI Volume: %d%%" % value
+	settings_manager.set_setting("audio", "ui_volume", value / 100.0, false)
 
 func _check_if_custom_preset():
 	"""Check if settings no longer match a preset, update to 'custom'"""

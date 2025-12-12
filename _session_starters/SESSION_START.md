@@ -4,12 +4,11 @@
 
 ---
 
-## 📊 Sprint Progress
+## 🎯 Current Sprint: v0.5.0 "Atmosphere & Audio"
 
-**Sprint:** v0.5.0 "Atmosphere & Audio"  
-**Status:** 8/13 tasks complete (62%)  
-**Budget:** $22 / $34 target (under by $12)  
-**Timeline:** Session 8 of 12-15 (~7-10 days)  
+**Status:** 9/13 tasks complete (69%)  
+**Timeline:** 12-15 sessions (~7-10 days)  
+**Budget:** $22 actual (under target by $12)  
 **Model:** Sonnet (standard implementation)
 
 ### ✅ Completed This Sprint
@@ -21,41 +20,23 @@
 - [x] Ambient Environmental Sounds (Task 2.3)
 - [x] Building Sounds (Task 2.4)
 - [x] Container Sounds (Task 2.5)
+- [x] Settings Menu - Audio Controls (Task 3.2)
 
-### 🎯 Remaining Tasks
-- [ ] UI Sounds (inventory, crafting, pickup, warnings)
-- [ ] Settings Menu - Audio Controls (volume sliders)
-- [ ] Sound Variation System (pitch/volume randomization)
-- [ ] Audio Balance Pass (test all scenarios)
-- [ ] Controller Rumble (optional haptic feedback)
-
----
-
-## 🎯 Next Session Priority
-
-**Recommended:** UI Sounds implementation
-
-**Files needed:**
-- `audio_manager.gd` - Add UI sound category
-- `inventory_ui.gd` - Play inventory_toggle, item_pickup sounds
-- `crafting_ui.gd` - Play craft_complete, craft_fail sounds
-- `player.gd` - Play pickup sounds on item collection
-
-**Audio assets ready:**
-- `ui/inventory_open.wav`, `ui/inventory_close.wav`
-- `ui/craft_complete.wav`, `ui/craft_fail.wav`
-- `ui/item_pickup.wav`
-- `ui/warning_*.wav` (3 variations)
+### 🎯 Next Up
+- [ ] UI Sounds (inventory, crafting, pickup, warnings) - Task 3.1
+- [ ] Sound Variation System (pitch/volume randomization) - Task 3.3
+- [ ] Audio Balance Pass (test all scenarios) - Task 3.4
+- [ ] Controller Rumble (optional haptic feedback) - Task 3.5
 
 ---
 
 ## 📝 Recent Changes (Last 5)
 
-1. **[2025-12-12 22:45]** Task 2.5 complete - Container sounds (chest_open, chest_close)
-2. **[2025-12-12 22:45]** Task 2.4 complete - Building sounds (block_place, block_remove, build_toggle)
-3. **[2025-12-12 22:45]** Fixed chest collision - Dual-layer (Layer 1 + 3) for blocking AND interaction
-4. **[2025-12-12 20:30]** Updated file output rules - COMPLETE files mandatory
-5. **[2025-12-12 18:45]** Reduced ambient volumes by ~30% for subtler atmosphere
+1. **[2025-12-12 23:30]** Task 3.2 complete - Settings menu with audio controls (5 volume sliders)
+2. **[2025-12-12 23:30]** Added controller support - Start button opens settings menu
+3. **[2025-12-12 22:45]** Task 2.5 complete - Container sounds (chest_open, chest_close)
+4. **[2025-12-12 22:45]** Task 2.4 complete - Building sounds (block_place, block_remove, build_toggle)
+5. **[2025-12-12 22:45]** Fixed chest collision - Dual-layer (Layer 1 + 3) for blocking AND interaction
 
 ---
 
@@ -69,6 +50,9 @@
 **Potential Issues** (from code review - not confirmed):
 - Race condition if container destroyed while UI open (needs null checks)
 - Input blocking too broad in player.gd line 148
+
+**Known Limitations:**
+- Settings menu: Mouse navigation only (controller D-Pad navigation deferred to backlog)
 
 ---
 
@@ -103,25 +87,13 @@ When updating SESSION_START.md, ROADMAP.txt, or creating COMMIT_MESSAGE.txt:
 - ✅ Use exact filename (no _NEW, _UPDATED suffixes)
 - ✅ UTF-8 encoding (→ not ->, ✅ not x)
 
-### For Code Files (.gd)
+### For Code Files
 **You handle code files via Git. I only output code when:**
 - You explicitly request a complete file
 - It's a new file that doesn't exist yet
 - You ask me to "show me the updated file"
 
 **Otherwise, I describe changes and you commit via Git.**
-
-### For Scene Files (.tscn)
-- ✅ Output complete scene structure when creating new scenes
-- ✅ Update existing scenes when modifying node hierarchies
-- ✅ Include all node properties, signals, and connections
-
-### For Project Configuration
-- ✅ Update project.godot when adding:
-  - AutoLoad singletons
-  - Input action mappings
-  - Project settings changes
-  - Plugin configurations
 
 ---
 
@@ -131,7 +103,7 @@ When you say **"Generate a commit"**, I will:
 
 1. **Create COMMIT_MESSAGE.txt** - Ready-to-use commit message
 2. **Update SESSION_START.md** - Sprint progress, recent changes
-3. **Update ROADMAP.txt** - Mark tasks complete (if applicable)
+3. **Update ROADMAP.txt** - Mark tasks complete
 4. **Share files** - Use present_files tool
 
 **You then:**
@@ -178,9 +150,7 @@ When you say **"Generate a commit"**, I will:
 
 ---
 
-## ⚙️ Quick Commands
-
-**See COMMANDS.md for full reference**
+## ⚙️ Quick Commands (Testing)
 
 ```bash
 # Run game
@@ -188,26 +158,16 @@ godot --path . world.tscn
 
 # Test audio
 godot --path . audio_manager_test.tscn
-
-# Commit workflow
-git add .
-git commit -F COMMIT_MESSAGE.txt
-git push
 ```
 
 ---
 
 ## 💡 Session Workflow
 
-**⚠️ CRITICAL RULE: Never start coding until you say "proceed"**
-
 **Starting work:**
 1. Upload SESSION_START.md (this file)
 2. Upload specific code files you're working on
 3. I request any other files I need
-4. I discuss the approach, ask clarifying questions
-5. **You review the plan and say "proceed"**
-6. Only then do I output code or describe changes
 
 **During work:**
 - I describe code changes

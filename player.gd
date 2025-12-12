@@ -44,6 +44,7 @@ var crafting_ui: Control
 var inventory_ui: Control
 var health_ui: Control
 var container_ui: Control  # Container UI
+var settings_menu: Control  # Settings menu
 
 # Get the gravity from the project settings
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -125,6 +126,12 @@ func _input(event):
 			close_container_ui()
 			return
 		
+		# Close settings menu if open (PRIORITY #2)
+		if settings_menu and settings_menu.visible:
+			settings_menu.hide()
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			return
+		
 		# Close inventory if open
 		if inventory_ui and inventory_ui.visible:
 			inventory_ui.visible = false
@@ -137,8 +144,14 @@ func _input(event):
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			return
 		
+		# If nothing is open and mouse is captured, open settings menu
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+			if settings_menu:
+				settings_menu.show()
+				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+			else:
+				# Fallback to old behavior if settings menu not loaded
+				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
@@ -328,6 +341,17 @@ func setup_ui():
 		print("Container UI loaded successfully (scene-based)")
 	else:
 		print("ERROR: Could not load container_ui.tscn")
+	
+	# Load settings menu
+	print("Loading settings menu...")
+	var settings_menu_scene = load("res://settings_menu.tscn")
+	if settings_menu_scene:
+		settings_menu = settings_menu_scene.instantiate()
+		get_tree().root.add_child(settings_menu)
+		settings_menu.hide()  # Start hidden
+		print("Settings menu loaded successfully")
+	else:
+		print("Warning: Could not load settings_menu.tscn")
 
 func _get_terrain_surface() -> String:
 	"""Detect surface type under player for footstep sounds"""

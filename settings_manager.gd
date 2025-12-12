@@ -40,6 +40,13 @@ var default_settings = {
 	},
 	"performance": {
 		"max_fps": 60  # 0=unlimited
+	},
+	"audio": {
+		"master_volume": 1.0,   # 0.0 - 1.0
+		"sfx_volume": 0.75,     # 0.0 - 1.0
+		"music_volume": 0.35,   # 0.0 - 1.0
+		"ambient_volume": 0.25, # 0.0 - 1.0
+		"ui_volume": 0.60       # 0.0 - 1.0
 	}
 }
 
@@ -187,6 +194,7 @@ func apply_all_settings():
 	apply_display_settings()
 	apply_graphics_settings()
 	apply_performance_settings()
+	apply_audio_settings()
 	
 	emit_signal("settings_applied")
 	print("All settings applied")
@@ -253,6 +261,28 @@ func apply_performance_settings():
 	var max_fps = get_setting("performance", "max_fps")
 	Engine.max_fps = max_fps
 	print("Max FPS: ", max_fps if max_fps > 0 else "Unlimited")
+
+func apply_audio_settings():
+	"""Apply audio-related settings"""
+	if not AudioManager:
+		print("AudioManager not found - skipping audio settings")
+		return
+	
+	var master = get_setting("audio", "master_volume")
+	var sfx = get_setting("audio", "sfx_volume")
+	var music = get_setting("audio", "music_volume")
+	var ambient = get_setting("audio", "ambient_volume")
+	var ui = get_setting("audio", "ui_volume")
+	
+	AudioManager.set_master_volume(master)
+	AudioManager.set_sfx_volume(sfx)
+	AudioManager.set_music_volume(music)
+	AudioManager.set_ambient_volume(ambient)
+	AudioManager.set_ui_volume(ui)
+	
+	print("Audio settings applied: Master=%.2f, SFX=%.2f, Music=%.2f, Ambient=%.2f, UI=%.2f" % [
+		master, sfx, music, ambient, ui
+	])
 
 func parse_resolution(resolution_string: String) -> Vector2i:
 	"""Parse resolution string like '1920x1080' into Vector2i"""

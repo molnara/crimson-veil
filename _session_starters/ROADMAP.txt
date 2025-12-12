@@ -32,7 +32,7 @@ PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions] - COMPLETE
 
 PRIORITY 3 - Polish & Refinement (Optional) [2-4 sessions]
 [ ] UI Sounds [Sonnet] - inventory_toggle, craft_complete, pickup, warnings integration
-[ ] Settings Menu - Audio Controls [Sonnet] - Volume sliders, mute toggles, test buttons
+[X] Settings Menu - Audio Controls [Sonnet] - Volume sliders (master, sfx, music, ambient, ui) with persistence (COMPLETE 2025-12-12)
 [ ] Sound Variation System [Sonnet] - Pitch/volume randomization enhancements
 [ ] Audio Balance Pass [Sonnet] - Test and adjust all volume levels across scenarios
 [ ] Controller Rumble [Sonnet] - Haptic feedback for harvesting, building, tree falling (OPTIONAL)
@@ -43,7 +43,7 @@ AUDIO FILE MANIFEST (48 files total - ALL GENERATED):
 - Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
 - Actual budget: $22 (under $34 target by $12)
 
-SPRINT PROGRESS: 8/13 tasks complete (62%)
+SPRINT PROGRESS: 9/13 tasks complete (69%)
 
 
 NEXT UP (After v0.5.0)
@@ -73,7 +73,7 @@ MEDIUM PRIORITY:
 [ ] Farming system [Sonnet] - Plant crops, tend gardens for renewable food
 [ ] NPC traders [Opus] - Buy/sell resources, discover rare items (new AI system)
 [ ] Character customization [Sonnet] - Appearance options for player model
-[ ] Controller UI navigation [Sonnet] - D-Pad navigation through inventory/crafting menus with visual focus
+[ ] Controller UI navigation [Sonnet] - D-Pad navigation through inventory/crafting/settings menus with visual focus, LB/RB tab switching
 
 LOW PRIORITY:
 [ ] Performance stats UI [Sonnet] - Display FPS, CPU, GPU, and memory usage in upper right corner
@@ -105,7 +105,7 @@ COMPLETED SPRINTS
 For detailed changelog, use: git log --oneline --grep="v0\.[0-9]"
 
 v0.5.0 IN PROGRESS (December 2025) - "Atmosphere & Audio"
-Sprint Progress: 8/13 tasks (62%)
+Sprint Progress: 9/13 tasks (69%)
 Commit: [in progress]
 
 v0.4.0 RELEASE (December 12, 2025) - "Storage & Organization"
@@ -245,7 +245,7 @@ Notes:
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
 - Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
-- v0.5.0 Current: Sound & Music System (8/13 tasks complete - 62% complete)
+- v0.5.0 Current: Sound & Music System (9/13 tasks complete - 69% complete)
 - Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
 
 AI MODEL USAGE SUMMARY:
