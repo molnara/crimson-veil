@@ -46,9 +46,13 @@ None currently blocking - sprint progressing smoothly!
 3. Update ROADMAP.txt (if tasks completed)
 4. Share via present_files
 
-**For code files:**
+**For code files (.gd):**
 - I describe changes unless you ask for complete file
 - You commit via Git
+
+**For scene files (.tscn) and project.godot:**
+- ✅ Output complete .tscn files when creating/modifying scenes
+- ✅ Update project.godot for AutoLoads, input actions, settings
 
 ---
 

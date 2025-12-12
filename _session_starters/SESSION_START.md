@@ -103,13 +103,25 @@ When updating SESSION_START.md, ROADMAP.txt, or creating COMMIT_MESSAGE.txt:
 - ✅ Use exact filename (no _NEW, _UPDATED suffixes)
 - ✅ UTF-8 encoding (→ not ->, ✅ not x)
 
-### For Code Files
+### For Code Files (.gd)
 **You handle code files via Git. I only output code when:**
 - You explicitly request a complete file
 - It's a new file that doesn't exist yet
 - You ask me to "show me the updated file"
 
 **Otherwise, I describe changes and you commit via Git.**
+
+### For Scene Files (.tscn)
+- ✅ Output complete scene structure when creating new scenes
+- ✅ Update existing scenes when modifying node hierarchies
+- ✅ Include all node properties, signals, and connections
+
+### For Project Configuration
+- ✅ Update project.godot when adding:
+  - AutoLoad singletons
+  - Input action mappings
+  - Project settings changes
+  - Plugin configurations
 
 ---
 
