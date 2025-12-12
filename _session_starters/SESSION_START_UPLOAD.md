@@ -92,7 +92,7 @@ Please upload these files.
 
 ## 🎯 Current Sprint: v0.5.0 "Atmosphere & Audio"
 
-**Status:** 6/13 tasks complete (46%)  
+**Status:** 8/13 tasks complete (62%)  
 **Timeline:** 12-15 sessions (~7-10 days)  
 **Budget:** $22 actual (under target by $12)  
 **Model:** Sonnet (standard implementation)
@@ -104,11 +104,11 @@ Please upload these files.
 - [x] Movement Sounds - Footsteps (Task 2.1)
 - [x] Music Manager & AI Music System (Task 2.2)
 - [x] Ambient Environmental Sounds (Task 2.3)
+- [x] Building Sounds (Task 2.4) - block_place, block_remove, build_toggle
+- [x] Container Sounds (Task 2.5) - chest_open, chest_close
 
 ### Next Up 🎯
-- [ ] Building Sounds (block_place, block_remove, build_toggle)
 - [ ] UI Sounds (inventory, crafting, pickup, warnings)
-- [ ] Container Sounds (chest_open, chest_close)
 - [ ] Settings Menu - Audio Controls (volume sliders)
 - [ ] Sound Variation System (pitch/volume randomization)
 - [ ] Audio Balance Pass (test all scenarios)
@@ -116,9 +116,12 @@ Please upload these files.
 
 ---
 
-## 🐛 Known Issues
+## 🛠 Known Issues
 
-**None currently** - Sprint progressing smoothly!
+**Fixed This Session:**
+- ✅ Chests couldn't be opened (collision layer mismatch)
+- ✅ Chests couldn't be deleted (raycast on wrong layer)
+- ✅ Player could walk through chests (no physical collision)
 
 **Potential Issues** (from code review - not confirmed):
 - Race condition if container destroyed while UI open (needs null checks)
@@ -128,11 +131,11 @@ Please upload these files.
 
 ## 📝 Recent Changes (Last 5)
 
-1. **[2025-12-12 20:30]** Updated file output rules - COMPLETE files mandatory
-2. **[2025-12-12 18:45]** Reduced ambient volumes by ~30% for subtler atmosphere
-3. **[2025-12-12 18:30]** Task 2.3 complete - Ambient system with biome-aware loops
-4. **[2025-12-12 18:00]** Task 2.2 complete - Music Manager with day/night rotation
-5. **[2025-12-12 09:15]** Fixed log despawn sound spam (removed audio from despawn)
+1. **[2025-12-12 22:45]** Task 2.5 complete - Container sounds (chest_open, chest_close)
+2. **[2025-12-12 22:45]** Task 2.4 complete - Building sounds (block_place, block_remove, build_toggle)
+3. **[2025-12-12 22:45]** Fixed chest collision - Dual-layer (Layer 1 + 3) for blocking AND interaction
+4. **[2025-12-12 20:30]** Updated file output rules - COMPLETE files mandatory
+5. **[2025-12-12 18:45]** Reduced ambient volumes by ~30% for subtler atmosphere
 
 ---
 
@@ -298,9 +301,9 @@ Use present_files tool with exact filenames:
 
 **Never output corrupted characters:**
 ```
-❌ Ãƒâ€šÃ‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ (should be →)
-❌ ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â— (should be ×)
-❌ ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â° (should be °)
+❌ ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ'Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ'Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ (should be →)
+❌ ÃƒÆ'Ã†'ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚â€" (should be ×)
+❌ ÃƒÆ'Ã†'ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ'Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â° (should be °)
 ```
 
 ---

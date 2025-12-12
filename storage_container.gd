@@ -6,7 +6,7 @@ StorageContainer - Placeable chest with independent inventory
 
 ARCHITECTURE:
 - Extends Node3D (not StaticBody3D, that's a child)
-- Child: StaticBody3D on Layer 3 for raycast interaction
+- Child: StaticBody3D on Layers 1 + 3 for physical blocking AND raycast interaction
 - Child: MeshInstance3D for visual representation
 - Has own Inventory instance for storage
 
@@ -16,8 +16,8 @@ INTEGRATION:
 - Opens Container UI when player presses E or A button
 
 COLLISION LAYERS:
-- Layer 3 (interactive objects) - player raycasts this
-- Not Layer 1 (terrain) - containers don't block movement pathfinding
+- Layer 1 (terrain/blocks) - physical blocking, building raycast
+- Layer 3 (interactive objects) - player interaction raycast
 """
 
 # Container properties
@@ -57,7 +57,7 @@ func initialize(pos: Vector3):
 	# Create visual mesh
 	create_visual()
 	
-	# Create collision for interaction
+	# Create collision for interaction AND blocking
 	create_collision()
 	
 	print("Container created at: ", pos)
@@ -213,13 +213,15 @@ func create_chest_mesh() -> ArrayMesh:
 	return array_mesh
 
 func create_collision():
-	"""Create collision body for raycast interaction (Layer 3)"""
+	"""Create collision body for physical blocking AND raycast interaction"""
 	static_body = StaticBody3D.new()
 	add_child(static_body)
 	
-	# CRITICAL: Layer 3 for interactive objects
-	# Layer mask 4 = Layer 3 (2^2 = 4)
-	static_body.collision_layer = 4  # Layer 3
+	# DUAL LAYERS:
+	# Layer 1 (bit 0) = physical blocking + building removal raycast
+	# Layer 3 (bit 2) = player interaction raycast
+	# Combined: 1 + 4 = 5
+	static_body.collision_layer = 5  # Layers 1 + 3
 	static_body.collision_mask = 0   # Don't collide with anything
 	
 	# Create collision shape
@@ -234,7 +236,7 @@ func create_collision():
 	# Position collision at center of chest
 	collision_shape.position = Vector3(0, 0.35, 0)  # Half of height
 	
-	print("Container collision created on Layer 3")
+	print("Container collision created on Layers 1 + 3")
 
 func open():
 	"""Open the container (called by player interaction)"""
@@ -243,6 +245,10 @@ func open():
 		return
 	
 	is_open = true
+	
+	# Play chest open sound
+	AudioManager.play_sound("chest_open", "ui")
+	
 	emit_signal("container_opened", self)
 	print("Container opened: ", container_name)
 
@@ -252,6 +258,10 @@ func close():
 		return
 	
 	is_open = false
+	
+	# Play chest close sound
+	AudioManager.play_sound("chest_close", "ui")
+	
 	emit_signal("container_closed", self)
 	print("Container closed: ", container_name)
 

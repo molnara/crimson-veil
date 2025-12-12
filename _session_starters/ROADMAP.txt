@@ -23,15 +23,15 @@ PRIORITY 1 - Core Sound System (Foundation) [5 sessions] - COMPLETE
 [X] AI Sound Generation & Import [Sonnet] - Generated 48 audio files (40 SFX + 8 music) via SFX Engine + Mubert (COMPLETE 2025-12-12)
 [X] SFX Integration - Harvesting Sounds [Sonnet] - Wire harvesting, tool switch, resource break, log despawn (COMPLETE 2025-12-12)
 
-PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions] - IN PROGRESS
+PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions] - COMPLETE
 [X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footsteps with steep slope detection (COMPLETE 2025-12-12)
-[ ] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration
-[ ] UI Sounds [Sonnet] - inventory_toggle, craft_complete, pickup, warnings integration
-[ ] Container Sounds [Sonnet] - chest_open, chest_close integration
+[X] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration (COMPLETE 2025-12-12)
+[X] Container Sounds [Sonnet] - chest_open, chest_close integration (COMPLETE 2025-12-12)
 [X] Music Manager & AI Music System [Sonnet] - Day/night ambient tracks, crossfade system, smart rotation (COMPLETE 2025-12-12)
 [X] Ambient Environmental Sounds [Sonnet] - Biome-aware ambient loops with occasional/rare frequency (COMPLETE 2025-12-12)
 
 PRIORITY 3 - Polish & Refinement (Optional) [2-4 sessions]
+[ ] UI Sounds [Sonnet] - inventory_toggle, craft_complete, pickup, warnings integration
 [ ] Settings Menu - Audio Controls [Sonnet] - Volume sliders, mute toggles, test buttons
 [ ] Sound Variation System [Sonnet] - Pitch/volume randomization enhancements
 [ ] Audio Balance Pass [Sonnet] - Test and adjust all volume levels across scenarios
@@ -43,7 +43,7 @@ AUDIO FILE MANIFEST (48 files total - ALL GENERATED):
 - Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
 - Actual budget: $22 (under $34 target by $12)
 
-SPRINT PROGRESS: 6/13 tasks complete (46%)
+SPRINT PROGRESS: 8/13 tasks complete (62%)
 
 
 NEXT UP (After v0.5.0)
@@ -63,7 +63,7 @@ HIGH PRIORITY:
 [ ] Workbench & Advanced Crafting [Sonnet] - DEFERRED FROM v0.5.0 - Workbench placement, proximity, recipes
 [ ] Inventory Organization [Sonnet] - DEFERRED FROM v0.5.0 - Sort, quick-stack, drag-and-drop, animations
 [ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers [Sonnet] - Stone  →  Iron  →  Steel progression path
+[ ] Tool tiers [Sonnet] - Stone → Iron → Steel progression path
 [ ] Durability system [Sonnet] - Tools degrade with use (creates resource sink)
 
 MEDIUM PRIORITY:
@@ -103,8 +103,10 @@ SOMEDAY/MAYBE (Ideas to explore)
 COMPLETED (Recent)
 ------------------
 v0.5.0 IN PROGRESS (December 12, 2025) - "Atmosphere & Audio"
-Sprint Progress: 6/13 tasks (46%)
+Sprint Progress: 8/13 tasks (62%)
 
+[X] Container Sounds [Sonnet] - chest_open/close integration with audio feedback
+[X] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration
 [X] Ambient Environmental Sounds [Sonnet] - Biome-aware ambient loops with occasional/rare frequency system
 [X] Music Manager & AI Music System [Sonnet] - Day/night music rotation with smart track variety and crossfades
 [X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footstep system with steep slope detection
@@ -131,26 +133,10 @@ Commit: d53049d
 [X] Stack count display [Sonnet] - Shows "current/max" format, red "FULL" indicator when maxed
 [X] Inventory full notification [Sonnet] - On-screen alert when trying to exceed stack limits
 [X] Inventory UI scene [Sonnet] - Created inventory_ui.tscn for proper rendering
-[X] Code review [Opus] - Comprehensive codebase analysis (Grade: A)
-[X] AI capacity planning documentation [Sonnet] - Created AI_USAGE_ANALYSIS.md with tracking templates
-[X] DEVELOPMENT_GUIDE modernization [Sonnet] - Cleanup, encoding fixes, added technical debt section
 
-Pre-v0.4.0 Features:
-[X] Xbox controller support [Sonnet] - Full analog movement/camera, all buttons mapped
-[X] Tool cycling improvement [Sonnet] - Removed "None" option, now only cycles Axe Ã¢â€ â€ Pickaxe
-[X] Valheim-style log breaking physics [Sonnet] - Trees break into 3-5 log pieces on impact
-[X] Impact-based log shattering [Sonnet] - Log counts vary by tree type (normal: 3-5, pine: 4-6, palm: 2-3)
-[X] Log despawn effects [Sonnet] - Brown particle "poof" with 1-4s randomized lifetimes
-[X] Health/hunger system [Sonnet] - Stats, regeneration, movement penalties (well-fed bonus at hunger > 70)
-[X] Health/hunger UI [Sonnet] - Bars in top-left with well-fed indicator
-[X] Eating system [Sonnet] - Click food in inventory to restore hunger (strawberries: 10-35, mushrooms: 15-40)
-[X] Food tooltips [Sonnet] - Green tint and tooltips show food items in inventory
-[X] Biome generation configuration [Sonnet] - Exposed noise scales and thresholds in Inspector
-[X] Biome-specific vegetation [Sonnet] - Per-biome density controls (forest trees, grassland strawberries)
-[X] Guaranteed Grassland spawn [Sonnet] - 100m radius around origin (Valheim-style safe spawning)
-[X] Grid-based inventory UI [Sonnet] - 8x4 visual slots, Tab to toggle
-[X] Crafting system [Sonnet] - 5 starter recipes with UI (Press R to open)
-[X] Cloud system rewrite [Sonnet] - Perlin noise for organic shapes, no straight edges
+v0.3.0 (December 10, 2025) - "Crafting & Building"
+[X] Building system [Sonnet] - Block placement with preview and validation
+[X] Crafting system [Sonnet] - Recipe database and resource consumption
 [X] Harvest highlight system [Sonnet] - Green outline for correct tool, red for wrong tool
 [X] Sun/moon rendering fix [Sonnet] - Moved to z=±500 for proper depth sorting
 [X] Crosshair enhancement [Sonnet] - Cross-shaped with outline for better visibility
@@ -216,6 +202,10 @@ QUARTERLY REVIEWS:
 
 BUGS / FIXES
 ------------
+[X] Chest collision layer fix - FIXED [Sonnet] - Chests now on Layers 1+3 for blocking AND interaction (2025-12-12)
+[X] Chests can't be opened - FIXED [Sonnet] - Layer 3 collision now properly configured (2025-12-12)
+[X] Chests can't be deleted - FIXED [Sonnet] - Building raycast detects Layer 1 collision (2025-12-12)
+[X] Player walks through chests - FIXED [Sonnet] - Layer 1 collision provides physical blocking (2025-12-12)
 [X] Log despawn sound spam - FIXED [Sonnet] - Removed resource_break audio from log despawn (2025-12-12)
 [X] Sun/moon seem to change sizes as I explore - FIXED [Sonnet]
 [X] Crabs still don't seem to spawn - FIXED [Sonnet]
@@ -268,13 +258,13 @@ SPRINT RISK ASSESSMENT (v0.4.0 - COMPLETED)
 ---
 Notes:
 - Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore  →  Gather  →  Craft  →  Build  →  Unlock new biomes  →  Repeat
+- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
 - Tone: Cozy loneliness with meditative gathering and discovery moments
 - All features should support "one more trip" addictive gathering loop
 - Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
 - Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
 - v0.4.0 Released: Storage Containers & Item Stacking (11/15 sprint tasks - 73% complete)
-- v0.5.0 Current: Sound & Music System (4/13 tasks complete - 31% complete)
+- v0.5.0 Current: Sound & Music System (8/13 tasks complete - 62% complete)
 - Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
 
 AI MODEL USAGE SUMMARY:

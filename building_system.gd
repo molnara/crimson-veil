@@ -203,6 +203,10 @@ func enable_building_mode(block_type: String = "stone_block"):
 	
 	current_block_type = block_type
 	preview_mode = true
+	
+	# Play build mode toggle sound
+	AudioManager.play_sound("build_mode_toggle", "ui")
+	
 	print("Building mode enabled: ", block_types[block_type]["name"])
 
 func disable_building_mode():
@@ -210,6 +214,10 @@ func disable_building_mode():
 	preview_mode = false
 	if preview_mesh:
 		preview_mesh.visible = false
+	
+	# Play build mode toggle sound
+	AudioManager.play_sound("build_mode_toggle", "ui")
+	
 	print("Building mode disabled")
 
 func place_block() -> bool:
@@ -246,6 +254,9 @@ func place_block() -> bool:
 			"node": container,
 			"is_container": true
 		}
+		
+		# Play block placement sound
+		AudioManager.play_sound("block_place", "sfx")
 		
 		emit_signal("block_placed", current_block_type, placement_position)
 		print("Placed ", block_def["name"], " at ", placement_position)
@@ -288,6 +299,9 @@ func place_block() -> bool:
 		"node": block
 	}
 	
+	# Play block placement sound
+	AudioManager.play_sound("block_place", "sfx")
+	
 	emit_signal("block_placed", current_block_type, placement_position)
 	print("Placed ", block_def["name"], " at ", placement_position)
 	
@@ -327,6 +341,9 @@ func remove_block_at_position(pos: Vector3) -> bool:
 	# Remove from tracking
 	placed_blocks.erase(pos_key)
 	
+	# Play block removal sound
+	AudioManager.play_sound("block_remove", "sfx")
+	
 	emit_signal("block_removed", block_type, pos)
 	print("Removed ", block_def["name"], " from ", pos)
 	
@@ -356,6 +373,9 @@ func _on_container_remove_confirmed(pos: Vector3):
 	
 	# Remove from tracking
 	placed_blocks.erase(pos_key)
+	
+	# Play block removal sound
+	AudioManager.play_sound("block_remove", "sfx")
 	
 	emit_signal("block_removed", block_type, pos)
 	print("Removed ", block_def["name"], " (forced)")
