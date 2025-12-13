@@ -111,10 +111,14 @@ func _ready():
 	add_child(crafting_system)
 	crafting_system.initialize(inventory)
 	
-	# Initialize combat system
-	combat_system = CombatSystem.new()
-	add_child(combat_system)
-	combat_system.initialize(self, camera, health_hunger_system)
+	# Combat system should be added as a child node in player.tscn
+	# with combat_system.gd script attached
+	combat_system = get_node_or_null("CombatSystem")
+	if combat_system:
+		combat_system.initialize(self, camera, health_hunger_system)
+		print("[Player] Combat system found and initialized")
+	else:
+		print("[Player] WARNING: CombatSystem node not found! Add it to player.tscn")
 	
 	# Connect harvesting signals
 	harvesting_system.harvest_completed.connect(_on_harvest_completed)
@@ -237,22 +241,16 @@ func _input(event):
 			RumbleManager.play_ui_click()
 	
 	# === COMBAT INPUT ===
-	# Attack with LMB or RT (tap = light, hold = charge)
-	# Block if any UI is open OR in build mode
+	# Simple Minecraft-style attack - press RT/LMB to swing
 	var ui_is_open = (container_ui and container_ui.visible) or \
 	                 (inventory_ui and inventory_ui.visible) or \
 	                 (crafting_ui and crafting_ui.visible)
 	var in_build_mode = building_system and building_system.preview_mode
 	
+	# Attack on button press
 	if event.is_action_pressed("combat_attack") and not ui_is_open and not in_build_mode:
 		if combat_system:
-			combat_system.start_charging()
-			print("🎮 COMBAT: Started charging attack")
-	
-	if event.is_action_released("combat_attack") and not ui_is_open and not in_build_mode:
-		if combat_system:
-			combat_system.release_attack()
-			print("🎮 COMBAT: Released attack")
+			combat_system.perform_attack()
 	
 	# Weapon switching with RB (same as tool cycling for now)
 	if event.is_action_pressed("cycle_weapon"):
@@ -422,6 +420,16 @@ func setup_ui():
 		print("Settings menu loaded successfully")
 	else:
 		print("Warning: Could not load settings_menu.tscn")
+	
+	# Load combat UI (NEW: Task 1.2)
+	print("Loading combat UI...")
+	var combat_ui_scene = load("res://combat_ui.tscn")
+	if combat_ui_scene:
+		var combat_ui = combat_ui_scene.instantiate()
+		get_tree().root.add_child(combat_ui)
+		print("Combat UI loaded successfully (crosshair + charge vignette)")
+	else:
+		print("Warning: Could not load combat_ui.tscn")
 
 func _get_terrain_surface() -> String:
 	"""Detect surface type under player for footstep sounds"""
@@ -648,19 +656,6 @@ func _physics_process(delta):
 	if abs(stick_y) > abs(input_dir.y):
 		input_dir.y = stick_y
 	
-	# Handle dodge with dedicated combat_dodge action (Space key OR B button)
-	# Block if any UI is open OR in build mode
-	if Input.is_action_just_pressed("combat_dodge"):
-		var ui_is_open = (container_ui and container_ui.visible) or \
-		                 (inventory_ui and inventory_ui.visible) or \
-		                 (crafting_ui and crafting_ui.visible)
-		var in_build_mode = building_system and building_system.preview_mode
-		
-		if not ui_is_open and not in_build_mode and combat_system:
-			var was_dodging = combat_system.try_dodge(input_dir)
-			if was_dodging:
-				print("🏃 DODGE! Direction: ", input_dir)
-	
 	# Handle jump/interact with A button (controller) or Space/E (keyboard)
 	# A button = Harvest/Interact when looking at resource, Jump otherwise
 	if (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("controller_interact")):
@@ -683,8 +678,8 @@ func _physics_process(delta):
 		print("On floor: ", is_on_floor())
 		print("Velocity: ", velocity)
 	
-	# Apply movement (Shift for sprint - B is now dodge)
-	var is_sprinting = Input.is_action_pressed("ui_shift") or Input.is_action_pressed("controller_sprint")
+	# Apply movement (Shift OR B button for sprint)
+	var is_sprinting = Input.is_action_pressed("ui_shift") or Input.is_action_pressed("combat_dodge")
 	var current_speed = sprint_speed if is_sprinting else move_speed
 	
 	# Apply hunger speed penalty

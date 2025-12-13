@@ -1,0 +1,437 @@
+CRIMSON VEIL - v0.6.0 IMPLEMENTATION GUIDE (SIMPLIFIED)
+========================================================
+
+🎮 DESIGN PHILOSOPHY: Minecraft-Style Combat
+- Simple click-to-attack (no charging mechanics)
+- No dodge system (B button = Sprint)
+- No bow & arrow (melee only for v0.6.0)
+- Focus on responsive, instant feedback
+- Easy to understand, hard to master
+
+QUICK START CHECKLIST
+=====================
+
+PHASE 1: COMBAT FOUNDATION ✅ COMPLETE
+---------------------------------------
+[✅] Day 1-2: Combat System Core
+    ✅ Created res://combat_system.gd (~300 lines)
+    ✅ Created res://weapon.gd (Resource class)
+    ✅ Added combat_attack input to project.godot
+    ✅ Integrated with player.gd input handling
+    ✅ Implemented camera shake system
+    ✅ Added @export parameters for Inspector tuning
+
+[✅] Day 3: Simple Attack System
+    ✅ Single-shot attack (raycast, damage, cooldown)
+    ✅ Targeting system with 30° auto-aim cone
+    ✅ Simple crosshair (white=default, red=targeting)
+    ✅ Created combat_ui.gd and combat_ui.tscn
+    ✅ Camera shake + rumble feedback
+
+[✅] Day 4: Weapons
+    ✅ Defined 3 melee weapons (club/spear/sword)
+    ✅ Weapon switching with RB button
+    ✅ Crafting recipes in Weapon class
+    ✅ Weapon stats: damage, range, cooldown
+
+PHASE 2: ENEMIES (Week 2)
+--------------------------
+Day 5-6: Enemy Base Class
+[ ] Create res://enemy.gd (extends CharacterBody3D)
+[ ] State machine (Idle/Chase/Attack/Death)
+[ ] Health system
+[ ] Drop table system
+[ ] Flash effects on damage
+[ ] take_damage(amount) method (simplified - no is_heavy)
+
+Day 7-9: Enemy Types (2 per day)
+[ ] Corrupted Rabbit (territorial, fast, 30 HP)
+[ ] Forest Goblin (patrol, flee at 20% HP, 50 HP)
+[ ] Desert Scorpion (ambush, burrow, 60 HP)
+[ ] Ice Wolf (pack AI, spawns in groups, 55 HP)
+[ ] Stone Golem (tank, ground slam, 100 HP)
+[ ] Shadow Wraith (night-only, floats, 40 HP)
+
+Day 10: Spawning Integration
+[ ] Extend critter_spawner.gd with enemy spawning
+[ ] Biome-specific spawn logic
+[ ] Pack spawning for Ice Wolves
+[ ] Night-only logic for Shadow Wraith
+[ ] Configure spawn rates (5-15% per chunk)
+
+PHASE 3: AUDIO & VISUAL (Days 11-12)
+-------------------------------------
+Day 11: Audio Generation
+[ ] Generate 8 player sounds via SFX Engine:
+    - swing_light.wav
+    - swing_medium.wav  
+    - swing_heavy.wav
+    - hit_flesh.wav
+    - hit_stone.wav
+    - player_grunt_1.wav
+    - player_grunt_2.wav
+    - player_death.wav
+[ ] Generate 24 enemy sounds (4 per enemy × 6 enemies)
+[ ] Import to res://audio/combat/
+[ ] Configure AudioManager entries
+[ ] Test all sound triggers
+
+Day 12: Textures & Effects
+[ ] Generate 5 textures via Leonardo.ai
+[ ] Apply to enemy materials
+[ ] Create hit particle effects
+[ ] Polish visual feedback
+[ ] Finalize rumble presets
+
+PHASE 4: INTEGRATION & POLISH (Day 13)
+---------------------------------------
+Day 13: Final Integration
+[ ] Death system (detection, UI, respawn)
+[ ] Balance pass (damage, HP, cooldowns)
+[ ] Testing checklist
+[ ] Bug fixes
+
+FILE STRUCTURE
+==============
+
+✅ Created Files:
+-----------------
+res://combat_system.gd              # Main combat logic (~300 lines)
+res://weapon.gd                      # Weapon resource class
+res://combat_ui.gd                   # Simple crosshair UI
+res://combat_ui.tscn                 # UI scene (crosshair only)
+
+Files to Create:
+----------------
+res://enemy.gd                       # Base enemy class
+res://enemies/
+    ├── corrupted_rabbit.gd + .tscn
+    ├── forest_goblin.gd + .tscn
+    ├── desert_scorpion.gd + .tscn
+    ├── ice_wolf.gd + .tscn
+    ├── stone_golem.gd + .tscn
+    └── shadow_wraith.gd + .tscn
+res://ui/death_screen.tscn + .gd    # Death/respawn UI
+res://audio/combat/                 # 32 combat sounds (8 player + 24 enemy)
+res://textures/enemies/             # 5 AI-generated textures
+
+✅ Modified Files:
+------------------
+res://player.gd                     # Combat input integration
+res://critter_spawner.gd            # Enemy spawning
+res://health_hunger_system.gd       # Death detection
+res://rumble_manager.gd             # Combat rumble presets
+res://audio_manager.gd              # Combat sound entries
+project.godot                       # combat_attack input mapping
+
+CRITICAL CODE SNIPPETS
+======================
+
+1. ✅ INPUT ACTIONS (project.godot) - COMPLETE
+-----------------------------------------------
+combat_attack={
+    "events": [
+        InputEventMouseButton (button_index=1),
+        InputEventJoypadMotion (axis=5, axis_value=1.0)  # RT
+    ]
+}
+
+combat_dodge={  # Now used for SPRINT instead
+    "events": [
+        InputEventKey (keycode=32),              # Space
+        InputEventJoypadButton (button_index=1)  # B
+    ]
+}
+
+cycle_weapon={
+    "events": [
+        InputEventJoypadButton (button_index=5)  # RB
+    ]
+}
+
+2. ✅ COMBAT SYSTEM CORE - COMPLETE
+------------------------------------
+extends Node
+class_name CombatSystem
+
+# Inspector-editable parameters
+@export_group("Combat Timing")
+@export_range(0.1, 2.0, 0.1) var attack_cooldown_duration: float = 0.5
+@export_range(1.0, 10.0, 0.5) var attack_range: float = 3.0
+
+@export_group("Targeting")
+@export_range(0.0, 90.0, 5.0) var auto_aim_cone_angle: float = 30.0
+
+# Combat state
+var attack_cooldown: float = 0.0
+var current_weapon: Weapon = null
+
+func perform_attack():
+    """Simple Minecraft-style attack"""
+    if attack_cooldown > 0 or not current_weapon:
+        return
+    
+    attack_cooldown = attack_cooldown_duration
+    var target = raycast_for_enemy(current_weapon.attack_range)
+    
+    if target and target.has_method("take_damage"):
+        target.take_damage(current_weapon.light_damage)
+        shake_camera(0.5, 0.1)
+        if RumbleManager:
+            RumbleManager.play("medium")
+    else:
+        shake_camera(0.3, 0.08)
+        if RumbleManager:
+            RumbleManager.play("light")
+
+3. ENEMY BASE SKELETON (TO CREATE)
+-----------------------------------
+extends CharacterBody3D
+class_name Enemy
+
+enum State { IDLE, CHASE, ATTACK, DEATH }
+
+@export var max_health: int = 50
+@export var damage: int = 10
+@export var move_speed: float = 3.0
+@export var detection_range: float = 10.0
+@export var attack_range: float = 2.0
+
+var current_state: State = State.IDLE
+var current_health: int
+var player: Node3D
+
+func _ready():
+    current_health = max_health
+    add_to_group("enemies")
+    player = get_tree().get_first_node_in_group("player")
+    create_enemy_visual()
+
+func update_ai(delta: float):
+    var distance = global_position.distance_to(player.global_position)
+    match current_state:
+        State.IDLE:
+            if distance < detection_range:
+                current_state = State.CHASE
+        State.CHASE:
+            if distance < attack_range:
+                current_state = State.ATTACK
+            else:
+                chase_player()
+
+func take_damage(amount: int):
+    """Simplified damage - no is_heavy parameter"""
+    current_health -= amount
+    flash_white()
+    if current_health <= 0:
+        die()
+
+AI GENERATION COMMANDS
+======================
+
+AUDIO (SFX Engine):
+-------------------
+# Player Combat (8 sounds)
+"Quick weapon whoosh, sharp and fast, light melee swing"
+"Medium weapon swing, moderate speed and weight"
+"Heavy powerful swing, deep whoosh with weight, strong attack"
+"Meaty impact, flesh hit, satisfying thud"
+"Rock impact, stone breaking, hard surface hit"
+"Male player damage grunt, short pain sound, taking hit"
+"Male player damage grunt variation, hit sound, different pitch"
+"Male player death sound, final gasp, character dying"
+
+# Enemy Sounds (4 per enemy × 6 enemies = 24 sounds)
+# Example - Corrupted Rabbit:
+"Corrupted animal growl, hostile, low menacing"
+"Rabbit attack hiss, aggressive lunge"
+"Rabbit damage squeak, small animal hurt"
+"Rabbit death squeal, final sound, small creature"
+
+# Repeat pattern for: Goblin, Scorpion, Wolf, Golem, Wraith
+
+TEXTURES (Leonardo.ai):
+-----------------------
+"Seamless tileable texture, corrupted animal fur, dark red-brown, diseased patches, matted, 512x512, top-down view, game texture"
+"Seamless tileable texture, green goblin skin, mottled, warts, rough, fantasy game, 512x512, top-down view"
+"Seamless tileable texture, scorpion chitin, sandy yellow, segmented plates, desert creature, 512x512, top-down view"
+"Seamless tileable texture, white wolf fur, icy blue tint, frost patches, winter, 512x512, top-down view, game asset"
+"Seamless tileable texture, granite stone, gray rock, orange glowing cracks, magma veins, 512x512, top-down view"
+
+BALANCE REFERENCE
+=================
+
+PLAYER STATS:
+Health: 100 HP
+Move Speed: 5.0 m/s (walk), 10.0 m/s (sprint)
+Attack Cooldown: 0.5s (configurable via Inspector)
+
+WEAPON DAMAGE TABLE (SIMPLIFIED):
+Weapon          | Damage | Cooldown | Range
+----------------|--------|----------|-------
+Wooden Club     |  15    |  1.0s    | 2.5m
+Stone Spear     |  20    |  1.2s    | 3.5m
+Bone Sword      |  25    |  1.0s    | 3.0m
+
+ENEMY STATS TABLE:
+Enemy            | HP  | DMG | Speed | Range | Hits to Kill (Club)
+-----------------|-----|-----|-------|-------|--------------------
+Corrupted Rabbit | 30  |  8  | 4.5   | 1.5m  | 2
+Forest Goblin    | 50  | 12  | 3.0   | 2.0m  | 4
+Desert Scorpion  | 60  | 15  | 3.0   | 2.5m  | 4
+Ice Wolf         | 55  | 14  | 4.5   | 2.0m  | 4
+Stone Golem      | 100 | 20  | 1.5   | 2.5m  | 7
+Shadow Wraith    | 40  | 12  | 4.0   | 2.0m  | 3
+
+SPAWN RATES (per chunk):
+Corrupted Rabbit: 15% (Forest)
+Forest Goblin: 8% (Forest)
+Desert Scorpion: 12% (Desert)
+Ice Wolf: 10% (Snow, spawns in packs of 2-3)
+Stone Golem: 5% (Mountains)
+Shadow Wraith: 8% (All biomes, night only)
+
+TESTING PROTOCOL
+================
+
+✅ PHASE 1 TESTS (COMPLETE):
+[✅] Attack works with M+KB (LMB)
+[✅] Attack works with controller (RT)
+[✅] Cooldown prevents spam
+[✅] Crosshair changes to red when targeting
+[✅] Camera shake on attack
+[✅] Controller rumble on attack
+[✅] Weapon switching works (RB)
+[✅] B button triggers sprint (not dodge)
+[✅] Combat system parameters visible in Inspector
+
+PHASE 2 TESTS (UPCOMING):
+[ ] All 6 enemy types spawn correctly
+[ ] Enemy AI works (chase, attack, death)
+[ ] Enemies take damage and die
+[ ] Enemies drop items on death
+[ ] Pack behavior for Ice Wolves
+[ ] Shadow Wraith only spawns at night
+
+PHASE 3 TESTS (UPCOMING):
+[ ] All 32 sounds play correctly
+[ ] Sound variation working
+[ ] Enemy textures applied
+[ ] Hit particles spawn
+[ ] Visual effects polished
+
+PHASE 4 TESTS (UPCOMING):
+[ ] Player death detected at 0 HP
+[ ] Death screen appears
+[ ] Respawn works correctly
+[ ] Items kept on death
+[ ] No performance issues
+
+COMMON PITFALLS
+===============
+
+1. ✅ ATTACK COOLDOWN SPAM - FIXED
+   Solution: Check cooldown before allowing attack
+   
+2. ✅ CONTROLLER INPUT SPAM - FIXED
+   Solution: Use is_action_pressed with echo check + charging flag
+   
+3. ENEMY STUCK IN WALLS
+   Fix: Set collision_mask properly (Layer 1 only)
+   
+4. CONTROLLER AUTO-AIM TOO STRONG
+   Fix: Tune cone angle in Inspector (default: 30°)
+   
+5. SHADOW WRAITH SPAWNS AT DAY
+   Fix: Check time_of_day properly (>= 0.9167 or < 0.25)
+   
+6. ICE WOLVES DON'T PACK
+   Fix: form_pack() called deferred in _ready()
+   
+7. STONE GOLEM TOO HARD
+   Fix: Reduce HP or increase player damage via Inspector
+   
+8. SOUNDS NOT PLAYING
+   Fix: Check AudioManager.play_sound() category parameter
+   
+9. ✅ B BUTTON CONFUSION - FIXED
+   Solution: B button now = Sprint (was dodge)
+
+PERFORMANCE TARGETS
+===================
+
+Target FPS: 60 (minimum)
+Max Active Enemies: 12 simultaneously
+Draw Calls: <100 with enemies
+Memory: <500 MB
+Load Time: <2 seconds
+
+If performance issues:
+1. Reduce enemy spawn rates
+2. Use simpler particle effects
+3. Lower texture resolution (256x256)
+4. Cull distant enemies
+5. Reduce max active enemies to 8
+
+RELEASE CRITERIA
+================
+
+MUST HAVE:
+✅ Combat system functional (simple attack)
+✅ Crosshair UI working
+✅ Controller support complete
+☐ At least 3 enemy types working
+☐ Death/respawn working
+☐ No crashes or soft-locks
+☐ Audio playing correctly
+
+SHOULD HAVE:
+☐ All 6 enemy types
+☐ All textures applied
+☐ All sounds integrated
+☐ Rumble working
+☐ Visual effects polished
+
+NICE TO HAVE:
+○ Damage numbers
+○ Enemy ambient sounds
+○ Weapon durability
+
+VERSION NUMBERING
+=================
+
+v0.6.0 - Initial simplified combat release
+v0.6.1 - Bug fixes + polish
+v0.6.2 - Balance adjustments
+v0.7.0 - Next major feature (bosses/save system)
+
+CHANGES FROM ORIGINAL PLAN
+===========================
+
+✅ COMPLETED SIMPLIFICATIONS:
+- Removed charging mechanics (was: hold 1.5s for heavy attack)
+- Removed dodge system (was: B button dash with i-frames)
+- Removed bow & arrow (was: charge-based ranged weapon)
+- Removed charge UI (vignette, charge bar)
+- Simplified to Minecraft-style click-to-attack
+- B button remapped from Dodge to Sprint
+- Made all combat parameters Inspector-editable
+- Reduced total dev time from 48h to 32h
+
+BENEFITS:
++ Simpler to implement
++ Easier to understand for players
++ More responsive combat feel
++ Fewer bugs to fix
++ Faster iteration on balance
++ Can always add complexity later if needed
+
+SUPPORT RESOURCES
+=================
+
+Godot Docs: https://docs.godotengine.org/en/stable/
+CharacterBody3D: https://docs.godotengine.org/en/stable/classes/class_characterbody3d.html
+State Machines: https://gdquest.com/tutorial/godot/design-patterns/finite-state-machine/
+Rumble API: https://docs.godotengine.org/en/stable/classes/class_input.html
+
+GOOD LUCK! 🎮⚔️

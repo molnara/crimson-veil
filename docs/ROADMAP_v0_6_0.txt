@@ -1,0 +1,156 @@
+CRIMSON VEIL - ROADMAP
+
+CURRENT: v0.6.0 "Hunter & Prey" (2/12 tasks - 17%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
+========================================================================================
+
+PHASE 1 STATUS: ✅ COMPLETE (Tasks 1.1-1.2 finished - simplified combat foundation ready)
+
+DESIGN DECISIONS (LOCKED - UPDATED Dec 13, 2025):
+✓ Combat Style: Simplified Minecraft-style Single-Shot Melee
+✓ Attack Types: Simple click-to-attack (0.5s cooldown, no charging mechanics)
+✓ Weapons: Melee only (wooden club, stone spear, bone sword) - NO bow for v0.6.0
+✓ Enemies: 6 types across all biomes (primitives + AI textures)
+✓ Enemy Roster: Corrupted Rabbit, Forest Goblin, Desert Scorpion, Ice Wolf, Stone Golem, Shadow Wraith
+✓ Critters: Stay peaceful (no hostile variants)
+✓ Controller: Full dual M+KB/gamepad support
+✓ Controller Layout: Minecraft-style (A=Interact/Jump, B=Sprint, RT=Attack, RB=Cycle Weapon)
+✓ UI Controls: ESC/B close all menus, movement blocked when any UI open
+✓ Visual Style: CSG primitives + AI-generated textures
+✓ Audio: 8 combat sounds via SFX Engine (player attacks only - simplified from 32)
+✓ Death Penalty: Respawn at spawn, keep items (forgiving for v0.6.0)
+✓ NO Dodge System: Removed for simplicity (was: dodge dash with i-frames)
+✓ NO Bow System: Removed for v0.6.0 (may add in future update)
+✓ NO Charging: Removed heavy attacks and charge mechanics
+
+SPRINT v0.6.0 - TASKS (SIMPLIFIED):
+[✅] 1.1 - Combat System Foundation (COMPLETE)
+      → CombatSystem.gd created (~300 lines, simplified from 500+)
+      → Weapon.gd resource class with static weapon definitions
+      → Player.gd integration (combat_attack input only)
+      → Camera shake system (0.3-0.5 intensity for attacks)
+      → Rumble integration (light/medium presets for attacks)
+      → Collision masking (Layer 9 for enemies)
+      → Export parameters for tuning (attack cooldown, range, auto-aim)
+      
+[✅] 1.2 - Melee Attack System (COMPLETE - SIMPLIFIED)
+      → Single-shot attack (RT/LMB tap, 0.5s cooldown)
+      → NO charging mechanics (removed for simplicity)
+      → Targeting: Raycast from camera with weapon-specific range
+      → Auto-aim: 30° cone for controller (configurable in Inspector)
+      → Crosshair: Simple 2-state (white=default, red=targeting)
+      → CombatUI: Minimal (crosshair only, no charge bar/vignette)
+      → Visual feedback: Camera shake + controller rumble on attacks
+      → Inspector-editable parameters via @export
+      
+[❌] 1.3 - Dodge System (REMOVED)
+      → Decided to keep combat simple like Minecraft
+      → B button remapped to Sprint instead
+      
+[✅] 1.4 - Melee Weapons (COMPLETE - UNCHANGED)
+      → Wooden Club: 15 dmg, 2.5m range, 1.0s cooldown (starter, equipped)
+      → Stone Spear: 20 dmg, 3.5m range, 1.2s cooldown (wood×3, stone×2, leather×1)
+      → Bone Sword: 25 dmg, 3.0m range, 1.0s cooldown (wood×2, bone×4)
+      → Weapon switching: RB button cycles equipped weapons
+      → Crafting recipes defined in Weapon.static methods
+      
+[❌] 1.5 - Bow & Arrow System (REMOVED)
+      → Removed for v0.6.0 to keep combat simple
+      → May add in future update if needed
+      
+[ ] 2.1 - Enemy Base Class (5h) 🎯 NEXT
+      → Enemy.gd extends CharacterBody3D
+      → Health, damage, movement, detection systems
+      → State machine (Idle → Chase → Attack → Death)
+      → Drop table system (items on death)
+      → take_damage(amount) method for combat integration (no is_heavy parameter)
+      → Must be in "enemies" group + collision Layer 9
+      
+[ ] 2.2 - Enemy Types (6 variants) (10h)
+      → Corrupted Rabbit (Forest, 30 HP, territorial, fast)
+      → Forest Goblin (Forest, 50 HP, hostile, patrols, flees at 20% HP)
+      → Desert Scorpion (Desert, 60 HP, ambush from sand)
+      → Ice Wolf (Snow, 55 HP, pack tactics, spawns in groups of 2-3)
+      → Stone Golem (Mountain, 100 HP, tank, ground slam)
+      → Shadow Wraith (Night-only, 40 HP, floats, despawns at dawn)
+      → CSG primitive geometry for all
+      → Unique drops per enemy (leather, chitin, fangs, cores, etc.)
+      
+[ ] 2.3 - Enemy AI & Spawning (3h)
+      → Chase AI (move toward player, maintain range)
+      → Attack patterns (telegraph → strike → cooldown)
+      → Pack behavior (Ice Wolves coordinate)
+      → Biome-specific spawning (extend CritterSpawner)
+      → Time-based spawning (Shadow Wraith night-only)
+      → Spawn rates (5-15% per chunk based on enemy type)
+      
+[ ] 3.1 - Combat Audio Generation (2h - REDUCED FROM 3h)
+      → Generate 8 sounds via SFX Engine (reduced from 32)
+      → Player combat: swing_light, swing_medium, swing_heavy, hit_flesh, hit_stone, player_grunt_1, player_grunt_2, player_death
+      → NO bow sounds (removed)
+      → NO dodge sounds (removed)
+      → Enemy sounds moved to separate task (6 enemies × 4 sounds = 24)
+      → Integration with AudioManager variation system
+      → Configure sound categories and volumes
+      
+[ ] 3.2 - AI Texture Generation (2h - UNCHANGED)
+      → Generate 5 enemy textures via Leonardo.ai/DALL-E
+      → Corrupted fur (dark red-brown, diseased)
+      → Goblin skin (mottled green, rough)
+      → Scorpion chitin (sandy yellow, segmented)
+      → Wolf fur (white, icy blue tint, frost)
+      → Stone with magma (gray, orange glowing cracks)
+      → Apply to CSG primitive materials
+      → Configure texture filtering (nearest for pixel art look)
+      
+[ ] 3.3 - Visual Effects & Feedback (2h - SIMPLIFIED)
+      → Hit particles (burst at impact point, color-coded by enemy)
+      → Crosshair feedback (flash on hit)
+      → Screen flash (red when taking damage)
+      → Death fade (enemies dissolve over 0.5s)
+      → Camera shake presets (light/medium for different weapons)
+      → NO charge vignette (removed)
+      → NO charge bar (removed)
+      
+[ ] 4.1 - Player Death & Respawn (2h - UNCHANGED)
+      → Death detection (health <= 0 in HealthHungerSystem)
+      → Death screen UI ("YOU DIED" + respawn button)
+      → Respawn at world spawn (0, Y, 0)
+      → Full health/hunger restoration
+      → Keep all items (forgiving for now)
+      → Death sound + fade to black effect
+      
+[ ] 4.2 - Combat Polish & Balance (2h)
+      → Enemy sounds generation (24 sounds - moved from 3.1)
+      → Combat rumble presets finalized
+      → Button hints UI (auto-switch M+KB vs controller)
+      → Final balance pass (damage numbers, enemy HP, cooldowns)
+      → Testing with all 6 enemy types
+      → Performance optimization
+
+TOTAL ESTIMATED TIME: ~32 hours (reduced from 48 hours due to simplification)
+
+TASK BREAKDOWN:
+Phase 1 - Combat Core: Tasks 1.1-1.2 (8h) ✅ COMPLETE - Simple attack system
+Phase 2 - Enemies: Tasks 2.1-2.3 (18h) - Enemy class, 6 types, AI/spawning
+Phase 3 - Audio & Visual: Tasks 3.1-3.3 (6h) - Sounds, textures, effects
+Phase 4 - Integration: Tasks 4.1-4.2 (4h) - Death system, polish
+
+CHANGES FROM ORIGINAL PLAN:
+- ❌ Removed charging mechanics (was: hold 1.5s for heavy attack)
+- ❌ Removed dodge system (was: B button dash with i-frames)
+- ❌ Removed bow & arrow (was: charge-based ranged weapon)
+- ✅ Simplified to Minecraft-style click-to-attack
+- ✅ B button now = Sprint (was: Dodge)
+- ✅ Reduced from 32 sounds to 8 player sounds + 24 enemy sounds
+- ✅ Simplified UI (crosshair only, no charge indicators)
+- ✅ All combat parameters now configurable via Inspector (@export)
+
+SPRINT ACHIEVEMENTS (Target):
+✅ Complete simplified combat system (melee only)
+✅ 6 enemy types across all biomes
+✅ Full controller support (simplified layout)
+✅ 32 combat sounds (8 player + 24 enemy)
+✅ AI-textured enemies (5 unique textures)
+✅ Death/respawn system
+✅ Minecraft-like combat feel (simple, responsive)
+
