@@ -41,6 +41,7 @@ var harvesting_system: HarvestingSystem
 var building_system: BuildingSystem
 var crafting_system: CraftingSystem
 var tool_system: ToolSystem
+var combat_system: CombatSystem  # Combat system
 var inventory: Inventory
 var health_hunger_system: HealthHungerSystem
 var harvest_ui: Control
@@ -110,6 +111,11 @@ func _ready():
 	add_child(crafting_system)
 	crafting_system.initialize(inventory)
 	
+	# Initialize combat system
+	combat_system = CombatSystem.new()
+	add_child(combat_system)
+	combat_system.initialize(self, camera, health_hunger_system)
+	
 	# Connect harvesting signals
 	harvesting_system.harvest_completed.connect(_on_harvest_completed)
 	
@@ -123,8 +129,8 @@ func _input(event):
 		spring_arm.rotate_x(-event.relative.y * mouse_sensitivity)
 		spring_arm.rotation.x = clamp(spring_arm.rotation.x, -PI/2, PI/2)
 	
-	# Toggle mouse capture (ESC/Start button)
-	if event.is_action_pressed("ui_cancel"):
+	# Toggle mouse capture (ESC/Start button OR B button to close menus)
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("combat_dodge"):
 		# Close container if open (PRIORITY #1)
 		if container_ui and container_ui.visible:
 			close_container_ui()
@@ -138,7 +144,7 @@ func _input(event):
 			AudioManager.play_sound("inventory_toggle", "ui", false, false)
 			return
 		
-		# Close inventory if open
+		# Close inventory if open (PRIORITY #3)
 		if inventory_ui and inventory_ui.visible:
 			inventory_ui.visible = false
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -146,12 +152,17 @@ func _input(event):
 			AudioManager.play_sound("inventory_toggle", "ui", false, false)
 			return
 		
-		# Close crafting menu if open
+		# Close crafting menu if open (PRIORITY #4)
 		if crafting_ui and crafting_ui.visible:
 			crafting_ui.visible = false
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			# Play close sound
 			AudioManager.play_sound("inventory_toggle", "ui", false, false)
+			return
+		
+		# If nothing to close and B button pressed, ignore (don't dodge)
+		if event.is_action_pressed("combat_dodge"):
+			return  # B button consumed by menu close, don't process as dodge
 			return
 		
 		# If nothing is open and mouse is captured, open settings menu
@@ -171,11 +182,17 @@ func _input(event):
 			close_container_ui()
 			return
 	
-	# Block inventory/crafting keys when container is open
-	if container_ui and container_ui.visible:
-		return  # Don't process I/C/Y/X keys
+	# Block inventory/crafting/building keys when ANY UI is open
+	var any_ui_open = (container_ui and container_ui.visible) or \
+	                  (inventory_ui and inventory_ui.visible) or \
+	                  (crafting_ui and crafting_ui.visible) or \
+	                  (settings_menu and settings_menu.visible)
 	
-	# Toggle inventory with I key or Y button (Xbox)
+	if any_ui_open:
+		# Only allow ESC/B to close, block all other UI inputs
+		return
+	
+	# Toggle inventory with I key or Y button (Xbox) - ONLY if no UI open
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_I:
 			if inventory_ui:
@@ -187,7 +204,7 @@ func _input(event):
 			inventory_ui.toggle_visibility()
 		print("Toggle inventory")
 	
-	# Toggle crafting menu with C key or X button (Xbox)
+	# Toggle crafting menu with C key or X button (Xbox) - ONLY if no UI open
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_C:
 			if crafting_ui:
@@ -217,6 +234,33 @@ func _input(event):
 			# Play tool switch sound
 			AudioManager.play_sound("tool_switch", "ui", false, false)
 			# RUMBLE: Tool switch feedback
+			RumbleManager.play_ui_click()
+	
+	# === COMBAT INPUT ===
+	# Attack with LMB or RT (tap = light, hold = charge)
+	# Block if any UI is open OR in build mode
+	var ui_is_open = (container_ui and container_ui.visible) or \
+	                 (inventory_ui and inventory_ui.visible) or \
+	                 (crafting_ui and crafting_ui.visible)
+	var in_build_mode = building_system and building_system.preview_mode
+	
+	if event.is_action_pressed("combat_attack") and not ui_is_open and not in_build_mode:
+		if combat_system:
+			combat_system.start_charging()
+			print("🎮 COMBAT: Started charging attack")
+	
+	if event.is_action_released("combat_attack") and not ui_is_open and not in_build_mode:
+		if combat_system:
+			combat_system.release_attack()
+			print("🎮 COMBAT: Released attack")
+	
+	# Weapon switching with RB (same as tool cycling for now)
+	if event.is_action_pressed("cycle_weapon"):
+		if combat_system:
+			combat_system.cycle_weapon()
+			# Play tool switch sound
+			AudioManager.play_sound("tool_switch", "ui", false, false)
+			# RUMBLE: Weapon switch feedback
 			RumbleManager.play_ui_click()
 	
 	# Toggle building mode with B key or D-pad Up
@@ -593,19 +637,7 @@ func _physics_process(delta):
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	
-	# Handle jump (Space or A button) - CONTEXT SENSITIVE
-	# Priority 1: Container interaction (if looking at one within 3m)
-	# Priority 2: Jump (if on ground)
-	if (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("controller_jump")):
-		var container = get_container_at_cursor()
-		if container and not is_flying:
-			# Container takes priority - open it instead of jumping
-			open_container(container)
-		elif is_on_floor():
-			# No container nearby - jump normally
-			velocity.y = jump_velocity
-	
-	# Get input direction (keyboard + left stick)
+	# Get input direction (keyboard + left stick) - MOVED UP for dodge detection
 	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	
 	# Controller left stick (with deadzone)
@@ -616,6 +648,33 @@ func _physics_process(delta):
 	if abs(stick_y) > abs(input_dir.y):
 		input_dir.y = stick_y
 	
+	# Handle dodge with dedicated combat_dodge action (Space key OR B button)
+	# Block if any UI is open OR in build mode
+	if Input.is_action_just_pressed("combat_dodge"):
+		var ui_is_open = (container_ui and container_ui.visible) or \
+		                 (inventory_ui and inventory_ui.visible) or \
+		                 (crafting_ui and crafting_ui.visible)
+		var in_build_mode = building_system and building_system.preview_mode
+		
+		if not ui_is_open and not in_build_mode and combat_system:
+			var was_dodging = combat_system.try_dodge(input_dir)
+			if was_dodging:
+				print("🏃 DODGE! Direction: ", input_dir)
+	
+	# Handle jump/interact with A button (controller) or Space/E (keyboard)
+	# A button = Harvest/Interact when looking at resource, Jump otherwise
+	if (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("controller_interact")):
+		var container = get_container_at_cursor()
+		if container and not is_flying:
+			# Container interaction
+			open_container(container)
+			print("📦 Container interaction (A button)")
+		elif is_on_floor() and not harvesting_system.is_harvesting and not harvesting_system.is_looking_at_resource() and not (building_system and building_system.preview_mode):
+			# Jump (only if NOT harvesting AND NOT looking at resource AND NOT in build mode)
+			velocity.y = jump_velocity
+			print("⬆️ JUMP! (A button)")
+	
+	# Calculate movement direction
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	
 	# Debug: Print position when pressing P
@@ -624,7 +683,7 @@ func _physics_process(delta):
 		print("On floor: ", is_on_floor())
 		print("Velocity: ", velocity)
 	
-	# Apply movement (Shift or B button for sprint)
+	# Apply movement (Shift for sprint - B is now dodge)
 	var is_sprinting = Input.is_action_pressed("ui_shift") or Input.is_action_pressed("controller_sprint")
 	var current_speed = sprint_speed if is_sprinting else move_speed
 	

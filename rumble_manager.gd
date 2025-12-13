@@ -35,6 +35,13 @@ const RUMBLE_PRESETS = {
 	"heavy": {"weak": 0.55, "strong": 0.45, "duration": 0.40},      # Resource breaks, damage
 	"impact": {"weak": 0.20, "strong": 0.60, "duration": 0.15},     # Wrong tool, hard hits
 	"footstep": {"weak": 0.08, "strong": 0.05, "duration": 0.08},   # Very subtle steps
+	# Combat presets
+	"attack_light": {"weak": 0.25, "strong": 0.20, "duration": 0.15},     # Light melee attack
+	"attack_heavy": {"weak": 0.50, "strong": 0.60, "duration": 0.35},     # Heavy charged attack
+	"dodge": {"weak": 0.30, "strong": 0.25, "duration": 0.20},            # Dodge dash
+	"player_hit": {"weak": 0.45, "strong": 0.55, "duration": 0.30},       # Taking damage
+	"enemy_death": {"weak": 0.40, "strong": 0.40, "duration": 0.25},      # Enemy killed
+	"bow_release": {"weak": 0.15, "strong": 0.10, "duration": 0.12},      # Bow fired (light)
 }
 
 # ============================================================================
@@ -51,6 +58,13 @@ const COOLDOWNS = {
 	"heavy": 0.30,       # Heavy impacts
 	"impact": 0.30,      # Wrong tool
 	"footstep": 0.25,    # Footsteps (longer to prevent spam while walking)
+	# Combat cooldowns
+	"attack_light": 0.20,     # Light attacks
+	"attack_heavy": 0.35,     # Heavy attacks
+	"dodge": 0.25,            # Dodge
+	"player_hit": 0.40,       # Taking damage
+	"enemy_death": 0.30,      # Enemy killed
+	"bow_release": 0.15,      # Bow shots
 }
 
 # Emergency brake - global rate limit
@@ -339,3 +353,31 @@ func play_warning() -> void:
 func play_footstep() -> void:
 	"""Helper: Play rumble for footstep (if enabled)"""
 	play("footstep")
+
+# ============================================================================
+# COMBAT RUMBLE HELPERS
+# ============================================================================
+
+func play_light_attack() -> void:
+	"""Helper: Play rumble for light attack"""
+	play("attack_light")
+
+func play_heavy_attack() -> void:
+	"""Helper: Play rumble for heavy attack"""
+	play("attack_heavy")
+
+func play_dodge_dash() -> void:
+	"""Helper: Play rumble for dodge"""
+	play("dodge")
+
+func play_player_damage() -> void:
+	"""Helper: Play rumble for taking damage"""
+	play("player_hit")
+
+func play_enemy_killed() -> void:
+	"""Helper: Play rumble for enemy death"""
+	play("enemy_death")
+
+func play_bow_shot() -> void:
+	"""Helper: Play rumble for bow release"""
+	play("bow_release")

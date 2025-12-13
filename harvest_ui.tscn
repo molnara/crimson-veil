@@ -61,9 +61,10 @@ offset_bottom = 20.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Crosshair" type="Panel" parent="CrosshairContainer"]
+[node name="Crosshair" type="ColorRect" parent="CrosshairContainer"]
 custom_minimum_size = Vector2(4, 4)
 layout_mode = 2
+color = Color(1, 1, 1, 1)
 
 [node name="InventoryDisplay" type="VBoxContainer" parent="."]
 layout_mode = 1

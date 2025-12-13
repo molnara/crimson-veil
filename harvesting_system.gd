@@ -262,6 +262,11 @@ func start_harvest():
 			if wrong_tool_cooldown <= 0:
 				var required_tool = tool_system.get_required_tool_name(resource_type)
 				print("Cannot harvest ", current_target.resource_name, " - requires ", required_tool)
+				# VISUAL FEEDBACK: Show error in target label
+				if target_label:
+					target_label.text = "❌ Requires " + required_tool
+					target_label.modulate = Color.RED
+					# Will reset when looking away (update_target_ui() will fix it)
 				
 				# AUDIO: Play wrong tool sound
 				AudioManager.play_sound("wrong_tool", "sfx")
