@@ -16,6 +16,10 @@ var current_container: Node = null  # Container player is looking at
 var is_harvesting: bool = false
 var just_completed_harvest: bool = false  # Prevent cancel message after completion
 
+# Wrong tool feedback cooldown (prevent spam from held controller input)
+var wrong_tool_cooldown: float = 0.0
+const WRONG_TOOL_COOLDOWN_TIME: float = 0.5  # 500ms between wrong tool sounds
+
 # UI references (will be set from outside)
 var progress_bar: ProgressBar = null
 var target_label: Label = null
@@ -59,6 +63,10 @@ func initialize(player_node: CharacterBody3D, player_camera: Camera3D, player_in
 func _process(delta):
 	if player == null or camera == null:
 		return
+	
+	# Tick down wrong tool cooldown
+	if wrong_tool_cooldown > 0:
+		wrong_tool_cooldown -= delta
 	
 	# Always update what the player is looking at
 	update_raycast()
@@ -240,17 +248,26 @@ func start_harvest():
 	if current_target == null:
 		return
 	
+	# Prevent starting harvest if already harvesting
+	if is_harvesting:
+		return
+	
 	# Check if we have the required tool
 	if tool_system:
 		var resource_info = current_target.get_info()
 		var resource_type = resource_info.get("type", "generic")
 		
 		if not tool_system.can_harvest(resource_type):
-			var required_tool = tool_system.get_required_tool_name(resource_type)
-			print("Cannot harvest ", current_target.resource_name, " - requires ", required_tool)
-			
-			# AUDIO: Play wrong tool sound
-			AudioManager.play_sound("wrong_tool", "sfx")
+			# Only play wrong tool sound if cooldown has expired
+			if wrong_tool_cooldown <= 0:
+				var required_tool = tool_system.get_required_tool_name(resource_type)
+				print("Cannot harvest ", current_target.resource_name, " - requires ", required_tool)
+				
+				# AUDIO: Play wrong tool sound
+				AudioManager.play_sound("wrong_tool", "sfx")
+				
+				# Set cooldown to prevent spam
+				wrong_tool_cooldown = WRONG_TOOL_COOLDOWN_TIME
 			return
 	
 	if current_target.start_harvest(player):

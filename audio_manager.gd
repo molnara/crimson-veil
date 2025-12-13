@@ -1,7 +1,13 @@
 extends Node
 
 # AudioManager - Centralized audio management system
-# Handles all game sounds with pooling, volume control, and variation
+# Handles all game sounds with pooling, volume control, and intelligent variation
+# 
+# Variation System:
+#   - 4 presets: none, subtle, moderate, strong
+#   - Per-sound configuration (48 sounds configured)
+#   - Automatic pitch/volume randomization
+#   - Smart defaults by sound category
 
 # ============================================================================
 # VOLUME SETTINGS
@@ -20,6 +26,75 @@ const SFX_VOLUME_DEFAULT: float = 0.75
 const MUSIC_VOLUME_DEFAULT: float = 0.35
 const AMBIENT_VOLUME_DEFAULT: float = 0.25
 const UI_VOLUME_DEFAULT: float = 0.60
+
+# ============================================================================
+# SOUND VARIATION SYSTEM
+# ============================================================================
+
+# Variation presets (pitch_min, pitch_max, volume_min, volume_max)
+const VARIATION_PRESETS = {
+	"none": {"pitch": [1.0, 1.0], "volume": [1.0, 1.0]},
+	"subtle": {"pitch": [0.97, 1.03], "volume": [0.95, 1.0]},
+	"moderate": {"pitch": [0.93, 1.07], "volume": [0.90, 1.0]},
+	"strong": {"pitch": [0.88, 1.12], "volume": [0.85, 1.0]},
+}
+
+# Sound-specific variation settings (override defaults)
+# Format: "sound_name": "preset_name" or "sound_name": {"pitch": [min, max], "volume": [min, max]}
+var sound_variations: Dictionary = {
+	# ========== FOOTSTEPS - Strong variation for organic feel ==========
+	"footstep_grass_1": "strong",
+	"footstep_grass_2": "strong",
+	"footstep_grass_3": "strong",
+	"footstep_stone_1": "strong",
+	"footstep_stone_2": "strong",
+	"footstep_stone_3": "strong",
+	"footstep_sand_1": "strong",
+	"footstep_sand_2": "strong",
+	"footstep_sand_3": "strong",
+	"footstep_snow_1": "strong",
+	"footstep_snow_2": "strong",
+	"footstep_snow_3": "strong",
+	
+	# ========== HARVESTING - Moderate variation for impact diversity ==========
+	"axe_chop": "moderate",
+	"pickaxe_hit": "moderate",
+	"mushroom_pick": "subtle",
+	"strawberry_pick": "subtle",
+	"resource_break": "moderate",
+	
+	# ========== BUILDING - Subtle variation to maintain consistency ==========
+	"block_place": "subtle",
+	"block_remove": "subtle",
+	
+	# ========== UI SOUNDS - Minimal/no variation for clarity ==========
+	"inventory_toggle": "none",
+	"craft_complete": "none",
+	"craft_unavailable": "none",
+	"stack_full": "none",
+	"tool_switch": "none",
+	"health_low": "none",
+	"hunger_warning": "none",
+	"setting_click": "none",
+	"item_pickup": "subtle",
+	
+	# ========== CONTAINERS - Subtle variation ==========
+	"chest_open": "subtle",
+	"chest_close": "subtle",
+	
+	# ========== AMBIENT - No variation (already looping naturally) ==========
+	"wind_light": "none",
+	"wind_strong": "none",
+	"ocean_waves": "none",
+	"crickets_night": "none",
+	"birds_day": "none",
+	"frogs_night": "none",
+	"leaves_rustle": "none",
+	"thunder_distant": "none",
+}
+
+# Default variation preset for sounds not in the dictionary
+const DEFAULT_VARIATION_PRESET: String = "moderate"
 
 # ============================================================================
 # SOUND POOLING
@@ -73,6 +148,9 @@ func _ready():
 	print("  - Sound pool: %d players" % MAX_CONCURRENT_SOUNDS)
 	print("  - Volume levels: Master=%.2f, SFX=%.2f, Music=%.2f, Ambient=%.2f, UI=%.2f" % [
 		master_volume, sfx_volume, music_volume, ambient_volume, ui_volume
+	])
+	print("  - Variation system: %d sounds configured, %d presets available" % [
+		sound_variations.size(), VARIATION_PRESETS.size()
 	])
 
 # ============================================================================
@@ -196,15 +274,15 @@ func _load_sound_library():
 # ============================================================================
 
 func play_sound(sound_name: String, category: String = "sfx", pitch_vary: bool = true, 
-                volume_vary: bool = false) -> void:
+                volume_vary: bool = true) -> void:
 	"""
 	Play a sound effect with automatic pooling and variation
 	
 	Args:
 		sound_name: Name of sound in library (e.g., "axe_chop")
 		category: Volume category ("sfx", "ui", "ambient")
-		pitch_vary: Apply random pitch variation (0.9-1.1x)
-		volume_vary: Apply random volume variation (0.9-1.0x)
+		pitch_vary: Apply pitch variation (uses sound-specific preset)
+		volume_vary: Apply volume variation (uses sound-specific preset)
 	"""
 	
 	# Check if sound exists in library
@@ -222,15 +300,20 @@ func play_sound(sound_name: String, category: String = "sfx", pitch_vary: bool =
 	# Configure player
 	player.stream = sounds[sound_name]
 	
+	# Get variation settings for this sound
+	var variation = _get_variation_settings(sound_name)
+	
 	# Apply volume (Master × Category × Variation)
 	var final_volume = master_volume * _get_category_volume(category)
 	if volume_vary:
-		final_volume *= randf_range(0.9, 1.0)
+		var vol_range = variation["volume"]
+		final_volume *= randf_range(vol_range[0], vol_range[1])
 	player.volume_db = linear_to_db(final_volume)
 	
 	# Apply pitch variation
 	if pitch_vary:
-		player.pitch_scale = randf_range(0.9, 1.1)
+		var pitch_range = variation["pitch"]
+		player.pitch_scale = randf_range(pitch_range[0], pitch_range[1])
 	else:
 		player.pitch_scale = 1.0
 	
@@ -241,7 +324,7 @@ func play_sound(sound_name: String, category: String = "sfx", pitch_vary: bool =
 	active_sounds.append(player)
 
 func play_sound_variant(base_name: String, variant_count: int, category: String = "sfx",
-                        pitch_vary: bool = true, volume_vary: bool = false) -> void:
+                        pitch_vary: bool = true, volume_vary: bool = true) -> void:
 	"""
 	Play a random variant from a set of numbered sounds
 	
@@ -252,8 +335,8 @@ func play_sound_variant(base_name: String, variant_count: int, category: String 
 		base_name: Base sound name (e.g., "footstep_grass")
 		variant_count: Number of variants (e.g., 3 for _1, _2, _3)
 		category: Volume category
-		pitch_vary: Apply pitch variation
-		volume_vary: Apply volume variation
+		pitch_vary: Apply pitch variation (uses preset)
+		volume_vary: Apply volume variation (uses preset)
 	"""
 	var variant_num = randi_range(1, variant_count)
 	var sound_name = "%s_%d" % [base_name, variant_num]
@@ -476,6 +559,31 @@ func _update_all_volumes() -> void:
 	for player in ambient_players.values():
 		player.volume_db = linear_to_db(master_volume * ambient_volume)
 
+func _get_variation_settings(sound_name: String) -> Dictionary:
+	"""
+	Get pitch and volume variation ranges for a specific sound
+	
+	Returns: {"pitch": [min, max], "volume": [min, max]}
+	"""
+	# Check if sound has custom settings
+	if sound_variations.has(sound_name):
+		var setting = sound_variations[sound_name]
+		
+		# If it's a preset name (string), look it up
+		if setting is String:
+			if VARIATION_PRESETS.has(setting):
+				return VARIATION_PRESETS[setting]
+			else:
+				push_warning("[AudioManager] Unknown variation preset: %s, using default" % setting)
+				return VARIATION_PRESETS[DEFAULT_VARIATION_PRESET]
+		
+		# If it's a custom dictionary, use it directly
+		elif setting is Dictionary:
+			return setting
+	
+	# No custom setting - use default preset
+	return VARIATION_PRESETS[DEFAULT_VARIATION_PRESET]
+
 func _get_category_volume(category: String) -> float:
 	"""Get volume multiplier for category"""
 	match category.to_lower():
@@ -555,6 +663,59 @@ func stop_all_sounds() -> void:
 	ambient_players.clear()
 	
 	print("[AudioManager] All audio stopped")
+
+# ============================================================================
+# VARIATION SYSTEM UTILITIES
+# ============================================================================
+
+func set_sound_variation(sound_name: String, preset_or_custom) -> void:
+	"""
+	Set variation for a specific sound
+	
+	Args:
+		sound_name: Sound to configure
+		preset_or_custom: Either a preset name ("none", "subtle", "moderate", "strong")
+		                  or custom dict {"pitch": [min, max], "volume": [min, max]}
+	"""
+	sound_variations[sound_name] = preset_or_custom
+	print("[AudioManager] Set variation for '%s': %s" % [sound_name, str(preset_or_custom)])
+
+func get_sound_variation(sound_name: String) -> Dictionary:
+	"""Get the current variation settings for a sound"""
+	return _get_variation_settings(sound_name)
+
+func reset_variation(sound_name: String) -> void:
+	"""Reset a sound to use the default variation preset"""
+	if sound_variations.has(sound_name):
+		sound_variations.erase(sound_name)
+		print("[AudioManager] Reset variation for '%s' to default" % sound_name)
+
+func print_variation_info(sound_name: String = "") -> void:
+	"""Print variation information for debugging"""
+	if sound_name == "":
+		# Print all configured sounds
+		print("\n[AudioManager] Variation Settings:")
+		print("  Default preset: %s" % DEFAULT_VARIATION_PRESET)
+		print("  Configured sounds: %d" % sound_variations.size())
+		
+		var by_preset = {}
+		for snd in sound_variations.keys():
+			var preset = sound_variations[snd]
+			if preset is String:
+				if not by_preset.has(preset):
+					by_preset[preset] = []
+				by_preset[preset].append(snd)
+		
+		for preset in by_preset.keys():
+			print("    %s: %d sounds" % [preset, by_preset[preset].size()])
+	else:
+		# Print specific sound
+		var settings = _get_variation_settings(sound_name)
+		var preset_name = sound_variations.get(sound_name, "default")
+		print("\n[AudioManager] Variation for '%s':" % sound_name)
+		print("  Preset: %s" % preset_name)
+		print("  Pitch range: %.2f - %.2f" % [settings["pitch"][0], settings["pitch"][1]])
+		print("  Volume range: %.2f - %.2f" % [settings["volume"][0], settings["volume"][1]])
 
 # ============================================================================
 # DEBUG FUNCTIONS
