@@ -143,11 +143,15 @@ func _on_craft_button_pressed(recipe_name: String):
 func _on_recipe_crafted(item_name: String, amount: int):
 	"""Feedback when crafting succeeds"""
 	print("Successfully crafted ", amount, "x ", item_name)
+	# Play craft success sound
+	AudioManager.play_sound("craft_complete", "ui", false, false)
 	refresh_recipes()
 
 func _on_craft_failed(reason: String):
 	"""Feedback when crafting fails"""
 	print("Craft failed: ", reason)
+	# Play craft unavailable sound
+	AudioManager.play_sound("craft_unavailable", "ui", false, false)
 
 func toggle_visibility():
 	"""Show/hide the crafting menu"""
@@ -155,5 +159,9 @@ func toggle_visibility():
 	if visible:
 		refresh_recipes()
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		# Play inventory toggle sound (same sound for all UI panels)
+		AudioManager.play_sound("inventory_toggle", "ui", false, false)
 	else:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		# Play close sound
+		AudioManager.play_sound("inventory_toggle", "ui", false, false)

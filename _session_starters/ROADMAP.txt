@@ -1,6 +1,6 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.5.0 "Atmosphere & Audio" (9/13 tasks - 69%)
+CURRENT: v0.5.0 "Atmosphere & Audio" (10/13 tasks - 77%)
 ========================================================
 
 DESIGN DECISIONS (LOCKED):
@@ -18,8 +18,12 @@ THIS SPRINT:
 [X] 2.3 - Ambient Environmental Sounds
 [X] 2.4 - Building Sounds
 [X] 2.5 - Container Sounds
+[X] 3.1 - UI Sounds (inventory, crafting, pickup, tool switch, warnings, settings, ESC feedback)
+      → 32 sound integration points across 5 scripts
+      → Fixed ESC key mapping bug
+      → Fixed chest double-open bug
+      → Complete audio coverage for all UI interactions
 [X] 3.2 - Settings Menu Audio Controls
-[ ] 3.1 - UI Sounds (inventory, crafting, pickup, warnings)
 [ ] 3.3 - Sound Variation System
 [ ] 3.4 - Audio Balance Pass
 [ ] 3.5 - Controller Rumble (OPTIONAL)
@@ -49,6 +53,11 @@ TECH DEBT:
 KNOWN ISSUES:
 - Container destroyed while UI open (needs null checks)
 - Input blocking too broad (player.gd:148)
+
+FIXED IN v0.5.0:
+- ✓ ESC key not mapped properly (ui_cancel had physical_keycode: -1)
+- ✓ Chest open sound playing multiple times (added UI visibility check)
+- ✓ Settings menu parser error (can't override show() in Godot 4)
 
 COMPLETED SPRINTS:
 v0.4.0 (Dec 12, 2025) - Storage & Organization (11/15 tasks - 73%)

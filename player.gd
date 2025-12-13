@@ -130,24 +130,30 @@ func _input(event):
 		if settings_menu and settings_menu.visible:
 			settings_menu.hide()
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			# Play close sound (hide() in settings_menu doesn't have sound, so add here)
+			AudioManager.play_sound("inventory_toggle", "ui", false, false)
 			return
 		
 		# Close inventory if open
 		if inventory_ui and inventory_ui.visible:
 			inventory_ui.visible = false
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			# Play close sound
+			AudioManager.play_sound("inventory_toggle", "ui", false, false)
 			return
 		
 		# Close crafting menu if open
 		if crafting_ui and crafting_ui.visible:
 			crafting_ui.visible = false
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			# Play close sound
+			AudioManager.play_sound("inventory_toggle", "ui", false, false)
 			return
 		
 		# If nothing is open and mouse is captured, open settings menu
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 			if settings_menu:
-				settings_menu.show()
+				settings_menu.open_settings()
 				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 			else:
 				# Fallback to old behavior if settings menu not loaded
@@ -204,6 +210,8 @@ func _input(event):
 	if event.is_action_pressed("cycle_tool"):
 		if tool_system:
 			tool_system.cycle_tool()
+			# Play tool switch sound
+			AudioManager.play_sound("tool_switch", "ui", false, false)
 	
 	# Toggle building mode with B key or D-pad Up
 	if event.is_action_pressed("toggle_building"):
@@ -438,6 +446,11 @@ func open_container(container: Node):
 		print("ERROR: Invalid container")
 		return
 	
+	# Don't open if container UI is already visible
+	if container_ui and container_ui.visible:
+		print("Container UI already open, ignoring interaction")
+		return
+	
 	# Save current UI state BEFORE opening container
 	save_ui_state()
 	
@@ -497,6 +510,8 @@ func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 	"""Called when a resource is successfully harvested"""
 	if inventory and drops.has("item") and drops.has("amount"):
 		inventory.add_item(drops["item"], drops["amount"])
+		# Play item pickup sound
+		AudioManager.play_sound("item_pickup", "ui", true, false)
 
 func apply_deadzone(value: float, deadzone: float) -> float:
 	"""Apply deadzone to analog stick input"""

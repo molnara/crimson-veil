@@ -83,6 +83,12 @@ func _ready():
 	# Initially hide menu
 	hide()
 
+func open_settings():
+	"""Show settings menu with sound effect"""
+	show()
+	# Play inventory toggle sound (same as other menus for consistency)
+	AudioManager.play_sound("inventory_toggle", "ui", false, false)
+
 func setup_resolution_options():
 	"""Populate resolution dropdown"""
 	resolution_option.clear()
@@ -221,16 +227,34 @@ func connect_signals():
 	music_slider.value_changed.connect(_on_music_volume_changed)
 	ambient_slider.value_changed.connect(_on_ambient_volume_changed)
 	ui_slider.value_changed.connect(_on_ui_volume_changed)
+	
+	# Slider drag end sounds (play sound when slider is released)
+	cloud_count_slider.drag_ended.connect(_on_slider_drag_ended)
+	view_distance_slider.drag_ended.connect(_on_slider_drag_ended)
+	master_slider.drag_ended.connect(_on_slider_drag_ended)
+	sfx_slider.drag_ended.connect(_on_slider_drag_ended)
+	music_slider.drag_ended.connect(_on_slider_drag_ended)
+	ambient_slider.drag_ended.connect(_on_slider_drag_ended)
+	ui_slider.drag_ended.connect(_on_slider_drag_ended)
+	
+	# Tab change sound
+	tab_container.tab_changed.connect(_on_tab_changed)
 
 func _on_resolution_changed(index: int):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	var resolution = settings_manager.resolution_presets[index]
 	settings_manager.set_setting("display", "resolution", resolution, false)
 
 func _on_fullscreen_toggled(pressed: bool):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.set_setting("display", "fullscreen", pressed, false)
 	
 	# Warn user if in editor
@@ -240,17 +264,25 @@ func _on_fullscreen_toggled(pressed: bool):
 func _on_vsync_toggled(pressed: bool):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.set_setting("display", "vsync", pressed, false)
 
 func _on_msaa_changed(index: int):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.set_setting("display", "msaa", index, false)
 	_check_if_custom_preset()
 
 func _on_quality_preset_changed(index: int):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
 	
 	var preset_names = ["low", "medium", "high", "ultra", "custom"]
 	var preset = preset_names[index]
@@ -264,12 +296,18 @@ func _on_quality_preset_changed(index: int):
 func _on_shadow_quality_changed(index: int):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.set_setting("graphics", "shadow_quality", index, false)
 	_check_if_custom_preset()
 
 func _on_fog_toggled(pressed: bool):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.set_setting("graphics", "fog_enabled", pressed, false)
 	_check_if_custom_preset()
 
@@ -290,6 +328,9 @@ func _on_view_distance_changed(value: float):
 func _on_max_fps_changed(index: int):
 	if updating_ui:
 		return
+	# Play setting click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	var fps_values = [30, 60, 120, 144, 0]  # 0 = unlimited
 	settings_manager.set_setting("performance", "max_fps", fps_values[index], false)
 
@@ -333,6 +374,9 @@ func _check_if_custom_preset():
 
 func _on_apply_pressed():
 	"""Apply all pending settings changes"""
+	# Play button click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.save_settings()
 	settings_manager.apply_all_settings()
 	
@@ -384,16 +428,35 @@ func apply_runtime_changes():
 
 func _on_cancel_pressed():
 	"""Cancel changes and reload from saved settings"""
+	# Play button click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.load_settings()
 	load_current_settings()
 	print("Settings cancelled, reloaded from file")
 
 func _on_reset_pressed():
 	"""Reset all settings to defaults"""
+	# Play button click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	settings_manager.reset_to_defaults()
 	load_current_settings()
 	print("Settings reset to defaults")
 
 func _on_close_pressed():
 	"""Close the settings menu"""
+	# Play button click sound
+	AudioManager.play_sound("setting_click", "ui", false, false)
+	
 	hide()
+
+func _on_slider_drag_ended(_value_changed: bool):
+	"""Play sound when any slider is released"""
+	# Only play if the value actually changed
+	if _value_changed:
+		AudioManager.play_sound("setting_click", "ui", false, false)
+
+func _on_tab_changed(_tab: int):
+	"""Play sound when switching tabs"""
+	AudioManager.play_sound("setting_click", "ui", false, false)

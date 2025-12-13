@@ -151,6 +151,9 @@ func show_container(container: Node, player_inv: Inventory, player: Node3D):
 	visible = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	
+	# Play chest open sound
+	AudioManager.play_sound("chest_open", "ui", false, false)
+	
 	print("Container UI opened: ", container.container_name)
 
 func close_container():
@@ -174,6 +177,9 @@ func close_container():
 	# Hide UI
 	visible = false
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+	# Play chest close sound
+	AudioManager.play_sound("chest_close", "ui", false, false)
 	
 	print("Container UI closed")
 

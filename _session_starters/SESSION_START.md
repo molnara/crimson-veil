@@ -1,8 +1,8 @@
 # Crimson Veil - Session Start
 
-**Sprint v0.5.0:** 9/13 (69%) | **Model:** Sonnet  
-**Now:** Task 3.1 - UI Sounds  
-**Last:** Settings menu, controller support, container sounds, building sounds, chest collision fix  
+**Sprint v0.5.0:** 10/13 (77%) | **Model:** Sonnet  
+**Now:** Task 3.3 - Sound Variation System  
+**Last:** UI Sounds (32 integration points, ESC key fix, chest double-open fix, complete settings audio)  
 **Watch:** Container null checks (race condition), input blocking (player.gd:148)
 
 ## Output Rules
@@ -17,4 +17,4 @@
 
 ## Context
 Godot 4.3 GDScript | Low-poly cozy survival | 48 audio files (40 SFX + 8 music)  
-Systems: ✅ World, movement, inventory, crafting, building, harvesting, containers, audio | ⏳ Combat, save/load
+Systems: ✅ World, movement, inventory, crafting, building, harvesting, containers, audio, UI sounds | ⏳ Combat, save/load
