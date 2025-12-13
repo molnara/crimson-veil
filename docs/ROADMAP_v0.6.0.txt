@@ -1,0 +1,407 @@
+CRIMSON VEIL - ROADMAP
+
+CURRENT: v0.6.0 "Hunter & Prey" (0/12 tasks - 0%) 🎯 IN PLANNING
+========================================================================
+
+DESIGN DECISIONS (LOCKED):
+✓ Combat Style: Streamlined First-Person Action (Option B.5)
+✓ Attack Types: Light (tap) + Heavy (charge 1.5s) + Dodge (dash with i-frames)
+✓ Weapons: Melee (wooden club, stone spear, bone sword) + Ranged (bow & arrow)
+✓ Enemies: 6 types across all biomes (primitives + AI textures)
+✓ Enemy Roster: Corrupted Rabbit, Forest Goblin, Desert Scorpion, Ice Wolf, Stone Golem, Shadow Wraith
+✓ Critters: Stay peaceful (no hostile variants)
+✓ Controller: Full dual M+KB/gamepad support with context-sensitive buttons
+✓ Visual Style: CSG primitives + AI-generated textures
+✓ Audio: 32 combat sounds via SFX Engine (8 player + 24 enemy)
+✓ Death Penalty: Respawn at spawn, keep items (forgiving for v0.6.0)
+✓ Bow Mechanics: Hitscan with charge (hold to draw, release to fire)
+
+SPRINT v0.6.0 - TASKS:
+[ ] 1.1 - Combat System Foundation (4h)
+      → Create CombatSystem.gd (attack/charge/dodge mechanics)
+      → Weapon.gd resource class (damage, range, cooldown properties)
+      → Integration with player.gd input handling
+      → Camera effects (shake, bob, recoil)
+      
+[ ] 1.2 - Melee Attack System (5h)
+      → Light attack (tap, 1s cooldown)
+      → Charge attack (hold 1.5s, 2x damage, heavy feedback)
+      → Targeting system (raycast + soft auto-aim for controller)
+      → Hit detection and damage application
+      → Visual feedback (crosshair states, charge vignette)
+      
+[ ] 1.3 - Dodge System (3h)
+      → Dodge dash (Space + direction = 4m dash)
+      → I-frame system (0.3s invincibility)
+      → Context-sensitive A button (dodge vs jump vs interact)
+      → Controller integration (full stick support)
+      → Cooldown tracking (3s between dodges)
+      
+[ ] 1.4 - Melee Weapons (2h)
+      → Wooden Club (15/30 damage, 2.5m range, starter)
+      → Stone Spear (20/40 damage, 3.5m range, balanced)
+      → Bone Sword (25/50 damage, 3.0m range, endgame)
+      → Crafting recipes (club: wood×5, spear: wood×3+stone×2+leather×1, sword: wood×2+bone×4)
+      → Weapon switching system (T key / RB button)
+      
+[ ] 1.5 - Bow & Arrow System (4h)
+      → Bow charge mechanics (hold RT/LMB to draw)
+      → Hitscan arrow (instant hit, 15-40 damage based on charge)
+      → Arrow ammo tracking (craft: wood×1+stone×1 = 5 arrows)
+      → Charge UI indicator (fills as bow draws)
+      → Audio feedback (bow creak while charging, twang on release)
+      
+[ ] 2.1 - Enemy Base Class (5h)
+      → Enemy.gd extends CharacterBody3D
+      → Health, damage, movement, detection systems
+      → State machine (Idle → Chase → Attack → Death)
+      → Drop table system (items on death)
+      → Flash effects (white on hit, red on telegraph)
+      → Knockback system
+      
+[ ] 2.2 - Enemy Types (6 variants) (10h)
+      → Corrupted Rabbit (Forest, 30 HP, territorial, fast)
+      → Forest Goblin (Forest, 50 HP, hostile, patrols, flees at 20% HP)
+      → Desert Scorpion (Desert, 60 HP, ambush from sand)
+      → Ice Wolf (Snow, 55 HP, pack tactics, spawns in groups of 2-3)
+      → Stone Golem (Mountain, 100 HP, tank, ground slam)
+      → Shadow Wraith (Night-only, 40 HP, floats, despawns at dawn)
+      → CSG primitive geometry for all
+      → Unique drops per enemy (leather, chitin, fangs, cores, etc.)
+      
+[ ] 2.3 - Enemy AI & Spawning (3h)
+      → Chase AI (move toward player, maintain range)
+      → Attack patterns (telegraph → strike → cooldown)
+      → Pack behavior (Ice Wolves coordinate)
+      → Biome-specific spawning (extend CritterSpawner)
+      → Time-based spawning (Shadow Wraith night-only)
+      → Spawn rates (5-15% per chunk based on enemy type)
+      
+[ ] 3.1 - Combat Audio Generation (3h)
+      → Generate 32 sounds via SFX Engine
+      → Player combat: swing_light, swing_heavy, charge_buildup, charge_ready, dodge_whoosh, hit_flesh, hit_stone, player_grunt
+      → Enemy sounds: 4 per enemy (ambient, attack, hit, death) × 6 enemies = 24 sounds
+      → Integration with AudioManager variation system
+      → Configure sound categories and volumes
+      
+[ ] 3.2 - AI Texture Generation (2h)
+      → Generate 5 enemy textures via Leonardo.ai/DALL-E
+      → Corrupted fur (dark red-brown, diseased)
+      → Goblin skin (mottled green, rough)
+      → Scorpion chitin (sandy yellow, segmented)
+      → Wolf fur (white, icy blue tint, frost)
+      → Stone with magma (gray, orange glowing cracks)
+      → Apply to CSG primitive materials
+      → Configure texture filtering (nearest for pixel art look)
+      
+[ ] 3.3 - Visual Effects & Feedback (3h)
+      → Hit particles (burst at impact point, color-coded by enemy)
+      → Crosshair states (default, targeting, charging, ready)
+      → Charge vignette (screen darkens as attack charges)
+      → Screen flash (red when taking damage)
+      → Death fade (enemies dissolve over 0.5s)
+      → Camera shake presets (light hit, heavy hit, ground slam)
+      
+[ ] 4.1 - Player Death & Respawn (2h)
+      → Death detection (health <= 0 in HealthHungerSystem)
+      → Death screen UI ("YOU DIED" + respawn button)
+      → Respawn at world spawn (0, Y, 0)
+      → Full health/hunger restoration
+      → Keep all items (forgiving for now)
+      → Death sound + fade to black effect
+      
+[ ] 4.2 - Combat Rumble & Polish (2h)
+      → Add combat rumble presets to RumbleManager
+      → attack_light, attack_heavy, dodge, player_hit, enemy_death, bow_release
+      → Continuous rumble while charging (bow/melee)
+      → Integration at all combat interaction points
+      → Button hints UI (auto-switch M+KB vs controller)
+      → Charge bar UI (bottom-right, shows attack/bow charge)
+      → Final balance pass (damage numbers, enemy HP, cooldowns)
+
+SPRINT ACHIEVEMENTS (Target):
+✓ Complete combat system (melee + ranged)
+✓ 6 enemy types across all biomes
+✓ Bow & arrow with charge mechanics
+✓ Full controller support (dual input)
+✓ 32 combat sounds (AI-generated)
+✓ AI-textured enemies (5 unique textures)
+✓ Death/respawn system
+✓ Professional combat feel (rumble, effects, audio)
+
+TOTAL ESTIMATED TIME: ~48 hours (1-2 weeks solo dev)
+
+TASK BREAKDOWN:
+Phase 1 - Combat Core: Tasks 1.1-1.5 (18h) - Attack, dodge, weapons, bow
+Phase 2 - Enemies: Tasks 2.1-2.3 (18h) - Enemy class, 6 types, AI/spawning
+Phase 3 - Audio & Visual: Tasks 3.1-3.3 (8h) - Sounds, textures, effects
+Phase 4 - Integration: Tasks 4.1-4.2 (4h) - Death system, rumble, polish
+
+IMPLEMENTATION NOTES:
+
+COMBAT SYSTEM:
+- Attack input: LMB/RT (tap = light, hold 1.5s = charge)
+- Dodge input: Space/A + direction (context-sensitive with jump/interact)
+- Weapon cycle: T/RB
+- Attack range: 2.5-3.5m depending on weapon
+- Charge vignette: Screen darkens, FOV narrows, shake builds
+- Hit detection: Raycast from camera, soft auto-aim for controller (30° cone)
+- Damage numbers: Optional floating text (can add in polish pass)
+
+BOW SYSTEM:
+- Draw mechanic: Hold LMB/RT to charge (2s max)
+- Damage scaling: 15 (quick shot) → 40 (fully charged)
+- Range: 30 meters (hitscan, instant hit)
+- Ammo: Arrows (craft wood+stone = 5 arrows)
+- Visual: Charge bar fills, crosshair shrinks (accuracy)
+- Audio: Bow creak loop while drawing, twang on release
+- Can move slowly while charging (-30% speed)
+
+ENEMY BEHAVIORS:
+- Corrupted Rabbit: Territorial (attacks if player <5m), fast chase
+- Forest Goblin: Hostile patrol, flees at 20% HP, drops varied loot
+- Desert Scorpion: Burrow ambush, emerges near player, tail sting attack
+- Ice Wolf: Pack spawns (2-3), coordinate attacks, surround player
+- Stone Golem: Slow tank, ground slam AoE, guards ore deposits
+- Shadow Wraith: Night-only (10 PM-6 AM), floats, transparent shader
+
+ENEMY DROPS:
+- Corrupted Rabbit: Corrupted Leather (common), Dark Meat (40%)
+- Forest Goblin: Wood (80%), Stone (60%), Goblin Tooth (30% rare)
+- Desert Scorpion: Chitin (100%), Venom Sac (25% rare)
+- Ice Wolf: Wolf Pelt (100%), Fang (70%), Ice Shard (15% rare)
+- Stone Golem: Stone (100%), Iron Ore (60%), Stone Core (20% rare)
+- Shadow Wraith: Shadow Essence (80%), Ectoplasm (30% rare)
+
+VISUAL STYLE:
+- CSG Primitives: Spheres, boxes, cylinders, capsules, cones
+- AI Textures: 512×512 PNG, seamless/tileable, nearest filter
+- Materials: StandardMaterial3D, roughness 0.8-0.9, no shine
+- Eyes: Small emissive spheres (glowing)
+- Effects: GPUParticles3D for hits/deaths, simple colored bursts
+
+AUDIO GENERATION PROMPTS (SFX Engine):
+Player:
+1. "Quick weapon whoosh, sharp and fast, melee swing"
+2. "Heavy powerful swing, deep whoosh with weight, charged attack"
+3. "Rising energy hum, building tension, loopable, weapon charging"
+4. "Satisfying ding, weapon fully charged indicator"
+5. "Quick air whoosh, fast dash movement, dodge sound"
+6. "Meaty impact, flesh hit, satisfying thud"
+7. "Rock impact, stone breaking, hard surface hit"
+8. "Player damage grunt, taking hit, short pain sound"
+
+Enemies (4 per type):
+Rabbit: "Corrupted animal growl, hostile, low menacing" / "Rabbit attack hiss" / "Rabbit damage squeak" / "Rabbit death squeal"
+Goblin: "Goblin grunt, hostile voice" / "Goblin war cry, club swing" / "Goblin pain grunt" / "Goblin death cry"
+Scorpion: "Insect clicking, mandibles, desert" / "Tail whip, stinger strike" / "Chitin crack, exoskeleton" / "Insect death screech"
+Wolf: "Wolf howl, pack call, icy echo" / "Wolf snarl, aggressive" / "Wolf yelp, pain" / "Wolf death howl, mournful"
+Golem: "Stone grinding, rocks moving, deep bass" / "Heavy rock slam, ground impact" / "Stone cracking, damage" / "Rocks collapsing, final crash"
+Wraith: "Ghostly whisper, ethereal, creepy" / "Shadow swoosh, dark energy" / "Ethereal screech, spirit damage" / "Fading wail, dissipating"
+
+TEXTURE GENERATION PROMPTS (Leonardo.ai/DALL-E):
+1. "Seamless tileable texture, corrupted animal fur, dark red-brown, diseased patches, matted, 512x512, top-down view, game texture"
+2. "Seamless tileable texture, green goblin skin, mottled, warts, rough, fantasy game, 512x512, top-down view"
+3. "Seamless tileable texture, scorpion chitin, sandy yellow, segmented plates, desert creature, 512x512, top-down view"
+4. "Seamless tileable texture, white wolf fur, icy blue tint, frost patches, winter, 512x512, top-down view, game asset"
+5. "Seamless tileable texture, granite stone, gray rock, orange glowing cracks, magma veins, 512x512, top-down view"
+
+CONTROLLER MAPPING:
+- RT (Trigger 7): Attack (tap = light, hold = charge)
+- LT (Trigger 6): Block (future feature)
+- A (Button 0): Dodge/Jump/Interact (context-sensitive)
+- B (Button 1): Sprint (existing)
+- X (Button 3): Crafting menu (existing)
+- Y (Button 4): Inventory (existing)
+- RB (Button 5): Cycle weapons
+- D-Pad: Quick slots (future)
+- Left Stick: Movement (existing)
+- Right Stick: Camera (existing)
+
+RUMBLE PRESETS (add to RumbleManager):
+- attack_light: {weak: 0.3, strong: 0.0, duration: 0.15}
+- attack_heavy: {weak: 0.0, strong: 0.8, duration: 0.3}
+- dodge: {weak: 0.4, strong: 0.0, duration: 0.2}
+- player_hit: {weak: 0.0, strong: 0.6, duration: 0.25}
+- enemy_death: {weak: 0.5, strong: 0.5, duration: 0.4}
+- bow_release: {weak: 0.2 + (charge * 0.3), strong: 0.0, duration: 0.2}
+- ground_slam: {weak: 0.8, strong: 0.8, duration: 0.5} (Stone Golem)
+
+BALANCE PARAMETERS:
+Player:
+- Health: 100 HP (existing)
+- Move Speed: 5.0 m/s walk, 10.0 m/s sprint (existing)
+- Attack Range: 2.5-3.5m (weapon-dependent)
+- Dodge Distance: 4.0m
+- Dodge I-Frames: 0.3s
+- Bow Range: 30m
+
+Weapons:
+- Wooden Club: 15 light / 30 heavy, 1.0s cooldown, 2.5m range
+- Stone Spear: 20 light / 40 heavy, 1.2s cooldown, 3.5m range
+- Bone Sword: 25 light / 50 heavy, 1.0s cooldown, 3.0m range
+- Bow: 15-40 damage (charge-based), 30m range, arrow ammo
+
+Enemies (HP / Damage / Speed / Range):
+- Corrupted Rabbit: 30 / 8 / 4.5 / 1.5m (dies in 2 light hits or 1 heavy)
+- Forest Goblin: 50 / 12 / 3.0 / 2.0m (dies in 3-4 light hits or 2 heavy)
+- Desert Scorpion: 60 / 15 / 3.0 / 2.5m (dies in 4 light hits or 2 heavy)
+- Ice Wolf: 55 / 14 / 4.5 / 2.0m (dies in 3-4 light hits or 2 heavy)
+- Stone Golem: 100 / 20 / 1.5 / 2.5m (dies in 7 light hits or 4 heavy, tank)
+- Shadow Wraith: 40 / 12 / 4.0 / 2.0m (dies in 3 light hits or 2 heavy)
+
+TESTING CHECKLIST:
+Combat:
+[ ] Light attack works with mouse/controller
+[ ] Charge attack charges for 1.5s, releases on input release
+[ ] Dodge dashes 4m with i-frames (can pass through enemies)
+[ ] Weapon switching cycles between club/spear/sword
+[ ] Bow charges, fires arrows, consumes ammo
+[ ] Hit detection accurate with soft auto-aim on controller
+[ ] Damage numbers correct for each weapon/enemy combo
+[ ] Knockback pushes enemies back appropriately
+
+Enemies:
+[ ] All 6 enemies spawn in correct biomes
+[ ] Each enemy has working AI (chase, attack, death)
+[ ] Pack behavior works for Ice Wolves (coordinate)
+[ ] Shadow Wraith only spawns at night, despawns at dawn
+[ ] Enemies drop correct items on death
+[ ] Enemy sounds play at appropriate times
+[ ] Textures applied correctly to primitives
+
+Controller:
+[ ] RT tap = light attack, hold = charge
+[ ] A button context-sensitive (dodge/jump/interact)
+[ ] Charge bar visible and fills correctly
+[ ] Button hints switch automatically M+KB ↔ controller
+[ ] Rumble triggers on all combat actions
+[ ] Continuous rumble while charging attack/bow
+
+Audio/Visual:
+[ ] All 32 combat sounds play correctly
+[ ] Sound variation system working
+[ ] Hit particles spawn at impact points
+[ ] Crosshair changes states (targeting, charging, ready)
+[ ] Screen effects work (vignette, flash, shake)
+[ ] Death screen appears, respawn works
+
+Integration:
+[ ] Player death detected at 0 HP
+[ ] Respawn restores health, teleports to spawn
+[ ] Items kept on death (no drops)
+[ ] Combat doesn't break existing systems (harvesting, building)
+[ ] No performance issues with 6+ enemies active
+
+POST-RELEASE ADDITIONS (Optional v0.6.1):
+[ ] Damage numbers (floating text above enemies)
+[ ] Critical hits (10% chance, 2x damage, yellow numbers)
+[ ] Enemy ambient sounds (idle growls/clicks)
+[ ] Weapon durability (basic wear system)
+[ ] Enemy loot rarities (bronze/silver/gold tiers)
+[ ] Boss enemies (save for v0.7.0)
+
+KNOWN LIMITATIONS (Address in Future):
+- No death penalty (items kept, instant respawn)
+- No weapon animations (camera bob only)
+- No enemy ragdolls (fade out on death)
+- Pack AI simple (no formations/flanking)
+- No enemy variants (just one model per type)
+- Bow is hitscan (no projectile physics yet)
+
+BACKLOG (POST-v0.6.0):
+- Boss enemies (mini-boss per biome)
+- Save/load system (CRITICAL for v0.7.0)
+- Weapon durability & repair
+- Advanced AI (formations, flee, call for help)
+- Enemy variants (elite versions, corrupted versions)
+- Ranged enemies (goblin archers, scorpion spit)
+- Magic system (staff, spells)
+- Death penalty options (corpse run, item drops)
+- Projectile physics for bow (arrow arc, stick in walls)
+- Thrown weapons (spears, knives)
+
+TECH DEBT (Carry Forward):
+[ ] Critter visual extraction (reduce critter_spawner.gd from 1,143 lines)
+[ ] ITEM_COLORS consolidation (remove duplication from inventory_ui.gd + container_ui.gd)
+[ ] Container null safety (race condition if destroyed while UI open)
+[ ] Input handling consolidation (player.gd uses duplicate input checks)
+[ ] Cloud system extraction (day_night_cycle.gd is 829 lines)
+[ ] Combat system extraction (player.gd will grow, consider separating combat logic)
+
+NEXT SPRINT IDEAS (v0.7.0):
+- Boss enemies (1 per biome, unique mechanics)
+- Save/load system (HIGH PRIORITY)
+- Progression gates (defeat boss to unlock next biome)
+- Advanced enemy AI (smarter behaviors)
+- Enemy variants (5-10 more types)
+- Ranged enemy types
+- Magic system (if fitting the theme)
+- Advanced crafting (workbench, forge)
+- Weapon/tool durability
+- Death penalties (corpse run system)
+
+========================================================================
+
+PREVIOUS SPRINT: v0.5.0 "Atmosphere & Audio" (13/13 tasks - 100%) ✅ RELEASED
+========================================================================
+
+DESIGN DECISIONS (LOCKED):
+✓ Music: Pure ambient drone (minimal, non-intrusive)
+✓ Footsteps: Biome-aware (4 surfaces: grass/stone/sand/snow)
+✓ Volume: Hybrid (realistic ambient, punchy actions)
+✓ Music variety: Day/night variation (8 tracks total)
+✓ Variation: Smart presets (none/subtle/moderate/strong per sound type)
+✓ Balance: Optimized for cozy survival atmosphere
+✓ Rumble: 5 presets with cooldowns (ready for settings integration)
+✓ Version display: Settings menu shows current version
+
+SPRINT v0.5.0 - COMPLETED TASKS:
+[X] 1.1 - Audio Manager Architecture
+[X] 1.2 - AI Sound Generation (48 files: 40 SFX + 8 music)
+[X] 1.3 - Harvesting Sounds
+[X] 2.1 - Movement Sounds (footsteps)
+[X] 2.2 - Music Manager & AI Music
+[X] 2.3 - Ambient Environmental Sounds
+[X] 2.4 - Building Sounds
+[X] 2.5 - Container Sounds
+[X] 3.1 - UI Sounds (32 integration points)
+[X] 3.2 - Settings Menu Audio Controls
+[X] 3.3 - Sound Variation System (48 sounds configured)
+[X] 3.4 - Audio Balance Pass (optimized category relationships)
+[X] 3.5 - Controller Rumble (13 integration points)
+      → RumbleManager singleton created
+      → 5 rumble presets (light/medium/heavy/impact/footstep)
+      → Per-type cooldown system (prevents spam)
+      → Auto-detects controller connect/disconnect
+      → Scales by intensity + master volume
+      → Ready for settings UI integration
+
+POST-RELEASE ADDITIONS:
+[X] Version display in settings menu (bottom-right, auto-populated from project.godot)
+
+SPRINT ACHIEVEMENTS:
+✓ Complete audio system (48 sounds: 40 SFX + 8 music)
+✓ Smart variation system (4 presets across all sounds)
+✓ Balanced volume relationships (cozy atmosphere)
+✓ Comprehensive haptic feedback (13 rumble points)
+✓ Professional out-of-box experience
+✓ Version tracking for releases
+
+========================================================================
+
+COMPLETED SPRINTS:
+v0.5.0 (Dec 13, 2025) - Atmosphere & Audio (13/13 tasks - 100%) ✅
+v0.4.0 (Dec 12, 2025) - Storage & Organization (11/15 tasks - 73%)
+v0.3.0 - Building & Crafting
+v0.2.0 - World Generation
+v0.1.0 - Foundation
+
+---
+Game: Low-poly survival (Valheim/Minecraft aesthetic)
+Tone: Cozy loneliness with meditative gathering
+Loop: Explore → Gather → Craft → Fight → Build → Unlock biomes → Repeat
+Combat: First-person action (light/heavy/dodge + bow)
+Enemies: 6 biome-specific types (primitives + AI textures)
+Audio: 80 sounds total (48 ambient + 32 combat) with intelligent variation + haptic feedback
+Polish: Professional feel with balanced audio/rumble/combat + version tracking
