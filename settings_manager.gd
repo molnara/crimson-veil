@@ -26,7 +26,7 @@ var config: ConfigFile = ConfigFile.new()
 # Default settings
 var default_settings = {
 	"display": {
-		"resolution": "1152x648",
+		"resolution": "2048x1152",
 		"fullscreen": false,
 		"vsync": true,
 		"msaa": 0  # 0=disabled, 1=2x, 2=4x, 3=8x
@@ -43,19 +43,19 @@ var default_settings = {
 	},
 	"audio": {
 		"master_volume": 1.0,   # 0.0 - 1.0
-		"sfx_volume": 0.75,     # 0.0 - 1.0
-		"music_volume": 0.35,   # 0.0 - 1.0
-		"ambient_volume": 0.25, # 0.0 - 1.0
-		"ui_volume": 0.60       # 0.0 - 1.0
+		"sfx_volume": 0.75,     # 0.0 - 1.0 (punchy actions)
+		"music_volume": 0.42,   # 0.0 - 1.0 (atmospheric presence)
+		"ambient_volume": 0.32, # 0.0 - 1.0 (environmental immersion)
+		"ui_volume": 0.62       # 0.0 - 1.0 (clear feedback)
 	}
 }
 
 # Available resolution presets
 var resolution_presets = [
-	"1152x648",   # Default (16:9)
+	"2048x1152",  # Default (16:9) - QHD-
+	"1152x648",   # Smaller (16:9)
 	"1280x720",   # HD (16:9)
 	"1920x1080",  # Full HD (16:9)
-	"2048x1152",  # QHD- (16:9) - Between 1080p and 1440p
 	"2560x1440",  # QHD (16:9)
 	"3840x2160"   # 4K (16:9)
 ]

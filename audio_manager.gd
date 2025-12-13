@@ -16,16 +16,16 @@ extends Node
 # Volume levels (0.0 - 1.0)
 var master_volume: float = 1.0
 var sfx_volume: float = 0.75      # 75% - Punchy actions (harvesting, building)
-var music_volume: float = 0.35    # 35% - Background atmosphere
-var ambient_volume: float = 0.25  # 25% - Subtle environmental sounds
-var ui_volume: float = 0.60       # 60% - Clear UI feedback
+var music_volume: float = 0.42    # 42% - Atmospheric presence
+var ambient_volume: float = 0.32  # 32% - Environmental immersion
+var ui_volume: float = 0.62       # 62% - Clear feedback
 
 # Volume defaults (for reset functionality)
 const MASTER_VOLUME_DEFAULT: float = 1.0
 const SFX_VOLUME_DEFAULT: float = 0.75
-const MUSIC_VOLUME_DEFAULT: float = 0.35
-const AMBIENT_VOLUME_DEFAULT: float = 0.25
-const UI_VOLUME_DEFAULT: float = 0.60
+const MUSIC_VOLUME_DEFAULT: float = 0.42
+const AMBIENT_VOLUME_DEFAULT: float = 0.32
+const UI_VOLUME_DEFAULT: float = 0.62
 
 # ============================================================================
 # SOUND VARIATION SYSTEM
@@ -149,6 +149,7 @@ func _ready():
 	print("  - Volume levels: Master=%.2f, SFX=%.2f, Music=%.2f, Ambient=%.2f, UI=%.2f" % [
 		master_volume, sfx_volume, music_volume, ambient_volume, ui_volume
 	])
+	print("  - Balance: Optimized for cozy survival atmosphere")
 	print("  - Variation system: %d sounds configured, %d presets available" % [
 		sound_variations.size(), VARIATION_PRESETS.size()
 	])

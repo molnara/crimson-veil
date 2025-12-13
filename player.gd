@@ -22,6 +22,10 @@ var footstep_timer: float = 0.0
 const WALK_FOOTSTEP_INTERVAL: float = 0.45  # Seconds between steps when walking
 const SPRINT_FOOTSTEP_INTERVAL: float = 0.28  # Seconds between steps when sprinting
 
+# Block placement cooldown (prevent rapid-fire with controller)
+var placement_cooldown_timer: float = 0.0
+const PLACEMENT_COOLDOWN: float = 0.2  # 200ms cooldown between placements
+
 # UI state tracking (for container suppression)
 var ui_state_before_container = {
 	"inventory_was_visible": false,
@@ -232,19 +236,31 @@ func _input(event):
 	
 	# Controller: RT (interact/harvest) and LT (cancel/remove)
 	if event.is_action_pressed("controller_interact"):  # RT
+		# Check placement cooldown first
+		if placement_cooldown_timer > 0:
+			return  # Still in cooldown, ignore input
+		
 		# Building mode takes priority
 		if building_system and building_system.preview_mode:
-			building_system.place_block()
+			if building_system.place_block():
+				# Block placed successfully - start cooldown
+				placement_cooldown_timer = PLACEMENT_COOLDOWN
 		# Otherwise try harvesting
 		elif harvesting_system and harvesting_system.is_looking_at_resource():
 			harvesting_system.start_harvest()
 	
 	if event.is_action_pressed("controller_cancel"):  # LT
+		# Check placement cooldown first (also applies to removal)
+		if placement_cooldown_timer > 0:
+			return  # Still in cooldown, ignore input
+		
 		if building_system and building_system.preview_mode:
 			# Try to remove block at cursor
 			var block_data = building_system.get_block_at_raycast()
 			if block_data:
-				building_system.remove_block_at_position(block_data["position"])
+				if building_system.remove_block_at_position(block_data["position"]):
+					# Block removed successfully - start cooldown
+					placement_cooldown_timer = PLACEMENT_COOLDOWN
 		elif harvesting_system and harvesting_system.is_harvesting:
 			harvesting_system.cancel_harvest()
 			print("Harvest manually cancelled")
@@ -521,6 +537,10 @@ func apply_deadzone(value: float, deadzone: float) -> float:
 	return (abs(value) - deadzone) / (1.0 - deadzone) * sign(value)
 
 func _physics_process(delta):
+	# Update placement cooldown timer
+	if placement_cooldown_timer > 0:
+		placement_cooldown_timer -= delta
+	
 	# Controller camera look (right stick)
 	if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		var look_x = apply_deadzone(Input.get_axis("controller_look_left", "controller_look_right"), controller_deadzone)

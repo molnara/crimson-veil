@@ -1,6 +1,6 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.5.0 "Atmosphere & Audio" (11/13 tasks - 85%)
+CURRENT: v0.5.0 "Atmosphere & Audio" (12/13 tasks - 92%)
 ========================================================
 
 DESIGN DECISIONS (LOCKED):
@@ -9,6 +9,7 @@ DESIGN DECISIONS (LOCKED):
 ✓ Volume: Hybrid (realistic ambient, punchy actions)
 ✓ Music variety: Day/night variation (8 tracks total)
 ✓ Variation: Smart presets (none/subtle/moderate/strong per sound type)
+✓ Balance: Optimized for cozy survival atmosphere
 
 THIS SPRINT:
 [X] 1.1 - Audio Manager Architecture
@@ -33,7 +34,14 @@ THIS SPRINT:
       → Building: subtle variation (consistency)
       → UI: no variation (critical feedback)
       → New utility functions for runtime adjustment
-[ ] 3.4 - Audio Balance Pass
+[X] 3.4 - Audio Balance Pass
+      → Music: 35% → 42% (atmospheric presence)
+      → Ambient: 25% → 32% (environmental immersion)
+      → UI: 60% → 62% (enhanced clarity)
+      → SFX: 75% (unchanged - already optimal)
+      → Category relationships optimized for cozy gameplay
+      → Comprehensive testing checklist provided
+      → Better out-of-box experience
 [ ] 3.5 - Controller Rumble (OPTIONAL)
 
 NEXT SPRINT IDEAS:
