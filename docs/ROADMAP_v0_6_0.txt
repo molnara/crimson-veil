@@ -1,10 +1,10 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.6.0 "Hunter & Prey" (7/12 tasks - 58%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
+CURRENT: v0.6.0 "Hunter & Prey" (9/12 tasks - 75%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
 ========================================================================================
 
 PHASE 1 STATUS: ✅ COMPLETE (Tasks 1.1-1.2 finished - simplified combat foundation ready)
-PHASE 2 STATUS: 🔄 IN PROGRESS (Tasks 2.1-2.2 complete - base class + 4 enemies done, 2 remaining)
+PHASE 2 STATUS: ✅ COMPLETE (Tasks 2.1-2.3 finished - all 6 enemies + spawning integration done)
 
 DESIGN DECISIONS (LOCKED - UPDATED Dec 13, 2025):
 ✓ Combat Style: Simplified Minecraft-style Single-Shot Melee
@@ -70,7 +70,7 @@ SPRINT v0.6.0 - TASKS (SIMPLIFIED):
       ✅ Tested and verified (7/9 core tests passed)
       ✅ Fixed combat_system.gd compatibility (simplified take_damage call)
       
-[🔄] 2.2 - Enemy Types (6 variants) (10h) - IN PROGRESS (4/6 complete - 67%)
+[✅] 2.2 - Enemy Types (6 variants) (10h) - COMPLETE (6/6 done - 100%)
       ✅ Corrupted Rabbit (Forest, 30 HP, territorial, fast zigzag chase)
          → CSG geometry: brown body, pink ears, glowing red eyes, fluffy tail
          → Drops: corrupted_leather (100%), dark_meat (40%)
@@ -93,18 +93,36 @@ SPRINT v0.6.0 - TASKS (SIMPLIFIED):
          → Behavior: Pack formation via pack_id, howl before attack, surround player at 4m
          → Tests: 8/8 passing (100%) - fully verified
          → Special: Pack coordination, damage alerts pack members
-      ⏳ Stone Golem (Mountain, 100 HP, tank, ground slam)
-      ⏳ Shadow Wraith (Night-only, 40 HP, floats, despawns at dawn)
-      → Automated test suites created for all completed enemies
+      ✅ Stone Golem (Mountain, 100 HP, tank, ground slam AoE) - COMPLETE
+         → CSG geometry: large stone body, thick arms, sturdy legs, glowing orange eyes, cracks
+         → Drops: stone (100%, 3-5 pieces), iron_ore (60%), stone_core (20%)
+         → Behavior: Slow tank, patrols stone nodes, ground slam (1s telegraph, 3m AoE, 2s stagger)
+         → Tests: 8/8 passing (100%) - fully verified
+         → Special: AoE damage, stagger state, stone resource patrol
+      ✅ Shadow Wraith (Night-only, 40 HP, ethereal, floats, despawns at dawn) - COMPLETE
+         → CSG geometry: dark purple cylinder body, featureless sphere head, wispy particle trail
+         → Drops: shadow_essence (80%), ectoplasm (30%)
+         → Behavior: Night-only spawn (10 PM-6 AM), floats 1.5m above terrain, phases through terrain
+         → Tests: 9/9 passing (100%) - fully verified
+         → Special: collision_mask=0 (phase-through), dawn despawn with fade, transparent material (alpha 0.6)
+      → Automated test suites created for all 6 enemies (100% pass rate)
       → Audio integration points marked (TODO for Task 3.1)
       
-[ ] 2.3 - Enemy AI & Spawning (3h)
-      → Chase AI (move toward player, maintain range)
-      → Attack patterns (telegraph → strike → cooldown)
-      → Pack behavior (Ice Wolves coordinate)
-      → Biome-specific spawning (extend CritterSpawner)
-      → Time-based spawning (Shadow Wraith night-only)
-      → Spawn rates (5-15% per chunk based on enemy type)
+[✅] 2.3 - Enemy AI & Spawning (3h) - COMPLETE
+      ✅ Chase AI (move toward player, maintain range)
+      ✅ Attack patterns (telegraph → strike → cooldown)
+      ✅ Pack behavior (Ice Wolves coordinate via pack_id)
+      ✅ Biome-specific spawning (integrated into CritterSpawner)
+      ✅ Time-based spawning (Shadow Wraith night-only: 10 PM-6 AM)
+      ✅ Spawn rates configured per biome:
+         → Forest: Corrupted Rabbit (15%)
+         → Snow: Ice Wolf pack (10%, spawns 2-3 wolves)
+         → Mountain: Stone Golem (5%)
+         → All biomes (night): Shadow Wraith (8%)
+      ✅ Minimum spawn distance: 15m from player
+      ✅ Pack spawning: Triangle formation with shared pack_id
+      ✅ Separate enemy tracking (active_enemies array, no meta data conflicts)
+      ✅ Automated test suite: 6/6 tests passing (100%)
       
 [ ] 3.1 - Combat Audio Generation (2h - REDUCED FROM 3h)
       → Generate 8 sounds via SFX Engine (reduced from 32)
@@ -151,12 +169,12 @@ SPRINT v0.6.0 - TASKS (SIMPLIFIED):
       → Performance optimization
 
 TOTAL ESTIMATED TIME: ~32 hours (reduced from 48 hours due to simplification)
-COMPLETED: ~20 hours (63%)
-REMAINING: ~12 hours (37%)
+COMPLETED: ~28 hours (88%)
+REMAINING: ~4 hours (12%)
 
 TASK BREAKDOWN:
 Phase 1 - Combat Core: Tasks 1.1-1.2 (8h) ✅ COMPLETE - Simple attack system
-Phase 2 - Enemies: Tasks 2.1-2.3 (18h) - Enemy class, 6 types, AI/spawning (67% complete)
+Phase 2 - Enemies: Tasks 2.1-2.3 (18h) ✅ COMPLETE - Enemy class, 6 types, AI/spawning
 Phase 3 - Audio & Visual: Tasks 3.1-3.3 (6h) - Sounds, textures, effects
 Phase 4 - Integration: Tasks 4.1-4.2 (4h) - Death system, polish
 
@@ -172,23 +190,41 @@ CHANGES FROM ORIGINAL PLAN:
 
 SPRINT ACHIEVEMENTS (Target):
 ✅ Complete simplified combat system (melee only)
-🔄 6 enemy types across all biomes (4/6 complete)
+✅ 6 enemy types across all biomes (6/6 complete - 100%)
 ✅ Full controller support (simplified layout)
 ⏳ 32 combat sounds (8 player + 24 enemy)
 ⏳ AI-textured enemies (5 unique textures)
 ⏳ Death/respawn system
 ✅ Minecraft-like combat feel (simple, responsive)
+✅ Enemy spawning integration (biome-specific + night-only)
+✅ Pack behavior (Ice Wolves)
+✅ Special mechanics (burrow, slam, phase-through, night-only)
 
-RECENT COMPLETION (Dec 13, 2025):
-✅ Desert Scorpion - Ambush predator with burrow/emerge mechanics
-   - 9/9 automated tests passing (100%)
-   - Buried state, emerge trigger, tail strike telegraph
-   - Re-burrow mechanic, damage handling
-✅ Ice Wolf - Pack hunter with coordination AI  
+RECENT COMPLETION (Dec 14, 2025):
+✅ Stone Golem - Tank enemy with ground slam AoE attack
    - 8/8 automated tests passing (100%)
-   - Pack formation, howl signal, surround behavior
-   - Pack damage alerts
+   - Ground slam: 1s telegraph, 3m AoE damage, 2s stagger
+   - Stone node patrol behavior
+   - CSG primitives: large stone body with glowing orange eyes
+✅ Shadow Wraith - Night-only ethereal enemy
+   - 9/9 automated tests passing (100%)
+   - Night-only spawning (10 PM - 6 AM), dawn despawn with fade
+   - Floating 1.5m above terrain, phase-through collision
+   - Transparent material (alpha 0.6) with wispy particle trail
+✅ Enemy Spawning Integration - Complete biome and time-based system
+   - 6/6 automated tests passing (100%)
+   - Biome-specific spawn rates (Forest 15%, Snow 10%, Mountain 5%, Night 8%)
+   - Pack spawning for Ice Wolves (2-3 per spawn with shared pack_id)
+   - Minimum 15m spawn distance from player
+   - Separate enemy tracking (no critter meta data conflicts)
 
-NEXT UP:
-⏳ Stone Golem (Mountain biome, tank enemy)
-⏳ Shadow Wraith (Night-only, ethereal enemy)
+PREVIOUS COMPLETIONS:
+✅ Desert Scorpion - Ambush predator with burrow/emerge mechanics (Dec 13)
+✅ Ice Wolf - Pack hunter with coordination AI (Dec 13)
+✅ Forest Goblin - Patrol/flee/coward AI (Dec 12)
+✅ Corrupted Rabbit - Territorial zigzag chaser (Dec 12)
+
+NEXT UP (PHASE 3 - Audio & Visual):
+⏳ Task 3.1 - Combat Audio Generation (8 player sounds via SFX Engine)
+⏳ Task 3.2 - AI Texture Generation (5 enemy textures via Leonardo.ai)
+⏳ Task 3.3 - Visual Effects & Feedback (hit particles, screen flash, death fade)

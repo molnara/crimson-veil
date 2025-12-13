@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8jh5m3n4pqr1"]
+
+[ext_resource type="Script" path="res://stone_golem.gd" id="1_stone_golem"]
+
+[node name="StoneGolem" type="CharacterBody3D"]
+collision_layer = 512
+collision_mask = 1
+script = ExtResource("1_stone_golem")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)

@@ -57,7 +57,7 @@ Generate a Markdown document with these sections (in order):
    - `health_hunger_system.gd`
    - [other core systems from previous sprints]
    - [NEW files created in previous sprint marked as "CREATED"]
-```
+\`\`\`
 
 **Rules for file list:**
 - Include all core systems
@@ -69,41 +69,38 @@ Generate a Markdown document with these sections (in order):
 **Template:**
 ```markdown
 **Custom Instructions for Project:**
-```
-You are assisting with development of Crimson Veil, a first-person survival game 
-built in Godot 4.5.1. The project uses:
+\`\`\`
+You(Claude) are assisting the Game Director(Xzarian) with development of Crimson Veil, a first-person survival game built in Godot 4.5.1. The project uses:
 - GDScript for all game logic
 - CSG primitives for 3D geometry
 - AI-generated assets (audio via SFX Engine, textures via Leonardo.ai)
 - Dual input support (M+KB and Xbox controller)
 
-Current sprint: v[X].[Y].[Z] "[Sprint Name]" - [Brief description]
-Status: [Phase X COMPLETE / Phase Y starting / Starting fresh]
-Total tasks: [N] ([M completed in previous phases if applicable])
-Estimated time: [X] hours [remaining/total]
+** VERY IMPORTANT: Project file structure res://, res://music, res://sfx **
 
-DESIGN PHILOSOPHY:
-[Extract key design decisions from ROADMAP]
+Current sprint: v0.6.0 "Hunter & Prey" - Combat system implementation
+Total tasks: 12 (grouped into 4 phases over ~48 hours)
 
 CRITICAL RULES (MUST FOLLOW):
 1. NEVER recreate existing code files from scratch
 2. ALWAYS request files to be uploaded from GitHub before modifying them
 3. Start each session by identifying which files are needed and requesting upload
 4. Ask to "proceed" before implementing any code or making changes
-5. Do NOT generate documentation, diagrams, or supplementary materials unless explicitly requested
+5. Do NOT generate instructions, documentation, diagrams, or supplementary materials unless explicitly requested
 6. When user says "generate commit", output a brief git commit message summarizing the changes
+7. ALWAYS generate automated test scripts/scenes
 
 Always:
 1. Focus on production code only
 2. Check ROADMAP and IMPLEMENTATION_GUIDE before suggesting implementations
 3. Follow established code patterns from existing scripts
-4. Respect locked design decisions [list key decisions from ROADMAP]
+4. Respect locked design decisions
 5. Consider controller support in all input implementations
 6. Maintain performance targets (60 FPS, <100 draw calls)
 7. Generate complete, production-ready code (not pseudocode)
 8. Include error handling and edge case management
 9. [Any sprint-specific rules from ROADMAP]
-```
+\`\`\`
 ```
 
 **How to fill this:**
@@ -135,7 +132,7 @@ At the start of each session, Claude should identify:
 
 **Step 2: Request File Upload**
 Claude should output:
-```
+\`\`\`
 Before we begin, please upload these existing files from GitHub:
 
 REQUIRED FOR MODIFICATION:
@@ -148,7 +145,7 @@ NEW FILES TO CREATE:
 - res://weapon.gd
 
 Please upload the existing files so I can modify them properly.
-```
+\`\`\`
 
 **Step 3: Wait for Upload**
 - Do not proceed until files are uploaded
@@ -166,7 +163,7 @@ Once uploaded, Claude should:
 **User:** "Let's start Task [X].[Y] - [Task Name]"
 
 **Claude:** 
-```
+\`\`\`
 Starting Task [X].[Y] - [Task Name].
 
 Before we begin, please upload these existing files from GitHub:
@@ -178,12 +175,12 @@ I'll be creating these new files:
 - res://[new_file2].gd
 
 Please upload the existing files.
-```
+\`\`\`
 
 **User:** [uploads files]
 
 **Claude:**
-```
+\`\`\`
 Files received. I can see [file1].gd currently handles [features]. 
 I'll add [new integration].
 
@@ -191,7 +188,7 @@ IMPLEMENTATION PLAN:
 [presents plan]
 
 Shall I proceed?
-```
+\`\`\`
 
 **User:** "Yes, proceed"
 
@@ -211,7 +208,7 @@ Each session should focus on **one complete task** from the roadmap to maintain 
 
 ### Session Template
 
-```
+\`\`\`
 SESSION [X]: Task [Y.Z] - [Task Name]
 ═══════════════════════════════════════════════════
 
@@ -250,7 +247,7 @@ WORKFLOW:
 6. Wait for "proceed" confirmation
 7. Provide complete code implementations (modifications to uploaded files + new files)
 8. Provide testing instructions
-```
+\`\`\`
 ```
 
 ### 5. DETAILED SESSION BREAKDOWN
@@ -262,7 +259,7 @@ WORKFLOW:
 ## DETAILED SESSION BREAKDOWN
 
 ### [✅/🎯/⏳] PHASE [N]: [PHASE NAME] [- COMPLETE / - CURRENT PHASE / - UPCOMING]
-```
+\`\`\`
 
 **For completed phases:**
 ```markdown
@@ -278,7 +275,7 @@ WORKFLOW:
 
 **Removed Features (if applicable):**
 - ❌ Feature that was cut
-```
+\`\`\`
 
 **For current/upcoming phases:**
 
@@ -288,7 +285,7 @@ For each task in the ROADMAP, create a session:
 #### **SESSION [N]: Task [X].[Y] - [Task Name]** [🎯 NEXT if current task]
 
 **Prompt Template:**
-```
+\`\`\`
 [Opening statement about what's being implemented]
 
 (Note: Claude will first request you upload [list files] before proceeding)
@@ -312,13 +309,13 @@ Expected deliverables:
 - [Deliverable 1]
 - [Deliverable 2]
 - [Deliverable 3]
-```
+\`\`\`
 
 **Expected Output:**
 - [What Claude should produce]
 - [Documentation needs]
 - [Testing requirements]
-```
+\`\`\`
 
 **How to generate sessions:**
 
@@ -346,15 +343,15 @@ Expected deliverables:
 ### Quick Commit Command
 
 When you're ready to commit your changes, simply say:
-```
+\`\`\`
 generate commit
-```
+\`\`\`
 
 Claude will output a properly formatted git commit message based on the work completed in the session.
 
 ### Commit Message Format:
 
-```
+\`\`\`
 v[X].[Y].[Z]: Task [X.Y] - [Brief description]
 
 - [Key change 1]
@@ -426,10 +423,10 @@ git commit -m "[paste generated message]"
 
 # Push to feature branch
 git push origin v[X].[Y].[Z]-[feature-name]
-```
+\`\`\`
 
 **Branch Strategy:**
-```
+\`\`\`
 main (stable releases)
   │
   └─ v[X].[Y].[Z]-[feature-name] (current sprint)
@@ -438,7 +435,7 @@ main (stable releases)
        ├─ phase-2-[name] (Sessions [range])
        ├─ phase-3-[name] (Sessions [range])
        └─ phase-4-[name] (Sessions [range])
-```
+\`\`\`
 
 **Merge Protocol:**
 - Complete each phase
@@ -447,7 +444,7 @@ main (stable releases)
 - Only merge to main when ALL tasks complete
 
 ---
-```
+\`\`\`
 
 **How to customize:**
 - Replace version numbers with actual sprint version
@@ -480,7 +477,7 @@ main (stable releases)
    - Clarify requirements if needed
 
 ### Testing Template:
-```
+\`\`\`
 SESSION [X] TEST RESULTS:
 ═════════════════════════
 
@@ -560,7 +557,7 @@ Questions for Next Session:
    - Don't try to do everything at once
 
 ### Sample Good Prompt Structure:
-```
+\`\`\`
 TASK: [Clear objective]
 
 CONTEXT:
@@ -646,7 +643,7 @@ Yes, proceed.
 ### If Claude Produces Incomplete Code:
 
 **Prompt:**
-```
+\`\`\`
 The code snippet you provided is incomplete. Please provide the FULL implementation of [file.gd] including:
 - All necessary imports
 - Complete function bodies
@@ -754,7 +751,7 @@ Please provide:
    - List post-release improvements (v[X].[Y+1].[Z] ideas)
 
 3. **Release Preparation:**
-   ```
+\`\`\`
    Please create a v[X].[Y].[Z] release summary:
    
    1. Feature overview ([sprint focus] highlights)
@@ -766,7 +763,7 @@ Please provide:
    7. Credits (AI tools used: SFX Engine, Leonardo.ai)
    
    Format as Markdown for GitHub release notes.
-   ```
+\`\`\`
 
 4. **Git Release:**
    ```bash
@@ -781,10 +778,10 @@ Please provide:
    # Tag release
    git tag -a v[X].[Y].[Z] -m "Release v[X].[Y].[Z] - [Sprint Name]"
    git push origin main --tags
-   ```
+\`\`\`
 
 5. **Next Sprint Planning:**
-   ```
+\`\`\`
    v[X].[Y].[Z] is complete. Help me plan v[X].[Y+1].[Z]:
    
    Review ROADMAP "NEXT SPRINT IDEAS" section.
@@ -846,7 +843,7 @@ This workflow provides:
 - [Benefit or note 3]
 
 Good luck with Crimson Veil v[X].[Y].[Z]! 🎮⚔️
-```
+\`\`\`
 
 **How to customize:**
 - Calculate remaining sessions and time
@@ -861,7 +858,7 @@ Good luck with Crimson Veil v[X].[Y].[Z]! 🎮⚔️
 When user requests a workflow document, follow these steps:
 
 ### STEP 1: Request Inputs
-```
+\`\`\`
 I'll generate a comprehensive workflow document for v[X].[Y].[Z].
 
 Please upload these files:

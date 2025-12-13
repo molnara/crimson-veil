@@ -57,6 +57,7 @@ var day_night_cycle: DayNightCycle = null
 
 # Track spawned critters
 var active_critters: Array = []
+var active_enemies: Array = []  # Track enemies separately (no meta data)
 var populated_chunks: Dictionary = {}
 var initialized: bool = false
 var last_firefly_check_time: float = -1.0  # Track when we last checked firefly spawning
@@ -512,6 +513,9 @@ func populate_chunk(chunk_pos: Vector2i):
 		var critter = spawn_critter_for_biome(biome, Vector3(world_x, height, world_z))
 		if critter:
 			populated_chunks[chunk_pos].append(critter)
+	
+	# NEW: Enemy spawning integration
+	spawn_enemies_in_chunk(chunk_pos)
 
 func spawn_critter_for_biome(biome: Chunk.Biome, spawn_pos: Vector3):
 	"""Spawn biome-appropriate critter"""
@@ -1080,6 +1084,99 @@ func get_biome_at_position(world_x: float, world_z: float, base_noise: float) ->
 			return Chunk.Biome.GRASSLAND
 	
 	return Chunk.Biome.GRASSLAND
+
+func spawn_enemies_in_chunk(chunk_pos: Vector2i) -> void:
+	"""Spawn enemies based on biome and time of day"""
+	if not chunk_manager or not player:
+		return
+	
+	var chunk_size = chunk_manager.chunk_size
+	var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
+	
+	# Random position in chunk
+	var local_x = randf() * chunk_size
+	var local_z = randf() * chunk_size
+	var world_x = world_offset.x + local_x
+	var world_z = world_offset.y + local_z
+	
+	var base_noise = noise.get_noise_2d(world_x, world_z)
+	var biome = get_biome_at_position(world_x, world_z, base_noise)
+	var height = get_terrain_height_with_raycast(world_x, world_z, base_noise, biome)
+	
+	# Check minimum distance from player (15m)
+	if Vector3(world_x, height, world_z).distance_to(player.global_position) < 15.0:
+		return
+	
+	# Biome-specific spawning
+	match biome:
+		Chunk.Biome.FOREST:
+			if randf() < 0.15:
+				spawn_single_enemy("corrupted_rabbit", Vector3(world_x, height, world_z), chunk_pos)
+			# Forest Goblin will be added in future tasks
+		Chunk.Biome.DESERT:
+			# Desert Scorpion will be added in future tasks
+			pass
+		Chunk.Biome.SNOW:
+			if randf() < 0.10:
+				spawn_wolf_pack(Vector3(world_x, height, world_z), chunk_pos)
+		Chunk.Biome.MOUNTAIN:
+			if randf() < 0.05:
+				spawn_single_enemy("stone_golem", Vector3(world_x, height, world_z), chunk_pos)
+	
+	# Night-only spawning (all biomes)
+	if day_night_cycle and is_night_time():
+		if randf() < 0.08:
+			spawn_single_enemy("shadow_wraith", Vector3(world_x, height, world_z), chunk_pos)
+
+func spawn_single_enemy(enemy_type: String, position: Vector3, chunk_pos: Vector2i) -> void:
+	"""Spawn a single enemy at position"""
+	var enemy_scene = load("res://%s.tscn" % enemy_type)
+	if not enemy_scene:
+		push_error("Failed to load enemy scene: res://%s.tscn" % enemy_type)
+		return
+	
+	var enemy = enemy_scene.instantiate()
+	add_child(enemy)
+	enemy.global_position = position
+	
+	# Track in populated_chunks
+	if not populated_chunks.has(chunk_pos):
+		populated_chunks[chunk_pos] = []
+	populated_chunks[chunk_pos].append(enemy)
+	active_enemies.append(enemy)  # Track enemies separately from critters
+
+func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i) -> void:
+	"""Spawn 2-3 Ice Wolves in pack formation"""
+	var pack_size = randi_range(2, 3)
+	var pack_id = randi()
+	
+	for i in range(pack_size):
+		var angle = (i / float(pack_size)) * TAU
+		var offset = Vector3(cos(angle) * 2.5, 0, sin(angle) * 2.5)
+		var spawn_pos = center_pos + offset
+		
+		var wolf_scene = load("res://ice_wolf.tscn")
+		if not wolf_scene:
+			push_error("Failed to load ice_wolf.tscn")
+			continue
+		
+		var wolf = wolf_scene.instantiate()
+		wolf.pack_id = pack_id
+		add_child(wolf)
+		wolf.global_position = spawn_pos
+		
+		# Track in populated_chunks
+		if not populated_chunks.has(chunk_pos):
+			populated_chunks[chunk_pos] = []
+		populated_chunks[chunk_pos].append(wolf)
+		active_enemies.append(wolf)  # Track enemies separately from critters
+
+func is_night_time() -> bool:
+	"""Check if it's night (10 PM to 6 AM)"""
+	if not day_night_cycle:
+		return false
+	var time = day_night_cycle.get_time_of_day()
+	return time >= 0.9167 or time < 0.25
 
 func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
 	var calculated_height = get_terrain_height_at_position(world_x, world_z, base_noise, biome)

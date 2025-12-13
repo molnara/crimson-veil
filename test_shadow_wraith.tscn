@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8jk9l0m1nop4"]
+
+[ext_resource type="Script" path="res://test_shadow_wraith.gd" id="1_test_shadow_wraith"]
+
+[node name="TestShadowWraith" type="Node3D"]
+script = ExtResource("1_test_shadow_wraith")

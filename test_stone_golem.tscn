@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b7gh8i9j0klm3"]
+
+[ext_resource type="Script" path="res://test_stone_golem.gd" id="1_test_stone_golem"]
+
+[node name="TestStoneGolem" type="Node3D"]
+script = ExtResource("1_test_stone_golem")
