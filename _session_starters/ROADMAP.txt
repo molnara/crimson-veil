@@ -1,256 +1,62 @@
-CRIMSON VEIL - FEATURE ROADMAP
-================================
+CRIMSON VEIL - ROADMAP
 
-AI MODEL GUIDE
---------------
-[Sonnet] = Standard implementation work (45-55 sessions/week capacity)
-[Opus] = Complex architecture, code reviews, multi-system refactoring (3-4 sessions/week capacity)
+CURRENT: v0.5.0 "Atmosphere & Audio" (9/13 tasks - 69%)
+========================================================
 
-CURRENT SPRINT: "Atmosphere & Audio" (v0.5.0 - 7-10 days) - Planned 2025-12-11
-----------------------------------------------------------
-Sprint Goal: Implement professional-quality sound system and ambient music using AI generation
-Budget: $22 actual ($8 SFX Engine + $14 Mubert - saved $12)
-Timeline: 12-15 sessions (~24-30% capacity)
+DESIGN DECISIONS (LOCKED):
+✓ Music: Pure ambient drone (minimal, non-intrusive)
+✓ Footsteps: Biome-aware (4 surfaces: grass/stone/sand/snow)
+✓ Volume: Hybrid (realistic ambient, punchy actions)
+✓ Music variety: Day/night variation (8 tracks total)
 
-DESIGN DECISIONS (LOCKED IN):
-✓ Music Style: Pure Ambient Drone (minimal, atmospheric, non-intrusive)
-✓ Footstep Complexity: Biome-aware (4 surface types: grass, stone, sand, snow)
-✓ Volume Philosophy: Hybrid (realistic ambient, exaggerated actions)
-✓ Music Variety: Day/Night Variation (8 tracks: 4 day + 4 night)
+THIS SPRINT:
+[X] 1.1 - Audio Manager Architecture
+[X] 1.2 - AI Sound Generation (48 files: 40 SFX + 8 music)
+[X] 1.3 - Harvesting Sounds
+[X] 2.1 - Movement Sounds (footsteps)
+[X] 2.2 - Music Manager & AI Music
+[X] 2.3 - Ambient Environmental Sounds
+[X] 2.4 - Building Sounds
+[X] 2.5 - Container Sounds
+[X] 3.2 - Settings Menu Audio Controls
+[ ] 3.1 - UI Sounds (inventory, crafting, pickup, warnings)
+[ ] 3.3 - Sound Variation System
+[ ] 3.4 - Audio Balance Pass
+[ ] 3.5 - Controller Rumble (OPTIONAL)
 
-PRIORITY 1 - Core Sound System (Foundation) [5 sessions] - COMPLETE
-[X] Audio Manager Architecture [Sonnet] - Singleton with sound pooling, volume controls, pitch variation (COMPLETE 2025-12-11)
-[X] AI Sound Generation & Import [Sonnet] - Generated 48 audio files (40 SFX + 8 music) via SFX Engine + Mubert (COMPLETE 2025-12-12)
-[X] SFX Integration - Harvesting Sounds [Sonnet] - Wire harvesting, tool switch, resource break, log despawn (COMPLETE 2025-12-12)
+NEXT SPRINT IDEAS:
+- Workbench system (proximity crafting)
+- Save/load (HIGH PRIORITY - complex)
+- Inventory organization (sort, quick-stack)
+- Combat system (new major system)
+- Advanced building (walls, roofs, furniture)
 
-PRIORITY 2 - Music & Ambient System (Atmosphere) [5-6 sessions] - COMPLETE
-[X] Movement Sounds - Footsteps [Sonnet] - Biome-aware footsteps with steep slope detection (COMPLETE 2025-12-12)
-[X] Building Sounds [Sonnet] - block_place, block_remove, build_mode_toggle integration (COMPLETE 2025-12-12)
-[X] Container Sounds [Sonnet] - chest_open, chest_close integration (COMPLETE 2025-12-12)
-[X] Music Manager & AI Music System [Sonnet] - Day/night ambient tracks, crossfade system, smart rotation (COMPLETE 2025-12-12)
-[X] Ambient Environmental Sounds [Sonnet] - Biome-aware ambient loops with occasional/rare frequency (COMPLETE 2025-12-12)
+BACKLOG (HIGH PRIORITY):
+- Save/load system (complex serialization)
+- Boss progression (Valheim-style gates)
+- Tool tiers (stone → iron → steel)
+- Durability system (resource sink)
+- Workbench & advanced crafting
+- Advanced building blocks
 
-PRIORITY 3 - Polish & Refinement (Optional) [2-4 sessions]
-[ ] UI Sounds [Sonnet] - inventory_toggle, craft_complete, pickup, warnings integration
-[X] Settings Menu - Audio Controls [Sonnet] - Volume sliders (master, sfx, music, ambient, ui) with persistence (COMPLETE 2025-12-12)
-[ ] Sound Variation System [Sonnet] - Pitch/volume randomization enhancements
-[ ] Audio Balance Pass [Sonnet] - Test and adjust all volume levels across scenarios
-[ ] Controller Rumble [Sonnet] - Haptic feedback for harvesting, building, tree falling (OPTIONAL)
+TECH DEBT:
+[ ] Critter visual extraction (reduce critter_spawner.gd from 1,143 lines)
+[ ] ITEM_COLORS consolidation (remove duplication from inventory_ui.gd + container_ui.gd)
+[ ] Container null safety (race condition if destroyed while UI open)
+[ ] Input handling consolidation (player.gd uses duplicate input checks)
+[ ] Cloud system extraction (day_night_cycle.gd is 829 lines)
 
-AUDIO FILE MANIFEST (48 files total - ALL GENERATED):
-- 40 SFX files (harvesting: 6, movement: 12, building: 3, UI: 9, container: 2, ambient: 8)
-- 8 Music tracks (4 day ambient, 4 night ambient - 2 min each, WAV format)
-- Tools used: SFX Engine ($8/month) + Mubert Creator ($14/month)
-- Actual budget: $22 (under $34 target by $12)
+KNOWN ISSUES:
+- Container destroyed while UI open (needs null checks)
+- Input blocking too broad (player.gd:148)
 
-SPRINT PROGRESS: 9/13 tasks complete (69%)
-
-
-NEXT UP (After v0.5.0)
-----------------------
-[ ] Workbench system [Sonnet] - Craftable building block, proximity detection, recipe gating
-[ ] Inventory organization [Sonnet] - Sort/Quick-stack buttons, container animations
-[ ] Save/load system [Opus] - Persistent world state (HIGH PRIORITY, complex serialization)
-[ ] Combat system [Opus] - Basic enemy encounters with simple weapons (new system)
-[ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
-
-
-BACKLOG (Prioritized)
----------------------
-HIGH PRIORITY:
-[ ] Save/load system [Opus] - Persistent world state and player progress (complex serialization)
-[ ] Boss progression system [Opus] - Valheim-style boss encounters that gate biome access (new major system)
-[ ] Workbench & Advanced Crafting [Sonnet] - DEFERRED FROM v0.5.0 - Workbench placement, proximity, recipes
-[ ] Inventory Organization [Sonnet] - DEFERRED FROM v0.5.0 - Sort, quick-stack, drag-and-drop, animations
-[ ] Advanced building [Sonnet] - Walls, roofs, furniture for proper base construction
-[ ] Tool tiers [Sonnet] - Stone → Iron → Steel progression path
-[ ] Durability system [Sonnet] - Tools degrade with use (creates resource sink)
-
-MEDIUM PRIORITY:
-[ ] Unique landmarks [Opus] - Procedurally placed points of interest (new generation system)
-[ ] Animal AI improvements [Sonnet] - More realistic critter behaviors (feeding, fleeing, nesting)
-[ ] Weather system [Sonnet] - Rain, snow, storms that affect gameplay
-[ ] Farming system [Sonnet] - Plant crops, tend gardens for renewable food
-[ ] NPC traders [Opus] - Buy/sell resources, discover rare items (new AI system)
-[ ] Character customization [Sonnet] - Appearance options for player model
-[ ] Controller UI navigation [Sonnet] - D-Pad navigation through inventory/crafting/settings menus with visual focus, LB/RB tab switching
-
-LOW PRIORITY:
-[ ] Performance stats UI [Sonnet] - Display FPS, CPU, GPU, and memory usage in upper right corner
-[ ] Custom skybox [Sonnet] - Replace ProceduralSkyMaterial with custom texture/cubemap
-[ ] Snow covered trees in snow biome [Sonnet] - Visual enhancement for winter atmosphere
-[ ] Multi-material terrain rendering [Sonnet] - Replace vertex color tinting (see chunk.gd:231)
-[ ] Seasonal changes [Opus] - Visual and gameplay shifts throughout the year (complex system)
-[ ] Fishing system [Sonnet] - Coastal/river fishing for food variety
-[ ] Mounts/vehicles [Opus] - Faster travel options (new physics/control system)
-
-
-SOMEDAY/MAYBE (Ideas to explore)
----------------------------------
-- Multiplayer co-op [Opus] - Shared world building with friends (major architecture change)
-- Magic/enchanting system [Opus] - Mystical progression path (new system)
-- Underground/cave generation [Opus] - Deeper exploration with mining (major world gen change)
-- Pet system [Sonnet] - Tamed critters that follow and help
-- Treasure hunting [Sonnet] - Buried loot and rare discoveries
-- Photography mode [Sonnet] - Capture and share scenic moments
-- Container networks [Opus] - Auto-sorting/piping systems (complex logic)
-- Named containers [Sonnet] - Label chests for organization
-- Container security [Sonnet] - Locks or ownership system
-- Dynamic soundtracks [Sonnet] - Music that responds to gameplay intensity
-- Voice acting [Opus] - NPC dialogue, ambient storytelling
-
-
-COMPLETED SPRINTS
-------------------
-For detailed changelog, use: git log --oneline --grep="v0\.[0-9]"
-
-v0.5.0 IN PROGRESS (December 2025) - "Atmosphere & Audio"
-Sprint Progress: 9/13 tasks (69%)
-Commit: [in progress]
-
-v0.4.0 RELEASE (December 12, 2025) - "Storage & Organization"
-Sprint Completion: 11/15 tasks (73%) - Priorities 1 & 2 fully complete
-Commit: d53049d
-Key Features: Container system, dual-panel UI, item stacking, chest placement/interaction
-
-v0.3.0 RELEASE (December 2025) - "Building & Crafting"
-Commit: [see git log]
-Key Features: Building system, crafting recipes, tool system
-
-v0.2.0 RELEASE (December 2025) - "World Generation"
-Commit: [see git log]
-Key Features: Chunk-based terrain, biome system, procedural resources
-
-v0.1.0 RELEASE (December 2025) - "Foundation"
-Commit: [see git log]
-Key Features: Player movement, camera, basic inventory
-
-
-DESIGN QUESTIONS / DECISIONS NEEDED
-------------------------------------
-v0.5.0 Sprint Decisions (Made):
-✓ Audio focus: Prioritize atmosphere over mechanics (audio > workbench)
-✓ Music style: Pure ambient drone (meditative, cozy-lonely tone)
-✓ Footsteps: Biome-aware (4 surfaces for immersion without complexity)
-✓ Volume balance: Hybrid approach (realistic ambient, punchy actions)
-✓ Budget: $22 investment for professional quality (saved $12)
-✓ Music variety: Day/night variation (8 tracks: 4 day + 4 night)
-
-v0.4.0 Sprint Decisions (Made):
-✓ Storage scope: Core + Polish approach (1 week timeline)
-✓ Container UI: Click-to-transfer first, drag-and-drop later
-✓ Container destruction: Harvestable (break to get materials back)
-✓ Item stacking: Full implementation this sprint
-✓ Workbench scope: Placement + proximity, defer recipe gating
-✓ Release v0.4.0 with Priorities 1 & 2 complete (73% sprint completion)
-
-Future Decisions (Still Open) - Use [Opus] for complex design decisions:
-? Should tools degrade/break or have infinite durability? (affects resource loops) [Opus]
-? What should unlock new biomes - boss kills or tool upgrades? (progression pacing) [Opus]
-? Should building have structural integrity like Valheim or free placement like Minecraft? [Opus]
-? How rare should character trees be? (currently 5% - too common or too rare?) [Sonnet]
-? Should critters be harvestable for food/materials or purely ambient? [Sonnet]
-? Should controller vibration intensity be configurable in settings? [Sonnet]
-? Container limits: How many containers can exist in world simultaneously? [Sonnet]
-? Should ambient music eventually adapt to gameplay intensity? [Sonnet]
-
-
-TECHNICAL DEBT / REFACTORING
------------------------------
-[X] Code organization [Sonnet] - Extracted large tree generators into modular files (COMPLETE)
-
-HIGH PRIORITY (from Opus 4.5 Code Review - 2025-12-11):
-[ ] Critter visual extraction [Sonnet] - Extract critter visuals to separate files (rabbit_visual.gd, crab_visual.gd, etc.) following tree_visual.gd pattern. Reduces critter_spawner.gd from 1,143 lines.
-[ ] ITEM_COLORS consolidation [Sonnet] - Move duplicated ITEM_COLORS dictionary from inventory_ui.gd and container_ui.gd to shared location (e.g., constants.gd or inventory.gd)
-[ ] Container null safety [Sonnet] - Add container validity checks in container_ui.gd to prevent null reference if container is destroyed while UI is open
-
-MEDIUM PRIORITY (from Code Review):
-[ ] Input handling consolidation [Sonnet] - Consolidate duplicate input handling in player.gd. Use only Input Actions for maintainability.
-[ ] Cloud system extraction [Sonnet] - Extract cloud system from day_night_cycle.gd (829 lines) to separate cloud_manager.gd
-[ ] Debug output toggle [Sonnet] - Add debug flag to control print() statements throughout codebase
-
-LOW PRIORITY:
-[ ] Multi-material terrain system [Sonnet] - Replace vertex color tinting with proper material blending (chunk.gd)
-[ ] Settings preset detection [Sonnet] - "Custom" preset detection could be more robust
-[ ] Resource spawning optimization [Sonnet] - Could batch-spawn resources instead of one-at-a-time
-[ ] Chunk unloading delay [Sonnet] - Add graceful fade-out before unloading distant chunks
-[ ] Container slot pooling [Sonnet] - Reuse UI nodes instead of queue_free/recreate (performance optimization)
-[ ] Block rotation [Sonnet] - Add ability to rotate walls/floors before placement in building system
-[ ] LOD for distant trees [Sonnet] - Implement level-of-detail system for vegetation
-
-QUARTERLY REVIEWS:
-[ ] Architecture review [Opus] - Scheduled codebase health check (next: after save/load implementation)
-
-
-BUGS / FIXES
-------------
-[X] Chest collision layer fix - FIXED [Sonnet] - Chests now on Layers 1+3 for blocking AND interaction (2025-12-12)
-[X] Chests can't be opened - FIXED [Sonnet] - Layer 3 collision now properly configured (2025-12-12)
-[X] Chests can't be deleted - FIXED [Sonnet] - Building raycast detects Layer 1 collision (2025-12-12)
-[X] Player walks through chests - FIXED [Sonnet] - Layer 1 collision provides physical blocking (2025-12-12)
-[X] Log despawn sound spam - FIXED [Sonnet] - Removed resource_break audio from log despawn (2025-12-12)
-[X] Sun/moon seem to change sizes as I explore - FIXED [Sonnet]
-[X] Crabs still don't seem to spawn - FIXED [Sonnet]
-[X] Rocks are not glowing (blue-ish) at night - FIXED [Sonnet]
-[X] Trees sometimes breaking too early before hitting ground - FIXED [Sonnet]
-[X] Logs clipping through terrain - FIXED [Sonnet]
-[X] Panels not centered in container UI - FIXED [Sonnet]
-[X] Wrong panel order in container UI - FIXED [Sonnet]
-[X] Other UIs visible when container open - FIXED [Sonnet]
-[X] Inventory debug text showing during container interaction - FIXED [Sonnet]
-
-POTENTIAL ISSUES (from Code Review - not yet confirmed):
-[ ] Race condition [Sonnet] - Container destroyed while UI open could cause null reference
-[ ] Input blocking too broad [Sonnet] - player.gd line 148 blocks ALL input when container open
-
-
-SPRINT RISK ASSESSMENT (v0.5.0 - Current)
-------------------------------------------
-🟢 LOW RISK: Audio system isolation - Won't break existing gameplay systems
-   Mitigation: Audio manager is separate AutoLoad, no gameplay logic dependencies
-   
-🟡 MEDIUM RISK: AI generation quality variance
-   Mitigation: Use free tier for testing, upgrade only when satisfied with quality
-   
-🟢 LOW RISK: Budget overrun ($22 actual vs $34 target)
-   Mitigation: SFX Engine is pay-per-credit (only buy what needed), Mubert is 1-month subscription
-   
-🟢 LOW RISK: Integration complexity (many files to modify)
-   Mitigation: Start with one system (harvesting), test, then expand to others
-   
-🟡 MEDIUM RISK: Music looping seamlessness
-   Mitigation: Test loops extensively, use Mubert's loop-friendly generation
-
-
-SPRINT RISK ASSESSMENT (v0.4.0 - COMPLETED)
---------------------------------------------
-✓ HIGH RISK: Container UI complexity (dual-panel, transfer logic) - MITIGATED (Phase 2 complete)
-   Resolution: Scene-based architecture + click-to-transfer simplicity
-   
-🟢 LOW RISK: Save compatibility for stacking changes
-   Status: Design accommodates future save system
-   
-🟢 LOW RISK: Controller UI navigation for containers
-   Status: Mouse/keyboard working, controller support deferred
-   
-✓ LOW RISK: Feature creep - MITIGATED
-   Resolution: Stuck to acceptance criteria, deferred extras to backlog
-
+COMPLETED SPRINTS:
+v0.4.0 (Dec 12, 2025) - Storage & Organization (11/15 tasks - 73%)
+v0.3.0 - Building & Crafting
+v0.2.0 - World Generation
+v0.1.0 - Foundation
 
 ---
-Notes:
-- Project follows Valheim/Minecraft aesthetic: low-poly + 16x16 pixel textures
-- Core loop: Explore → Gather → Craft → Build → Unlock new biomes → Repeat
-- Tone: Cozy loneliness with meditative gathering and discovery moments
-- All features should support "one more trip" addictive gathering loop
-- Full controller support implemented - keyboard+mouse and Xbox controller work simultaneously
-- Sprint planning focuses on "Core + Polish" approach: deliver complete, polished features
-- v0.5.0 Current: Sound & Music System (9/13 tasks complete - 69% complete)
-- Code Review (Opus 4.5): Completed 2025-12-11 - Overall grade: A (Excellent)
-
-AI MODEL USAGE SUMMARY:
-- Total Opus tasks in backlog: ~12 (complex systems, architecture)
-- Total Sonnet tasks in backlog: ~50+ (implementation, fixes, polish)
-- v0.5.0 Sprint: 12-15 Sonnet sessions (~24-30% weekly capacity)
-- Recommended weekly balance: 1 Opus session + 10-15 Sonnet sessions
-- See AI_USAGE_ANALYSIS.md for detailed capacity planning
+Game: Low-poly survival (Valheim/Minecraft aesthetic)
+Tone: Cozy loneliness with meditative gathering
+Loop: Explore → Gather → Craft → Build → Unlock biomes → Repeat

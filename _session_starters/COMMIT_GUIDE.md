@@ -1,148 +1,37 @@
-# Commit Process Guide
+# Commit Guide
 
-**How "Generate a commit" works**
+## "Generate a commit" → I Output:
+1. **COMMIT_MESSAGE.txt** - Ready for `git commit -F`
+2. **SESSION_START.md** - Updated progress
+3. **ROADMAP.txt** - Marked complete (if exists)
 
----
-
-## 🎯 When You Say "Generate a commit"
-
-I will create and share:
-
-1. **COMMIT_MESSAGE.txt** - Ready-to-use commit message
-2. **SESSION_START.md** - Updated with sprint progress
-3. **ROADMAP.txt** - Tasks marked complete (if applicable)
-
----
-
-## 📝 Commit Message Format
-
+## Message Format
 ```
-<type>(<scope>): <short summary>
+{type}({scope}): {summary}
 
 Changed files:
-- path/to/file1.gd (what changed)
-- path/to/file2.gd (what changed)
+- {file} ({what})
 
-<Optional longer description>
-
-Implements Task X.X from v0.X.0 sprint
+Implements Task {X.X} from v{X.X.X}
 ```
 
-**Example:**
-```
-feat(audio): Add UI sounds system
+**Types:** feat, fix, docs, refactor, perf, test
 
-Changed files:
-- scripts/audio/audio_manager.gd (added ui_sounds category)
-- scripts/ui/inventory_ui.gd (play inventory_toggle sound)
-- scripts/ui/crafting_ui.gd (play craft_complete sound)
-
-Implements Task 3.1 - UI Sounds from v0.5.0 sprint
-```
-
----
-
-## 📄 Your Workflow
-
-After I generate the commit files:
-
+## Your Git Commands
 ```bash
-# 1. Commit your code changes
 git add .
 git commit -F COMMIT_MESSAGE.txt
-
-# 2. (Optional) Copy updated docs to repo
-cp SESSION_START.md /path/to/repo/
-cp ROADMAP.txt /path/to/repo/
-
-# 3. Push
 git push
 ```
 
----
-
-## 📋 What Gets Updated
-
-### COMMIT_MESSAGE.txt
-- Conventional commit format
-- List of changed files
-- Task reference
-
-### SESSION_START.md
-- Sprint progress percentage
-- Recent changes (last 5)
-- Task completion status
-- Known issues
-
-### ROADMAP.txt (if applicable)
-- Task checkmarks [x]
-- Sprint progress count
-- Completion timestamps
-
----
-
-## 🎯 File Output Rules
-
-**Documentation files** (SESSION_START.md, ROADMAP.txt, etc):
-- ✅ Complete file with all sections
-- ✅ Exact filename (no suffixes)
-- ✅ UTF-8 encoding (→ ✅ 🎯)
-
-**Code files** (.gd, .tscn):
-- ❌ Not included in commit output
-- ✅ You handle via Git
-- ✅ I only output if explicitly requested
-
----
-
-## 💡 Tips
-
-**Fast commits:**
-- Upload just SESSION_START.md or QUICK_START.md
-- Say "Generate a commit"
-- Use the commit message I create
-
-**Detailed commits:**
-- Upload SESSION_START.md + ROADMAP.txt
-- Say "Generate a commit"
-- I'll update both with full context
-
-**Custom commits:**
-- Tell me what changed
-- I'll create appropriate commit message
-- You handle the rest
-
----
-
-## 🔍 Finding Change History
-
-**For detailed changelog:**
+## Session End
 ```bash
-# View recent commits
-git log --oneline -10
+# Optional: Copy docs to repo
+cp SESSION_START.md /path/to/repo/docs/
+cp ROADMAP.txt /path/to/repo/docs/
 
-# View commits for specific version
-git log --oneline --grep="v0.5"
-
-# View changes in last commit
-git diff HEAD~1
-
-# View specific commit
-git show <commit-hash>
+# Then push
+git push
 ```
 
-**Git is your source of truth** - No separate CHANGELOG.txt needed!
-
----
-
-## 🔧 Customization
-
-Want different commit message format? Just ask:
-- "Use imperative mood"
-- "Include issue numbers"
-- "Add co-author tags"
-- Etc.
-
----
-
-**That's it! Simple, fast, Git-native.**
+That's it. Solo dev = simple.
