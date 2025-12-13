@@ -52,6 +52,9 @@ INTEGRATION:
 @onready var reset_button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/ResetButton
 @onready var close_button = $Panel/MarginContainer/VBoxContainer/HBoxContainer/CloseButton
 
+# Version label
+@onready var version_label = $Panel/MarginContainer/VBoxContainer/VersionLabel
+
 # Settings manager reference
 var settings_manager: Node
 
@@ -66,6 +69,10 @@ func _ready():
 	else:
 		push_error("SettingsManager not found!")
 		return
+	
+	# Set version label
+	var version = ProjectSettings.get_setting("application/config/version", "0.0.0")
+	version_label.text = "v" + version
 	
 	# Setup UI
 	setup_resolution_options()
