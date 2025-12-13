@@ -1,10 +1,10 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.6.0 "Hunter & Prey" (3/12 tasks - 25%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
+CURRENT: v0.6.0 "Hunter & Prey" (5/12 tasks - 42%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
 ========================================================================================
 
 PHASE 1 STATUS: ✅ COMPLETE (Tasks 1.1-1.2 finished - simplified combat foundation ready)
-PHASE 2 STATUS: 🔄 IN PROGRESS (Task 2.1 complete - enemy base class tested and verified)
+PHASE 2 STATUS: 🔄 IN PROGRESS (Tasks 2.1-2.2 complete - base class + 2 enemies done, 4 remaining)
 
 DESIGN DECISIONS (LOCKED - UPDATED Dec 13, 2025):
 ✓ Combat Style: Simplified Minecraft-style Single-Shot Melee
@@ -70,15 +70,23 @@ SPRINT v0.6.0 - TASKS (SIMPLIFIED):
       ✅ Tested and verified (7/9 core tests passed)
       ✅ Fixed combat_system.gd compatibility (simplified take_damage call)
       
-[ ] 2.2 - Enemy Types (6 variants) (10h) 🎯 NEXT
-      → Corrupted Rabbit (Forest, 30 HP, territorial, fast)
-      → Forest Goblin (Forest, 50 HP, hostile, patrols, flees at 20% HP)
-      → Desert Scorpion (Desert, 60 HP, ambush from sand)
-      → Ice Wolf (Snow, 55 HP, pack tactics, spawns in groups of 2-3)
-      → Stone Golem (Mountain, 100 HP, tank, ground slam)
-      → Shadow Wraith (Night-only, 40 HP, floats, despawns at dawn)
-      → CSG primitive geometry for all
-      → Unique drops per enemy (leather, chitin, fangs, cores, etc.)
+[🔄] 2.2 - Enemy Types (6 variants) (10h) - IN PROGRESS (2/6 complete)
+      ✅ Corrupted Rabbit (Forest, 30 HP, territorial, fast zigzag chase)
+         → CSG geometry: brown body, pink ears, glowing red eyes, fluffy tail
+         → Drops: corrupted_leather (100%), dark_meat (40%)
+         → Behavior: Territorial (5m range), zigzag chase, quick attack (0.3s telegraph)
+         → Tests: 8/8 passing (100%) - fully verified
+      ✅ Forest Goblin (Forest, 50 HP, patrol/flee/coward AI)
+         → CSG geometry: green body, yellow eyes, brown arms, stick weapon
+         → Drops: wood (80%), stone (60%), goblin_tooth (30%)
+         → Behavior: Patrols 3-5 waypoints, flees at <20% HP, backpedals when close
+         → Tests: 9/9 passing (100%) - fully verified
+      ⏳ Desert Scorpion (Desert, 60 HP, ambush from sand)
+      ⏳ Ice Wolf (Snow, 55 HP, pack tactics, spawns in groups of 2-3)
+      ⏳ Stone Golem (Mountain, 100 HP, tank, ground slam)
+      ⏳ Shadow Wraith (Night-only, 40 HP, floats, despawns at dawn)
+      → Automated test suites created for all completed enemies
+      → Audio integration points marked (TODO for Task 3.1)
       
 [ ] 2.3 - Enemy AI & Spawning (3h)
       → Chase AI (move toward player, maintain range)

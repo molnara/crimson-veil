@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://corrupted_rabbit_001"]
+
+[ext_resource type="Script" path="res://corrupted_rabbit.gd" id="1"]
+
+[node name="CorruptedRabbit" type="CharacterBody3D"]
+script = ExtResource("1")
+max_health = 30
+damage = 8
+move_speed = 4.5
+detection_range = 5.0
+attack_range = 1.5
+attack_cooldown_duration = 1.0
+attack_telegraph_duration = 0.3
