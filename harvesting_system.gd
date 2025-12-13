@@ -266,6 +266,9 @@ func start_harvest():
 				# AUDIO: Play wrong tool sound
 				AudioManager.play_sound("wrong_tool", "sfx")
 				
+				# RUMBLE: Wrong tool feedback
+				RumbleManager.play_wrong_tool()
+				
 				# Set cooldown to prevent spam
 				wrong_tool_cooldown = WRONG_TOOL_COOLDOWN_TIME
 			return
@@ -310,6 +313,8 @@ func _play_harvest_hit_sound(resource: HarvestableResource):
 	
 	if sound_name != "":
 		AudioManager.play_sound(sound_name, "sfx")
+		# RUMBLE: Harvest hit feedback
+		RumbleManager.play_harvest_hit()
 
 func update_harvest_progress(delta: float):
 	"""Update the progress of the current harvest"""
@@ -333,6 +338,8 @@ func finish_harvest():
 	if current_target:
 		remove_highlight(current_target)
 		current_target.complete_harvest()
+		# RUMBLE: Harvest complete feedback
+		RumbleManager.play_harvest_complete()
 	
 	is_harvesting = false
 	just_completed_harvest = true  # Prevent cancel on next frame

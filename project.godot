@@ -21,6 +21,7 @@ SettingsManager="*res://settings_manager.gd"
 AudioManager="*res://audio_manager.gd"
 MusicManager="*res://music_manager.gd"
 AmbientManager="*res://ambient_manager.gd"
+RumbleManager="*res://rumble_manager.gd"
 
 [display]
 

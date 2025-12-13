@@ -258,6 +258,9 @@ func place_block() -> bool:
 		# Play block placement sound
 		AudioManager.play_sound("block_place", "sfx")
 		
+		# RUMBLE: Block placement feedback
+		RumbleManager.play_build_place()
+		
 		emit_signal("block_placed", current_block_type, placement_position)
 		print("Placed ", block_def["name"], " at ", placement_position)
 		return true
@@ -302,6 +305,9 @@ func place_block() -> bool:
 	# Play block placement sound
 	AudioManager.play_sound("block_place", "sfx")
 	
+	# RUMBLE: Block placement feedback
+	RumbleManager.play_build_place()
+	
 	emit_signal("block_placed", current_block_type, placement_position)
 	print("Placed ", block_def["name"], " at ", placement_position)
 	
@@ -344,6 +350,9 @@ func remove_block_at_position(pos: Vector3) -> bool:
 	# Play block removal sound
 	AudioManager.play_sound("block_remove", "sfx")
 	
+	# RUMBLE: Block removal feedback
+	RumbleManager.play_build_remove()
+	
 	emit_signal("block_removed", block_type, pos)
 	print("Removed ", block_def["name"], " from ", pos)
 	
@@ -376,6 +385,9 @@ func _on_container_remove_confirmed(pos: Vector3):
 	
 	# Play block removal sound
 	AudioManager.play_sound("block_remove", "sfx")
+	
+	# RUMBLE: Block removal feedback
+	RumbleManager.play_build_remove()
 	
 	emit_signal("block_removed", block_type, pos)
 	print("Removed ", block_def["name"], " (forced)")

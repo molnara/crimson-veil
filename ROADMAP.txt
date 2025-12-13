@@ -1,7 +1,7 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.5.0 "Atmosphere & Audio" (12/13 tasks - 92%)
-========================================================
+CURRENT: v0.5.0 "Atmosphere & Audio" (13/13 tasks - 100%) ✅ COMPLETE
+========================================================================
 
 DESIGN DECISIONS (LOCKED):
 ✓ Music: Pure ambient drone (minimal, non-intrusive)
@@ -10,8 +10,9 @@ DESIGN DECISIONS (LOCKED):
 ✓ Music variety: Day/night variation (8 tracks total)
 ✓ Variation: Smart presets (none/subtle/moderate/strong per sound type)
 ✓ Balance: Optimized for cozy survival atmosphere
+✓ Rumble: 5 presets with cooldowns (ready for settings integration)
 
-THIS SPRINT:
+SPRINT v0.5.0 - COMPLETED TASKS:
 [X] 1.1 - Audio Manager Architecture
 [X] 1.2 - AI Sound Generation (48 files: 40 SFX + 8 music)
 [X] 1.3 - Harvesting Sounds
@@ -20,29 +21,24 @@ THIS SPRINT:
 [X] 2.3 - Ambient Environmental Sounds
 [X] 2.4 - Building Sounds
 [X] 2.5 - Container Sounds
-[X] 3.1 - UI Sounds (inventory, crafting, pickup, tool switch, warnings, settings, ESC feedback)
-      → 32 sound integration points across 5 scripts
-      → Fixed ESC key mapping bug
-      → Fixed chest double-open bug
-      → Complete audio coverage for all UI interactions
+[X] 3.1 - UI Sounds (32 integration points)
 [X] 3.2 - Settings Menu Audio Controls
-[X] 3.3 - Sound Variation System
-      → 4 variation presets (none/subtle/moderate/strong)
-      → 48 sounds configured with intelligent defaults
-      → Footsteps: strong variation (organic feel)
-      → Harvesting: moderate variation (impact diversity)
-      → Building: subtle variation (consistency)
-      → UI: no variation (critical feedback)
-      → New utility functions for runtime adjustment
-[X] 3.4 - Audio Balance Pass
-      → Music: 35% → 42% (atmospheric presence)
-      → Ambient: 25% → 32% (environmental immersion)
-      → UI: 60% → 62% (enhanced clarity)
-      → SFX: 75% (unchanged - already optimal)
-      → Category relationships optimized for cozy gameplay
-      → Comprehensive testing checklist provided
-      → Better out-of-box experience
-[ ] 3.5 - Controller Rumble (OPTIONAL)
+[X] 3.3 - Sound Variation System (48 sounds configured)
+[X] 3.4 - Audio Balance Pass (optimized category relationships)
+[X] 3.5 - Controller Rumble (13 integration points)
+      → RumbleManager singleton created
+      → 5 rumble presets (light/medium/heavy/impact/footstep)
+      → Per-type cooldown system (prevents spam)
+      → Auto-detects controller connect/disconnect
+      → Scales by intensity + master volume
+      → Ready for settings UI integration
+
+SPRINT ACHIEVEMENTS:
+✓ Complete audio system (48 sounds: 40 SFX + 8 music)
+✓ Smart variation system (4 presets across all sounds)
+✓ Balanced volume relationships (cozy atmosphere)
+✓ Comprehensive haptic feedback (13 rumble points)
+✓ Professional out-of-box experience
 
 NEXT SPRINT IDEAS:
 - Workbench system (proximity crafting)
@@ -50,6 +46,7 @@ NEXT SPRINT IDEAS:
 - Inventory organization (sort, quick-stack)
 - Combat system (new major system)
 - Advanced building (walls, roofs, furniture)
+- Settings UI expansion (rumble controls)
 
 BACKLOG (HIGH PRIORITY):
 - Save/load system (complex serialization)
@@ -58,6 +55,7 @@ BACKLOG (HIGH PRIORITY):
 - Durability system (resource sink)
 - Workbench & advanced crafting
 - Advanced building blocks
+- Settings menu rumble controls (enable/disable, intensity, footstep toggle)
 
 TECH DEBT:
 [ ] Critter visual extraction (reduce critter_spawner.gd from 1,143 lines)
@@ -77,6 +75,7 @@ FIXED IN v0.5.0:
 - ✓ Wrong tool sound spam with controller (added 500ms cooldown)
 
 COMPLETED SPRINTS:
+v0.5.0 (Dec 13, 2025) - Atmosphere & Audio (13/13 tasks - 100%) ✅
 v0.4.0 (Dec 12, 2025) - Storage & Organization (11/15 tasks - 73%)
 v0.3.0 - Building & Crafting
 v0.2.0 - World Generation
@@ -86,3 +85,5 @@ v0.1.0 - Foundation
 Game: Low-poly survival (Valheim/Minecraft aesthetic)
 Tone: Cozy loneliness with meditative gathering
 Loop: Explore → Gather → Craft → Build → Unlock biomes → Repeat
+Audio: 48 sounds with intelligent variation + haptic feedback
+Polish: Professional feel with balanced audio/rumble

@@ -111,6 +111,8 @@ func _on_inventory_full(item_name: String):
 	show_full_notification()
 	# Play stack full warning sound
 	AudioManager.play_sound("stack_full", "ui", false, false)
+	# RUMBLE: Warning feedback
+	RumbleManager.play_warning()
 
 func set_health_system(health_sys: HealthHungerSystem):
 	"""Connect to health/hunger system for eating"""
@@ -240,10 +242,14 @@ func toggle_visibility():
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		# Play inventory open sound
 		AudioManager.play_sound("inventory_toggle", "ui", false, false)
+		# RUMBLE: Inventory toggle feedback
+		RumbleManager.play_ui_click()
 	else:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 		# Play inventory close sound
 		AudioManager.play_sound("inventory_toggle", "ui", false, false)
+		# RUMBLE: Inventory toggle feedback
+		RumbleManager.play_ui_click()
 
 func _on_slot_clicked(event: InputEvent, item_name: String):
 	"""Handle clicking on an inventory slot"""

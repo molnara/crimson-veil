@@ -216,6 +216,8 @@ func _input(event):
 			tool_system.cycle_tool()
 			# Play tool switch sound
 			AudioManager.play_sound("tool_switch", "ui", false, false)
+			# RUMBLE: Tool switch feedback
+			RumbleManager.play_ui_click()
 	
 	# Toggle building mode with B key or D-pad Up
 	if event.is_action_pressed("toggle_building"):
@@ -528,6 +530,8 @@ func _on_harvest_completed(_resource: HarvestableResource, drops: Dictionary):
 		inventory.add_item(drops["item"], drops["amount"])
 		# Play item pickup sound
 		AudioManager.play_sound("item_pickup", "ui", true, false)
+		# RUMBLE: Item pickup feedback
+		RumbleManager.play_item_pickup()
 
 func apply_deadzone(value: float, deadzone: float) -> float:
 	"""Apply deadzone to analog stick input"""
@@ -661,6 +665,9 @@ func _physics_process(delta):
 			
 			# Play footstep sound variant
 			AudioManager.play_sound_variant("footstep_%s" % surface, 3, "sfx", true, false)
+			
+			# RUMBLE: Footstep feedback (if enabled)
+			RumbleManager.play_footstep()
 			
 			# Reset timer
 			footstep_timer = 0.0
