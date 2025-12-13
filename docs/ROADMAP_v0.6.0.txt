@@ -1,7 +1,9 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.6.0 "Hunter & Prey" (0/12 tasks - 0%) 🎯 IN PLANNING
+CURRENT: v0.6.0 "Hunter & Prey" (5/12 tasks - 42%) 🎯 PHASE 1 COMPLETE
 ========================================================================
+
+PHASE 1 STATUS: ✅ COMPLETE (Tasks 1.1-1.5 finished - 18h estimated, combat foundation ready)
 
 DESIGN DECISIONS (LOCKED):
 ✓ Combat Style: Streamlined First-Person Action (Option B.5)
@@ -11,53 +13,61 @@ DESIGN DECISIONS (LOCKED):
 ✓ Enemy Roster: Corrupted Rabbit, Forest Goblin, Desert Scorpion, Ice Wolf, Stone Golem, Shadow Wraith
 ✓ Critters: Stay peaceful (no hostile variants)
 ✓ Controller: Full dual M+KB/gamepad support with context-sensitive buttons
+✓ Controller Layout: Dark Souls style (A=Interact/Jump, B=Dodge, RT=Attack, LT=Block, L3=Sprint)
+✓ UI Controls: ESC/B close all menus, movement blocked when any UI open
 ✓ Visual Style: CSG primitives + AI-generated textures
 ✓ Audio: 32 combat sounds via SFX Engine (8 player + 24 enemy)
 ✓ Death Penalty: Respawn at spawn, keep items (forgiving for v0.6.0)
 ✓ Bow Mechanics: Hitscan with charge (hold to draw, release to fire)
 
 SPRINT v0.6.0 - TASKS:
-[ ] 1.1 - Combat System Foundation (4h)
-      → Create CombatSystem.gd (attack/charge/dodge mechanics)
-      → Weapon.gd resource class (damage, range, cooldown properties)
-      → Integration with player.gd input handling
-      → Camera effects (shake, bob, recoil)
+[✅] 1.1 - Combat System Foundation (COMPLETE)
+      → CombatSystem.gd created (500+ lines, full attack/dodge/bow logic)
+      → Weapon.gd resource class with static weapon definitions
+      → Player.gd integration (combat_attack, combat_dodge inputs)
+      → Camera shake system (0.5 light, 1.5 heavy, 0.8 dodge)
+      → Rumble integration (6 combat presets: attack_light/heavy/dodge/player_hit/enemy_death/bow_release)
+      → Collision masking (Layer 9 for enemies)
       
-[ ] 1.2 - Melee Attack System (5h)
-      → Light attack (tap, 1s cooldown)
-      → Charge attack (hold 1.5s, 2x damage, heavy feedback)
-      → Targeting system (raycast + soft auto-aim for controller)
-      → Hit detection and damage application
-      → Visual feedback (crosshair states, charge vignette)
+[✅] 1.2 - Melee Attack System (COMPLETE)
+      → Light attack (RT tap, 1.0-1.2s cooldown per weapon)
+      → Heavy attack (RT hold 1.5s, 2x damage, stronger feedback)
+      → Targeting: Raycast from camera with weapon-specific range
+      → Auto-aim: 30° cone for controller (closest enemy in cone)
+      → Crosshair: 4x4 white ColorRect, always centered
+      → Visual feedback: Camera shake + controller rumble on all attacks
       
-[ ] 1.3 - Dodge System (3h)
-      → Dodge dash (Space + direction = 4m dash)
-      → I-frame system (0.3s invincibility)
-      → Context-sensitive A button (dodge vs jump vs interact)
-      → Controller integration (full stick support)
-      → Cooldown tracking (3s between dodges)
+[✅] 1.3 - Dodge System (COMPLETE)
+      → Dodge dash (B button + Left Stick = 4m dash in 0.3s)
+      → I-frames: 0.3s invincibility during dodge animation
+      → Context-sensitive A button: Container > Harvest > Jump (priority system)
+      → 8-directional dodging with analog stick support
+      → Cooldown: 3s between dodges (tracked per-player)
+      → Sprint: L3 (click left stick) for run speed
+      → UI blocking: Dodge disabled when menus open
       
-[ ] 1.4 - Melee Weapons (2h)
-      → Wooden Club (15/30 damage, 2.5m range, starter)
-      → Stone Spear (20/40 damage, 3.5m range, balanced)
-      → Bone Sword (25/50 damage, 3.0m range, endgame)
-      → Crafting recipes (club: wood×5, spear: wood×3+stone×2+leather×1, sword: wood×2+bone×4)
-      → Weapon switching system (T key / RB button)
+[✅] 1.4 - Melee Weapons (COMPLETE)
+      → Wooden Club: 15/30 dmg, 2.5m range, 1.0s cooldown (starter, equipped)
+      → Stone Spear: 20/40 dmg, 3.5m range, 1.2s cooldown (wood×3, stone×2, leather×1)
+      → Bone Sword: 25/50 dmg, 3.0m range, 1.0s cooldown (wood×2, bone×4)
+      → Weapon switching: RB button cycles equipped weapons
+      → Crafting recipes defined in Weapon.static methods
       
-[ ] 1.5 - Bow & Arrow System (4h)
-      → Bow charge mechanics (hold RT/LMB to draw)
-      → Hitscan arrow (instant hit, 15-40 damage based on charge)
-      → Arrow ammo tracking (craft: wood×1+stone×1 = 5 arrows)
-      → Charge UI indicator (fills as bow draws)
-      → Audio feedback (bow creak while charging, twang on release)
+[✅] 1.5 - Bow & Arrow System (COMPLETE)
+      → Charge mechanics: Hold RT to draw (0-2s max charge)
+      → Hitscan: Instant raycast hit at 30m range
+      → Damage scaling: lerp(15, 40, charge_percent)
+      → Arrow tracking: 20 arrows starting ammo (not yet consuming from inventory)
+      → Audio hooks: bow_draw (loop), bow_release, arrow_hit_flesh (placeholders)
+      → Camera recoil: Scaled shake based on charge amount
       
-[ ] 2.1 - Enemy Base Class (5h)
+[ ] 2.1 - Enemy Base Class (5h) 🎯 NEXT
       → Enemy.gd extends CharacterBody3D
       → Health, damage, movement, detection systems
       → State machine (Idle → Chase → Attack → Death)
       → Drop table system (items on death)
-      → Flash effects (white on hit, red on telegraph)
-      → Knockback system
+      → take_damage(amount, is_heavy) method for combat integration
+      → Must be in "enemies" group + collision Layer 9
       
 [ ] 2.2 - Enemy Types (6 variants) (10h)
       → Corrupted Rabbit (Forest, 30 HP, territorial, fast)
