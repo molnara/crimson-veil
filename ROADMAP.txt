@@ -1,6 +1,6 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.5.0 "Atmosphere & Audio" (13/13 tasks - 100%) ✅ COMPLETE
+CURRENT: v0.5.0 "Atmosphere & Audio" (13/13 tasks - 100%) ✅ RELEASED
 ========================================================================
 
 DESIGN DECISIONS (LOCKED):
@@ -11,6 +11,7 @@ DESIGN DECISIONS (LOCKED):
 ✓ Variation: Smart presets (none/subtle/moderate/strong per sound type)
 ✓ Balance: Optimized for cozy survival atmosphere
 ✓ Rumble: 5 presets with cooldowns (ready for settings integration)
+✓ Version display: Settings menu shows current version
 
 SPRINT v0.5.0 - COMPLETED TASKS:
 [X] 1.1 - Audio Manager Architecture
@@ -33,12 +34,16 @@ SPRINT v0.5.0 - COMPLETED TASKS:
       → Scales by intensity + master volume
       → Ready for settings UI integration
 
+POST-RELEASE ADDITIONS:
+[X] Version display in settings menu (bottom-right, auto-populated from project.godot)
+
 SPRINT ACHIEVEMENTS:
 ✓ Complete audio system (48 sounds: 40 SFX + 8 music)
 ✓ Smart variation system (4 presets across all sounds)
 ✓ Balanced volume relationships (cozy atmosphere)
 ✓ Comprehensive haptic feedback (13 rumble points)
 ✓ Professional out-of-box experience
+✓ Version tracking for releases
 
 NEXT SPRINT IDEAS:
 - Workbench system (proximity crafting)
@@ -86,4 +91,4 @@ Game: Low-poly survival (Valheim/Minecraft aesthetic)
 Tone: Cozy loneliness with meditative gathering
 Loop: Explore → Gather → Craft → Build → Unlock biomes → Repeat
 Audio: 48 sounds with intelligent variation + haptic feedback
-Polish: Professional feel with balanced audio/rumble
+Polish: Professional feel with balanced audio/rumble + version tracking
