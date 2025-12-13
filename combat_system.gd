@@ -88,7 +88,7 @@ func perform_attack():
 	if target:
 		# Deal damage
 		if target.has_method("take_damage"):
-			target.take_damage(current_weapon.light_damage, false)
+			target.take_damage(current_weapon.light_damage)  # Simplified - no is_heavy parameter
 		
 		# Audio feedback (Phase 3)
 		# if AudioManager:

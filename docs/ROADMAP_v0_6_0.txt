@@ -1,9 +1,10 @@
 CRIMSON VEIL - ROADMAP
 
-CURRENT: v0.6.0 "Hunter & Prey" (2/12 tasks - 17%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
+CURRENT: v0.6.0 "Hunter & Prey" (3/12 tasks - 25%) - SIMPLIFIED TO MINECRAFT-STYLE COMBAT
 ========================================================================================
 
 PHASE 1 STATUS: ✅ COMPLETE (Tasks 1.1-1.2 finished - simplified combat foundation ready)
+PHASE 2 STATUS: 🔄 IN PROGRESS (Task 2.1 complete - enemy base class tested and verified)
 
 DESIGN DECISIONS (LOCKED - UPDATED Dec 13, 2025):
 ✓ Combat Style: Simplified Minecraft-style Single-Shot Melee
@@ -57,15 +58,19 @@ SPRINT v0.6.0 - TASKS (SIMPLIFIED):
       → Removed for v0.6.0 to keep combat simple
       → May add in future update if needed
       
-[ ] 2.1 - Enemy Base Class (5h) 🎯 NEXT
-      → Enemy.gd extends CharacterBody3D
-      → Health, damage, movement, detection systems
-      → State machine (Idle → Chase → Attack → Death)
-      → Drop table system (items on death)
-      → take_damage(amount) method for combat integration (no is_heavy parameter)
-      → Must be in "enemies" group + collision Layer 9
+[✅] 2.1 - Enemy Base Class (5h) - COMPLETE
+      ✅ Enemy.gd extends CharacterBody3D (~270 lines)
+      ✅ Health, damage, movement, detection systems
+      ✅ State machine (Idle → Chase → Attack → Death)
+      ✅ Drop table system (items on death)
+      ✅ take_damage(amount) method for combat integration
+      ✅ Collision Layer 9 + "enemies" group
+      ✅ White flash damage feedback (0.1s)
+      ✅ Death fade animation (0.5s)
+      ✅ Tested and verified (7/9 core tests passed)
+      ✅ Fixed combat_system.gd compatibility (simplified take_damage call)
       
-[ ] 2.2 - Enemy Types (6 variants) (10h)
+[ ] 2.2 - Enemy Types (6 variants) (10h) 🎯 NEXT
       → Corrupted Rabbit (Forest, 30 HP, territorial, fast)
       → Forest Goblin (Forest, 50 HP, hostile, patrols, flees at 20% HP)
       → Desert Scorpion (Desert, 60 HP, ambush from sand)
