@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://test_desert_scorpion"]
+
+[ext_resource type="Script" path="res://test_desert_scorpion.gd" id="1"]
+
+[node name="TestDesertScorpion" type="Node3D"]
+script = ExtResource("1")

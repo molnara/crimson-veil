@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c4oprfadcsew6"]
+
+[ext_resource type="Script" uid="uid://d1hpokkflu6d1" path="res://test_ice_wolf.gd" id="1"]
+
+[node name="TestIceWolf" type="Node3D"]
+script = ExtResource("1")
