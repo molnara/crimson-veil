@@ -35,6 +35,13 @@ func _ready():
 		add_child(performance_hud)
 		print("Performance HUD loaded - Press F3 to toggle")
 	
+	# Add Biome Teleporter for testing (Ctrl+1-7 to teleport)
+	var biome_teleporter_script = load("res://biome_teleporter.gd")
+	if biome_teleporter_script:
+		var biome_teleporter = biome_teleporter_script.new()
+		add_child(biome_teleporter)
+		print("Biome Teleporter loaded - Press Ctrl+1-7 to teleport to biomes")
+	
 	# Connect the player to the chunk manager
 	chunk_manager.set_player(player)
 	
@@ -76,6 +83,8 @@ func _ready():
 	print("  Esc - Toggle mouse capture")
 	print("  F1 - Settings Menu")
 	print("  F3 - Performance HUD")
+	print("  Alt+1-7 - Teleport (1=Grass, 2=Forest, 3=Desert, 4=Snow, 5=Beach, 6=Mountain, 7=Ocean)")
+	print("  Alt+0 - Teleport to spawn")
 
 func apply_graphics_settings():
 	"""Apply graphics settings from SettingsManager on startup"""

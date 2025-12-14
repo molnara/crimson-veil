@@ -5,12 +5,105 @@
 
 ## TABLE OF CONTENTS
 
+0. [Phase 0 - Vegetation System Fix (Completed)](#0-phase-0---vegetation-system-fix-completed)
 1. [Weather System Architecture](#1-weather-system-architecture)
 2. [Biome Ground Cover System](#2-biome-ground-cover-system)
 3. [Wind System](#3-wind-system)
 4. [Particle Effects](#4-particle-effects)
 5. [Integration Points](#5-integration-points)
 6. [Performance Guidelines](#6-performance-guidelines)
+
+---
+
+## 0. PHASE 0 - VEGETATION SYSTEM FIX (COMPLETED)
+
+### 0.1 Modular Vegetation Architecture
+
+**File Structure:**
+```
+vegetation/
+├── vegetation_spawner.gd      # Main spawner + harvestable creation
+├── vegetation_types.gd        # VegType enum
+├── biome_spawn_rules.gd       # Biome configurations
+└── meshes/
+    ├── forest_meshes.gd       # create_mushroom_visual()
+    ├── plant_meshes.gd        # create_strawberry_visual()
+    └── ...
+```
+
+### 0.2 Harvestable Resource Creation
+
+**CRITICAL:** Harvestables require StaticBody3D with collision layer 2.
+
+```gdscript
+# vegetation_spawner.gd - Preloads
+const HarvestableMushroomClass = preload("res://harvestable_mushroom.gd")
+const HarvestableStrawberryClass = preload("res://harvestable_strawberry.gd")
+const ResourceNodeClass = preload("res://resource_node.gd")
+
+# Creation pattern
+func create_harvestable_strawberry(mesh_instance, bush_size):
+    # 1. Create harvestable node
+    var strawberry = HarvestableStrawberryClass.new()
+    strawberry.collision_layer = 2  # REQUIRED
+    strawberry.collision_mask = 0
+    
+    # 2. Create visual (calls mesh file)
+    var visual = MeshInstance3D.new()
+    strawberry.add_child(visual)
+    PlantMeshes.create_strawberry_visual(visual, size_string)
+    
+    # 3. Add collision shape
+    var collision = CollisionShape3D.new()
+    var shape = SphereShape3D.new()
+    shape.radius = 0.5
+    collision.shape = shape
+    strawberry.add_child(collision)
+    
+    # 4. Replace in scene, register for cleanup
+    parent.add_child(strawberry)
+    populated_chunks[_current_chunk].append(strawberry)
+```
+
+### 0.3 Strawberry Visual Improvements
+
+**Golden Angle Berry Distribution:**
+```gdscript
+var golden_angle = PI * (3.0 - sqrt(5.0))  # ~137.5°
+
+for i in range(berry_count):
+    var berry_angle = i * golden_angle + (randf() - 0.5) * 0.4
+    
+    # Stratified height (0.20 to 0.90 of bush)
+    var height_t = float(i + 1) / float(berry_count + 1)
+    var berry_height_t = 0.20 + height_t * 0.70
+    
+    # Match bush contour
+    var radius_mult = sin(berry_height_t * PI)
+    var base_radius = bush_radius * (0.5 + radius_mult * 0.5)
+    var berry_dist = base_radius * (1.03 + randf() * 0.04)  # 3-7% out
+```
+
+**Icosphere Berry Geometry (20 triangles):**
+```gdscript
+static func _add_berry_icosphere(surface_tool, center, radius, color):
+    var t = (1.0 + sqrt(5.0)) / 2.0  # Golden ratio
+    # 12 vertices, 20 faces
+    # ... (see plant_meshes.gd for full implementation)
+```
+
+### 0.4 Survival-Balanced Densities
+
+```gdscript
+# vegetation_spawner.gd
+@export var rock_density: float = 0.08       # Rare
+@export var mushroom_density: float = 0.04   # Rarest
+@export var strawberry_density: float = 0.06 # Rare
+
+@export var forest_mushroom_density: float = 0.10
+@export var grassland_strawberry_density: float = 0.12
+@export var mountain_rock_density: float = 0.15
+```
 
 ---
 

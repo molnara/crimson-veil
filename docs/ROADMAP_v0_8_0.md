@@ -3,6 +3,49 @@
 
 ---
 
+## PHASE 0: VEGETATION SYSTEM FIX - COMPLETED ✅
+
+**Unplanned but critical work to fix broken harvestables after modular refactor**
+
+### Completed Tasks
+
+[✅] **Harvestable Resource Fix**
+- Restored proper HarvestableStrawberry/HarvestableMushroom/ResourceNode creation
+- Added collision layer 2 and CollisionShape3D for raycast detection
+- Mesh files now create visuals only (*_visual functions)
+- Spawner creates full harvestable nodes with collision
+
+[✅] **Strawberry Bush Visual Improvements**
+- Restored rounded dome bush body (7 layers, 10 segments)
+- Upgraded berries from octahedron (8 tri) to icosphere (20 tri)
+- Implemented golden angle distribution for uniform berry placement
+- Fixed berry height range (0.20-0.90) and surface distance (3-7%)
+
+[✅] **Mushroom Visual Restoration**
+- Restored original stem + dome cap geometry
+- White stems with red/brown caps
+- Proper cluster generation (3-6 mushrooms)
+
+[✅] **Rock Harvestable Restoration**
+- Added create_rock(), create_small_rock(), create_snow_rock()
+- Uses ResourceNodeClass with proper collision
+
+[✅] **Survival-Balanced Spawning**
+| Resource | Old | New | Notes |
+|----------|-----|-----|-------|
+| Mushroom | 0.35 | 0.04 | Rarest |
+| Strawberry | 0.40 | 0.06 | Rare |
+| Rock | 0.25 | 0.08 | Uncommon |
+| Forest mushroom | 0.80 | 0.10 | |
+| Grassland strawberry | 0.90 | 0.12 | |
+
+**Files Modified:**
+- `vegetation/vegetation_spawner.gd`
+- `vegetation/meshes/forest_meshes.gd`
+- `vegetation/meshes/plant_meshes.gd`
+
+---
+
 ## SPRINT OVERVIEW
 
 **Theme:** Make the world feel alive through biome-specific environments and dynamic weather

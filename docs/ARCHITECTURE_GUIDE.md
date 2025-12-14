@@ -130,32 +130,77 @@ func update_view_distance(new_distance: int)
 
 ---
 
-### 3.2 Vegetation System
+### 3.2 Vegetation System (v0.7.1 Modular Refactor)
 
-**VegetationSpawner** (`vegetation_spawner.gd`)
+**VegetationSpawner** (`vegetation/vegetation_spawner.gd`)
 - Populates chunks with vegetation as player explores
 - Two-pass: large vegetation (trees/rocks) then ground cover (grass/flowers)
 - Uses MultiMesh for grass (1 draw call per chunk)
 - Cleans up when chunks unload via `chunk_unloaded` signal
+- **Creates harvestable nodes with proper collision**
 
+**Modular File Structure:**
+```
+vegetation/
+├── vegetation_spawner.gd      # Main spawner + harvestable creation
+├── vegetation_types.gd        # VegType enum
+├── biome_spawn_rules.gd       # Biome configurations
+└── meshes/
+    ├── forest_meshes.gd       # create_mushroom_visual()
+    ├── plant_meshes.gd        # create_strawberry_visual()
+    ├── rock_meshes.gd         # Decorative rocks
+    ├── tree_meshes.gd
+    ├── ground_cover_meshes.gd
+    ├── desert_meshes.gd
+    └── snow_meshes.gd
+```
+
+**Import Pattern:**
 ```gdscript
-# Key exports
-@export var grass_density: float = 0.35
-@export var spawn_radius: int = 2
-@export var ground_cover_samples_per_chunk: int = 25
+# vegetation_spawner.gd
+const VT = preload("res://vegetation/vegetation_types.gd")
+const ForestMeshes = preload("res://vegetation/meshes/forest_meshes.gd")
+const PlantMeshes = preload("res://vegetation/meshes/plant_meshes.gd")
 
-# Vegetation types
+# Harvestable classes (REQUIRED for proper harvesting)
+const HarvestableMushroomClass = preload("res://harvestable_mushroom.gd")
+const HarvestableStrawberryClass = preload("res://harvestable_strawberry.gd")
+const ResourceNodeClass = preload("res://resource_node.gd")
+```
+
+**Harvestable Creation Pattern:**
+```gdscript
+# Spawner creates full harvestable node
+func create_harvestable_strawberry(mesh_instance, bush_size):
+    var strawberry = HarvestableStrawberryClass.new()
+    strawberry.collision_layer = 2  # REQUIRED for raycast
+    
+    var visual = MeshInstance3D.new()
+    strawberry.add_child(visual)
+    PlantMeshes.create_strawberry_visual(visual, size)  # Visual only
+    
+    # Add CollisionShape3D, register for cleanup...
+```
+
+**Key Exports (Survival-Balanced):**
+```gdscript
+@export var rock_density: float = 0.08       # Rare
+@export var mushroom_density: float = 0.04   # Rarest
+@export var strawberry_density: float = 0.06 # Rare
+@export var forest_mushroom_density: float = 0.10
+@export var grassland_strawberry_density: float = 0.12
+```
+
+**Vegetation Types (VegType enum):**
+```gdscript
 enum VegType {
     TREE, PINE_TREE, PALM_TREE,
-    ROCK, SMALL_ROCK, BOULDER,
+    ROCK, SMALL_ROCK, BOULDER, SNOW_ROCK,
     GRASS_TUFT, GRASS_PATCH,
-    MUSHROOM_RED, MUSHROOM_BROWN,
-    STRAWBERRY_BUSH_SMALL/MEDIUM/LARGE,
-    WILDFLOWER_YELLOW/PURPLE/WHITE
+    MUSHROOM_RED, MUSHROOM_BROWN, MUSHROOM_CLUSTER,
+    STRAWBERRY_BUSH_SMALL, STRAWBERRY_BUSH_MEDIUM, STRAWBERRY_BUSH_LARGE,
+    WILDFLOWER_YELLOW, WILDFLOWER_PURPLE, WILDFLOWER_WHITE
 }
-
-# Key tracking
-var populated_chunks: Dictionary = {}  # chunk_pos -> Array of nodes
 ```
 
 **Tree Visuals** (separate files):
@@ -502,8 +547,21 @@ res://
 ├── # CORE SYSTEMS
 ├── chunk_manager.gd               # Terrain management
 ├── chunk.gd                       # Individual chunk
-├── vegetation_spawner.gd          # Vegetation system
 ├── critter_spawner.gd             # Critters AND enemies
+│
+├── # VEGETATION SYSTEM (v0.7.1 Modular)
+├── vegetation/
+│   ├── vegetation_spawner.gd      # Main spawner + harvestable creation
+│   ├── vegetation_types.gd        # VegType enum
+│   ├── biome_spawn_rules.gd       # Biome configurations
+│   └── meshes/
+│       ├── forest_meshes.gd       # Mushroom visuals
+│       ├── plant_meshes.gd        # Strawberry visuals
+│       ├── rock_meshes.gd         # Decorative rocks
+│       ├── tree_meshes.gd
+│       ├── ground_cover_meshes.gd
+│       ├── desert_meshes.gd
+│       └── snow_meshes.gd
 │
 ├── # PLAYER SYSTEMS
 ├── health_hunger_system.gd
@@ -780,5 +838,5 @@ var recipes = {
 
 ---
 
-*Document Version: 0.7.0*
-*Last Updated: Post-Performance Sprint*
+*Document Version: 0.8.0*
+*Last Updated: Vegetation System Fix*

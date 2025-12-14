@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://test_biome_veg"]
+
+[ext_resource type="Script" path="res://test_biome_vegetation.gd" id="1_test"]
+
+[node name="TestBiomeVegetation" type="Node3D"]
+script = ExtResource("1_test")

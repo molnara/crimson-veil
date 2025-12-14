@@ -268,6 +268,55 @@ Each biome has specific allowed ground cover types:
 | Mountain | Gray-green (0.5, 0.6, 0.4) |
 | Snow | Frosted (0.7, 0.8, 0.7) |
 
+### 4.7 Harvestable Resources System
+
+**Status:** ✅ v0.7.1 - Modular Refactor Complete
+
+The vegetation system uses a modular architecture for easier maintenance:
+
+**File Structure:**
+```
+vegetation/
+├── vegetation_spawner.gd      # Main spawner + harvestable creation
+├── vegetation_types.gd        # VegType enum, visibility settings
+├── biome_spawn_rules.gd       # Biome-specific configurations
+└── meshes/
+    ├── forest_meshes.gd       # Mushroom visuals
+    ├── plant_meshes.gd        # Strawberry visuals
+    ├── rock_meshes.gd         # Decorative rocks
+    └── ...                    # Other mesh creators
+```
+
+**Survival-Balanced Spawning:**
+
+Resources are intentionally rare to encourage exploration:
+
+| Resource | Base Density | Rarity | Rationale |
+|----------|--------------|--------|-----------|
+| Mushrooms | 0.04 | Rarest | Forest delicacy, valuable food |
+| Strawberries | 0.06 | Rare | Food source, requires searching |
+| Rocks | 0.08 | Uncommon | Building material |
+
+**Biome Multipliers:**
+| Biome | Mushrooms | Strawberries | Rocks |
+|-------|-----------|--------------|-------|
+| Forest | 0.10 | - | 0.08 |
+| Grassland | - | 0.12 | 0.10 |
+| Mountain | - | - | 0.15 |
+| Snow | - | - | 0.10 |
+| Desert | - | - | 0.12 |
+
+**Strawberry Bush Design:**
+- Bush body: Rounded dome (7 layers, 10 segments)
+- Berries: Icosphere geometry (20 triangles each)
+- Distribution: Golden angle (~137.5°) for uniform spread
+- Sizes: Small (1-2 drops), Medium (2-4 drops), Large (4-7 drops)
+
+**Mushroom Design:**
+- Stem: 8-sided cylinder, white color
+- Cap: 5-segment dome, red or brown
+- Clusters: 3-6 small mushrooms with random offsets
+
 ---
 
 ## 5. PLAYER SYSTEMS
@@ -812,6 +861,10 @@ Save/Load
 | Pixel art textures | Procedural | No external assets needed, consistent style | v0.1 |
 | Death = respawn only | No item loss | Less punishing during development | v0.6 |
 | 60 FPS target | Performance | Smooth gameplay priority | v0.7 |
+| Modular vegetation | Maintainability | Easier to add/modify vegetation types | v0.7.1 |
+| Rare harvestables | Survival feel | Resources feel valuable, encourage exploration | v0.7.1 |
+| Icosphere berries | Visual quality | Rounder berries (20 tri) look better than octahedra (8 tri) | v0.7.1 |
+| Golden angle distribution | Even spread | Prevents berry clumping on bushes | v0.7.1 |
 
 ---
 
@@ -828,6 +881,6 @@ Save/Load
 
 ---
 
-*Document Version: 0.7.0*
+*Document Version: 0.8.0*
 *Framework Version: 1.0*
-*Last Updated: Post-Performance Sprint*
+*Last Updated: Vegetation System Fix*

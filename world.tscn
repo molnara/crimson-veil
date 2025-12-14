@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
 [ext_resource type="PackedScene" uid="uid://7txokxk5534x" path="res://player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://c2gqjpxjajo8c" path="res://day_night_cycle.gd" id="4_aqk2v"]
-[ext_resource type="Script" uid="uid://5k6aextniq48" path="res://vegetation_spawner.gd" id="5_036b0"]
+[ext_resource type="Script" uid="uid://5k6aextniq48" path="res://vegetation/vegetation_spawner.gd" id="5_036b0"]
 [ext_resource type="Script" uid="uid://c33xs1ujes8lw" path="res://water_plane.gd" id="6_dwbse"]
 [ext_resource type="Script" uid="uid://wn1w2h0qttrp" path="res://critter_spawner.gd" id="7_critter"]
 [ext_resource type="Script" uid="uid://c6y6rkdqob7hv" path="res://audio_settings.gd" id="8_audio_settings"]
