@@ -2,7 +2,7 @@ extends Enemy
 class_name CorruptedRabbit
 
 ## Corrupted Rabbit - Fast, territorial forest enemy
-## Behavior: Only attacks if player within 5m, zigzag chase pattern, quick strikes
+## Behavior: Wanders/hops when idle, attacks if player within 5m, zigzag chase pattern
 ## Stats: 30 HP, 8 DMG, 4.5 speed, 1.5m attack range
 
 # Territorial behavior
@@ -13,6 +13,21 @@ var is_territorial_aggro: bool = false
 var zigzag_timer: float = 0.0
 const ZIGZAG_INTERVAL: float = 0.4  # Change direction every 0.4s
 var zigzag_direction: int = 1  # 1 = right, -1 = left
+
+# Idle wandering behavior (like critter rabbits)
+enum IdleState { WAITING, HOPPING }
+var idle_state: IdleState = IdleState.WAITING
+var idle_timer: float = 0.0
+var move_timer: float = 0.0
+var hop_timer: float = 0.0
+var wander_direction: Vector3 = Vector3.ZERO
+const IDLE_TIME_MIN: float = 1.5
+const IDLE_TIME_MAX: float = 4.0
+const MOVE_TIME_MIN: float = 1.0
+const MOVE_TIME_MAX: float = 3.0
+const HOP_INTERVAL: float = 0.5
+const HOP_STRENGTH: float = 3.0
+const WANDER_SPEED_MULTIPLIER: float = 0.5  # Slower when wandering vs chasing
 
 # Ambient sound timer (performance optimization)
 var ambient_sound_timer: float = 0.0
@@ -33,6 +48,9 @@ func _ready() -> void:
 		{"item": "corrupted_leather", "chance": 1.0},  # 100% chance
 		{"item": "dark_meat", "chance": 0.4}  # 40% chance
 	]
+	
+	# Initialize idle wandering timer
+	idle_timer = randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
 	
 	# Call parent _ready to initialize
 	super._ready()
@@ -163,7 +181,7 @@ func create_enemy_visual() -> void:
 		collision_shape.shape = shape
 
 func update_ai(delta: float) -> void:
-	"""Override AI for territorial behavior and zigzag chase"""
+	"""Override AI for territorial behavior, idle wandering, and zigzag chase"""
 	if not player or current_state == State.DEATH:
 		return
 	
@@ -178,10 +196,14 @@ func update_ai(delta: float) -> void:
 	
 	match current_state:
 		State.IDLE:
-			# Territorial: Only aggro if player within 5m
+			# Territorial: Aggro if player within 5m
 			if distance < TERRITORIAL_RANGE:
 				current_state = State.CHASE
 				is_territorial_aggro = true
+				idle_state = IdleState.WAITING  # Reset idle state
+			else:
+				# Wander around like critter rabbits
+				update_idle_wandering(delta)
 		
 		State.CHASE:
 			# Check if in attack range
@@ -193,6 +215,7 @@ func update_ai(delta: float) -> void:
 				current_state = State.IDLE
 				is_territorial_aggro = false
 				velocity = Vector3.ZERO  # STOP MOVING when losing aggro
+				idle_timer = randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)  # Start idle timer
 			else:
 				# Zigzag chase pattern
 				chase_zigzag(delta)
@@ -205,6 +228,48 @@ func update_ai(delta: float) -> void:
 				# Attempt attack if not on cooldown
 				if attack_cooldown <= 0 and not is_telegraphing:
 					start_attack_telegraph()
+
+func update_idle_wandering(delta: float) -> void:
+	"""Idle behavior: wait, then hop around randomly (like critter rabbits)"""
+	match idle_state:
+		IdleState.WAITING:
+			# Waiting/idle - stand still
+			idle_timer -= delta
+			velocity.x = 0
+			velocity.z = 0
+			
+			if idle_timer <= 0:
+				# Start moving in random direction
+				idle_state = IdleState.HOPPING
+				wander_direction = Vector3(randf() - 0.5, 0, randf() - 0.5).normalized()
+				move_timer = randf_range(MOVE_TIME_MIN, MOVE_TIME_MAX)
+				hop_timer = 0.0
+		
+		IdleState.HOPPING:
+			# Hopping around
+			move_timer -= delta
+			hop_timer += delta
+			
+			# Hop every 0.5 seconds
+			if hop_timer >= HOP_INTERVAL:
+				hop_timer = 0.0
+				velocity.y = HOP_STRENGTH
+			
+			# Move in wander direction (slower than chase speed)
+			var wander_speed = move_speed * WANDER_SPEED_MULTIPLIER
+			velocity.x = wander_direction.x * wander_speed
+			velocity.z = wander_direction.z * wander_speed
+			
+			# Face movement direction
+			if wander_direction.length() > 0.1:
+				var target_rotation = atan2(wander_direction.x, wander_direction.z)
+				rotation.y = lerp_angle(rotation.y, target_rotation + PI, delta * 5.0)  # +PI for visual offset
+			
+			if move_timer <= 0:
+				# Stop and wait
+				idle_state = IdleState.WAITING
+				idle_timer = randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
+				velocity = Vector3.ZERO
 
 func chase_zigzag(delta: float) -> void:
 	"""Fast zigzag chase pattern toward player"""
@@ -237,9 +302,11 @@ func chase_zigzag(delta: float) -> void:
 func on_attack_telegraph() -> void:
 	"""Visual feedback during attack telegraph"""
 	AudioManager.play_sound_3d("rabbit_attack", global_position, "sfx", false, false)
-	pass
+
+func on_hit() -> void:
+	"""Play hit sound effect"""
+	AudioManager.play_sound_3d("rabbit_hit", global_position, "sfx", false, false)
 
 func on_death() -> void:
 	"""Play death sound effect"""
 	AudioManager.play_sound_3d("rabbit_death", global_position, "sfx", false, false)
-	pass

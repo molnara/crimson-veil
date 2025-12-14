@@ -273,8 +273,7 @@ func cancel_harvest():
 
 func complete_harvest():
 	"""Complete the harvest and drop items"""
-	if not is_being_harvested:
-		return
+	print("[HarvestableResource] complete_harvest() called for: ", resource_name)
 	
 	# Calculate drops
 	var drop_count = randi_range(drop_amount_min, drop_amount_max)
@@ -283,8 +282,28 @@ func complete_harvest():
 		"amount": drop_count
 	}
 	
-	print("Harvested ", resource_name, " - Got ", drop_count, "x ", drop_item)
+	print("[HarvestableResource] Harvested ", resource_name, " - Got ", drop_count, "x ", drop_item)
 	
+	# Add directly to player's inventory
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		print("[HarvestableResource] Found player: ", player.name)
+		# Try direct property access (player.inventory)
+		var inv = player.get("inventory")
+		print("[HarvestableResource] player.get('inventory') = ", inv)
+		if inv != null and inv.has_method("add_item"):
+			inv.add_item(drop_item, drop_count)
+			print("[HarvestableResource] ✓ Added to inventory: ", drop_count, "x ", drop_item)
+			
+			# Play pickup sound and rumble
+			AudioManager.play_sound("item_pickup", "ui", true, false)
+			RumbleManager.play_item_pickup()
+		else:
+			print("[HarvestableResource] ✗ ERROR: Could not access player.inventory or no add_item method")
+	else:
+		print("[HarvestableResource] ✗ ERROR: Could not find player in 'player' group!")
+	
+	# Emit signal for any listeners
 	emit_signal("harvested", drops)
 	
 	# AUDIO: Play resource break sound
@@ -308,6 +327,56 @@ func take_damage(amount: float):
 	
 	if current_health <= 0:
 		complete_harvest()
+
+func apply_harvest_hit(hit_amount: float) -> float:
+	"""Apply a single harvest hit (Minecraft-style swing harvesting)
+	
+	Called by CombatSystem when player swings tool at resource.
+	Each hit progresses the harvest by hit_amount.
+	
+	Args:
+		hit_amount: Progress per hit (0.0 to 1.0, default 0.25 = 4 hits to harvest)
+	
+	Returns:
+		Current harvest progress (0.0 to 1.0)
+	"""
+	# Start harvesting if not already
+	if not is_being_harvested:
+		is_being_harvested = true
+		harvest_progress = 0.0
+	
+	# Apply hit progress
+	harvest_progress += hit_amount
+	harvest_progress = clamp(harvest_progress, 0.0, 1.0)
+	
+	# Visual feedback - shake on hit
+	apply_hit_visual_feedback()
+	
+	# Check if fully harvested
+	if harvest_progress >= 1.0:
+		complete_harvest()
+	
+	return harvest_progress
+
+func apply_hit_visual_feedback():
+	"""Apply visual feedback when hit (shake effect)"""
+	# Quick shake animation
+	var shake_amount = 0.1
+	var random_offset = Vector3(
+		randf_range(-shake_amount, shake_amount),
+		0,
+		randf_range(-shake_amount, shake_amount)
+	)
+	rotation = original_rotation + random_offset
+	
+	# Scale pulse
+	scale = Vector3.ONE * 0.95
+	
+	# Create a tween to reset
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "rotation", original_rotation, 0.15)
+	tween.tween_property(self, "scale", Vector3.ONE, 0.15)
 
 func get_info() -> Dictionary:
 	"""Return info about this resource for UI display"""

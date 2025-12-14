@@ -182,16 +182,10 @@ func _input(event):
 		# If nothing to close and B button pressed, ignore (don't dodge)
 		if event.is_action_pressed("combat_dodge"):
 			return  # B button consumed by menu close, don't process as dodge
-			return
 		
-		# If nothing is open and mouse is captured, open settings menu
+		# ESC with nothing open - just release mouse (don't open settings)
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-			if settings_menu:
-				settings_menu.open_settings()
-				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-			else:
-				# Fallback to old behavior if settings menu not loaded
-				Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
@@ -246,7 +240,15 @@ func _input(event):
 		is_flying = !is_flying
 		print("Fly mode: ", "ON" if is_flying else "OFF")
 	
-	# Cycle tools with T key or D-pad Left/Right
+	# LB - cycle backwards (MUST be checked BEFORE cycle_tool action which may have LB mapped)
+	if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_LEFT_SHOULDER:
+		if tool_system:
+			tool_system.cycle_tool_reverse()
+			AudioManager.play_sound("tool_switch", "ui", false, false)
+			RumbleManager.play_ui_click()
+		return  # Don't process further - prevents cycle_tool from also triggering
+	
+	# Cycle tools with T key or D-pad Left/Right (RB may also be mapped here)
 	if event.is_action_pressed("cycle_tool"):
 		if tool_system:
 			tool_system.cycle_tool()
@@ -267,13 +269,11 @@ func _input(event):
 		if combat_system:
 			combat_system.perform_attack()
 	
-	# Weapon switching with RB (same as tool cycling for now)
-	if event.is_action_pressed("cycle_weapon"):
-		if combat_system:
-			combat_system.cycle_weapon()
-			# Play tool switch sound
+	# Weapon/Tool switching with RB (forward)
+	if event.is_action_pressed("cycle_weapon"):  # RB
+		if tool_system:
+			tool_system.cycle_tool()
 			AudioManager.play_sound("tool_switch", "ui", false, false)
-			# RUMBLE: Weapon switch feedback
 			RumbleManager.play_ui_click()
 	
 	# Toggle building mode with B key or D-pad Up
@@ -293,20 +293,19 @@ func _input(event):
 			var next_index = (current_index + 1) % types.size()
 			building_system.set_block_type(types[next_index])
 	
-	# Controller: RT (interact/harvest) and LT (cancel/remove)
+	# Controller: RT (interact/harvest/combat) and LT (cancel/remove)
 	if event.is_action_pressed("controller_interact"):  # RT
 		# Check placement cooldown first
 		if placement_cooldown_timer > 0:
 			return  # Still in cooldown, ignore input
 		
-		# Building mode takes priority
+		# Building mode takes priority - place blocks
 		if building_system and building_system.preview_mode:
 			if building_system.place_block():
 				# Block placed successfully - start cooldown
 				placement_cooldown_timer = PLACEMENT_COOLDOWN
-		# Otherwise try harvesting
-		elif harvesting_system and harvesting_system.is_looking_at_resource():
-			harvesting_system.start_harvest()
+		# Otherwise: combat_attack handles both enemies AND resources now
+		# (handled above in combat input section)
 	
 	if event.is_action_pressed("controller_cancel"):  # LT
 		# Check placement cooldown first (also applies to removal)
@@ -324,15 +323,14 @@ func _input(event):
 			harvesting_system.cancel_harvest()
 			print("Harvest manually cancelled")
 	
-	# Mouse button handling (keep existing)
+	# Mouse button handling
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 			# Building mode takes priority
 			if building_system and building_system.preview_mode:
 				building_system.place_block()
-			# Otherwise try harvesting
-			elif harvesting_system and harvesting_system.is_looking_at_resource():
-				harvesting_system.start_harvest()
+			# Otherwise: combat_attack handles both enemies AND resources
+			# (handled above in combat input section)
 		
 		# Right-click: Remove block in building mode, or cancel harvest
 		elif event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
@@ -859,6 +857,14 @@ func take_damage(amount: int) -> void:
 			amount,
 			health_hunger_system.current_health
 		])
+		
+		# Rumble feedback for taking damage
+		if RumbleManager:
+			RumbleManager.play("player_hit")
+		
+		# Camera shake on damage
+		if combat_system:
+			combat_system.shake_camera(0.6, 0.15)
 
 func find_ground_position(start_pos: Vector3) -> Vector3:
 	"""Find ground level below a given position using raycast"""

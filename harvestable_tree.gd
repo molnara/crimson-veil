@@ -176,12 +176,32 @@ func complete_harvest():
 	if not is_being_harvested:
 		return
 	
+	print("[HarvestableTree] complete_harvest() called for: ", resource_name)
+	
 	# Calculate drops (same as parent, but don't queue_free yet)
 	var drop_count = randi_range(drop_amount_min, drop_amount_max)
 	var drops = {
 		"item": drop_item,
 		"amount": drop_count
 	}
+	
+	print("[HarvestableTree] Harvested ", resource_name, " - Got ", drop_count, "x ", drop_item)
+	
+	# Add directly to player's inventory
+	var player = get_tree().get_first_node_in_group("player")
+	if player:
+		var inv = player.get("inventory")
+		if inv != null and inv.has_method("add_item"):
+			inv.add_item(drop_item, drop_count)
+			print("[HarvestableTree] ✓ Added to inventory: ", drop_count, "x ", drop_item)
+			
+			# Play pickup sound and rumble
+			AudioManager.play_sound("item_pickup", "ui", true, false)
+			RumbleManager.play_item_pickup()
+		else:
+			print("[HarvestableTree] ✗ ERROR: Could not access player.inventory")
+	else:
+		print("[HarvestableTree] ✗ ERROR: Could not find player!")
 	
 	emit_signal("harvested", drops)
 	

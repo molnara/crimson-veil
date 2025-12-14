@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3 uid="uid://7txokxk5534x"]
+[gd_scene load_steps=6 format=3 uid="uid://7txokxk5534x"]
 
 [ext_resource type="Script" uid="uid://daqqh63op6cvn" path="res://player.gd" id="1"]
 [ext_resource type="Script" uid="uid://q6dkesngnfg" path="res://health_hunger_system.gd" id="2"]
 [ext_resource type="Script" uid="uid://v7f5s5wnjcyu" path="res://combat_system.gd" id="3_i3pqv"]
+[ext_resource type="PackedScene" path="res://first_person_weapon.tscn" id="4_fpweapon"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
 
@@ -23,10 +24,10 @@ margin = 0.2
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D"]
 
+[node name="FirstPersonWeapon" parent="SpringArm3D/Camera3D" instance=ExtResource("4_fpweapon")]
+
 [node name="HealthHungerSystem" type="Node" parent="."]
 script = ExtResource("2")
 
 [node name="CombatSystem" type="Node3D" parent="."]
 script = ExtResource("3_i3pqv")
-charge_delay = 1.5
-charge_threshold = 2.0

@@ -242,6 +242,10 @@ func on_attack_telegraph() -> void:
 	# Play wraith attack whisper sound
 	AudioManager.play_sound_3d("wraith_attack", global_position, "sfx", false, false)
 
+func on_hit() -> void:
+	"""Play hit sound effect"""
+	AudioManager.play_sound_3d("wraith_hit", global_position, "sfx", false, false)
+
 func on_attack_execute() -> void:
 	"""Execute attack and reset visuals"""
 	# Reset emission after attack

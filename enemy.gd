@@ -248,6 +248,10 @@ func die() -> void:
 	# Play death effect
 	on_death()
 	
+	# Rumble feedback for enemy kill
+	if RumbleManager:
+		RumbleManager.play("enemy_death")
+	
 	# Fade out and remove
 	fade_out()
 

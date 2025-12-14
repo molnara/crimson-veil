@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://first_person_weapon"]
+
+[ext_resource type="Script" path="res://first_person_weapon.gd" id="1"]
+
+[node name="FirstPersonWeapon" type="Node3D"]
+script = ExtResource("1")
