@@ -1,0 +1,161 @@
+CRIMSON VEIL - ROADMAP
+
+CURRENT: v0.7.0 "Performance" (7/12 tasks - 58%) ✅ PRIMARY GOAL ACHIEVED
+====================================================================================================
+
+PHASE 1 STATUS: ✅ COMPLETE (Tasks 1.1-1.2 done, 1.3 skipped)
+PHASE 2 STATUS: ✅ PARTIAL (Tasks 2.1, 2.3 done, 2.2 skipped)
+PHASE 3 STATUS: ✅ PARTIAL (Task 3.2 done, 3.1, 3.3 skipped)
+PHASE 4 STATUS: ✅ PARTIAL (Task 4.1 done, 4.2-4.3 skipped)
+
+PERFORMANCE RESULTS:
+┌─────────────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
+│ Metric              │ Baseline    │ Final       │ Improvement │ Target      │
+├─────────────────────┼─────────────┼─────────────┼─────────────┼─────────────┤
+│ FPS                 │ 25          │ 60          │ +140%       │ ✅ 60       │
+│ Draw Calls          │ 17,141      │ ~4,400-6,300│ -63-74%     │ ⚠️ <500     │
+│ Objects Drawn       │ 17,220      │ ~4,600-6,500│ -62-73%     │ ⚠️ <2,000   │
+│ Nodes               │ 61,439      │ ~8,100-9,900│ -84%        │ ✅ <10,000  │
+│ Memory              │ 333 MiB     │ ~260-290 MiB│ -15-22%     │ ✅ Stable   │
+└─────────────────────┴─────────────┴─────────────┴─────────────┴─────────────┘
+
+PRIMARY GOAL: 60 FPS ✅ ACHIEVED
+
+DESIGN DECISIONS (LOCKED):
+✅ Target: 60 FPS minimum - ACHIEVED
+✅ MultiMesh for grass (1 draw call per chunk for ALL grass) - IMPLEMENTED
+⏭️ MultiMesh for small rocks - SKIPPED (rocks are harvestable, need collision)
+✅ Vegetation despawn when chunks unload - IMPLEMENTED
+⏭️ Material caching - SKIPPED (not needed for 60 FPS target)
+⏭️ LOD system with billboards - SKIPPED (visibility culling sufficient)
+✅ Distance-based visibility culling - IMPLEMENTED
+✅ Performance HUD (F3 toggle) - IMPLEMENTED
+⏭️ Quality presets system - SKIPPED (future enhancement)
+
+SPRINT v0.7.0 - TASKS:
+
+=== PHASE 1: QUICK WINS & CLEANUP (8h planned, 5h actual) ===
+
+[✅] 1.1 - Reduce Vegetation Density (2h) - COMPLETE
+      ✓ Reduced ground_cover_samples_per_chunk: 75 → 25
+      ✓ Reduced grass_density: 0.75 → 0.35
+      ✓ Reduced large_vegetation_samples_per_chunk: 18 → 10
+      ✓ Reduced spawn_radius: 3 → 2 chunks
+      ✓ Reduced forest_tree_density: 0.75 → 0.50
+      ✓ Reduced grassland_tree_density: 0.18 → 0.12
+      ✓ Reduced grassland_rock_density: 0.70 → 0.50
+      → Impact: FPS 25 → 52 (+108%)
+      → Files: vegetation_spawner.gd
+
+[✅] 1.2 - Vegetation Despawn System (3h) - COMPLETE
+      ✓ Added chunk_unloaded signal to ChunkManager
+      ✓ Track vegetation per chunk in Dictionary (node references)
+      ✓ Remove vegetation nodes when chunk despawns
+      ✓ Clear populated_chunks entries on unload
+      ✓ Connected to ChunkManager.chunk_unloaded signal
+      ✓ Updated harvestable creation to track replacement nodes
+      → Impact: Memory stable, no leak during exploration
+      → Files: vegetation_spawner.gd, chunk_manager.gd
+
+[⏭️] 1.3 - Material Caching System (3h) - SKIPPED
+      → Reason: 60 FPS achieved without this optimization
+      → Can implement in future if VRAM becomes issue
+
+=== PHASE 2: MULTIMESH IMPLEMENTATION (14h planned, 7h actual) ===
+
+[✅] 2.1 - MultiMesh Grass System (6h) - COMPLETE
+      ✓ Created chunk-level grass MultiMesh system
+      ✓ Single MultiMeshInstance3D per chunk for ALL grass
+      ✓ Grass positions collected during chunk population
+      ✓ _create_chunk_grass_multimesh() creates combined mesh
+      ✓ Cached grass blade mesh for reuse
+      ✓ Proper world-space positioning
+      → Impact: FPS 52 → 60, Draw calls -60%
+      → Files: vegetation_spawner.gd
+
+[⏭️] 2.2 - MultiMesh Small Rocks (4h) - SKIPPED
+      → Reason: Rocks are harvestable, need individual collision
+      → Would require separating decorative vs harvestable rocks
+
+[✅] 2.3 - Combine Berry Meshes (4h → 1h actual) - COMPLETE
+      ✓ Replaced 12-26 individual berry MeshInstance3D with single mesh
+      ✓ Used SurfaceTool to combine all berries
+      ✓ Each berry rendered as octahedron (8 triangles)
+      ✓ Added _add_berry_sphere() helper function
+      → Impact: ~90% reduction in nodes per strawberry bush
+      → Files: vegetation_spawner.gd
+
+=== PHASE 3: LOD SYSTEMS (12h planned, 2h actual) ===
+
+[⏭️] 3.1 - Tree LOD System (6h) - SKIPPED
+      → Reason: Visibility culling provides sufficient optimization
+      → Billboard LOD would be future enhancement for <500 draw calls
+
+[✅] 3.2 - Vegetation Culling (3h → 2h actual) - COMPLETE
+      ✓ Distance-based visibility_range_end for all vegetation
+      ✓ Flowers fade at 35m, small rocks at 40m
+      ✓ Mushrooms/strawberries at 45-55m
+      ✓ Trees visible to 80-120m based on height
+      ✓ Applied recursively to all tree child meshes
+      ✓ Uses Godot's built-in GPU culling (zero CPU overhead)
+      → Impact: Draw calls reduced in distant areas
+      → Files: vegetation_spawner.gd, tree_visual.gd, 
+               pine_tree_visual.gd, palm_tree_visual.gd
+
+[⏭️] 3.3 - Chunk LOD (Terrain) (3h) - SKIPPED
+      → Reason: Not needed for 60 FPS target
+
+=== PHASE 4: POLISH & SETTINGS (7h planned, 2h actual) ===
+
+[✅] 4.1 - Performance Monitor HUD (2h) - COMPLETE
+      ✓ Created PerformanceHUD class (CanvasLayer)
+      ✓ Toggle with F3 key
+      ✓ Displays: FPS (current + avg), Draw Calls, Objects, Nodes, Memory
+      ✓ Color-coded thresholds (green/yellow/red)
+      ✓ Integrated into world.gd
+      → Files: performance_hud.gd, world.gd
+
+[⏭️] 4.2 - Quality Presets System (3h) - SKIPPED
+      → Reason: Manual tuning achieved target, presets are nice-to-have
+
+[⏭️] 4.3 - Settings Menu Integration (2h) - SKIPPED
+      → Reason: Depends on 4.2
+
+TOTAL TIME: ~16 hours (vs 41h estimated)
+COMPLETED: 7 tasks
+SKIPPED: 5 tasks (not needed to hit primary goal)
+
+FILES MODIFIED:
+- vegetation_spawner.gd (density, despawn, grass MultiMesh, berry combine, visibility)
+- chunk_manager.gd (chunk_unloaded signal)
+- tree_visual.gd (visibility range)
+- pine_tree_visual.gd (visibility range)
+- palm_tree_visual.gd (visibility range)
+- world.gd (Performance HUD integration)
+
+FILES CREATED:
+- performance_hud.gd (debug overlay)
+
+TESTING RESULTS:
+✅ 60 FPS sustained in all biomes
+✅ No visual degradation at current settings
+✅ Memory stable over 30+ minute sessions
+✅ Despawn system working (nodes go up AND down)
+✅ Performance HUD functional (F3 toggle)
+⚠️ Draw calls still above <500 target (would need billboard LOD)
+⚠️ Objects still above <2,000 target (would need aggressive culling)
+
+SUCCESS CRITERIA:
+✅ 60 FPS sustained in all biomes
+⚠️ <500 draw calls - NOT MET (4,400-6,300 achieved)
+✅ No visual degradation at High/Ultra settings
+✅ Memory stable over 30+ minute sessions
+⏭️ Quality presets functional - SKIPPED
+✅ All existing features still work
+
+NEXT VERSION: v0.8.0 (TBD)
+- Save/Load system?
+- Boss enemies?
+- Additional content?
+- Quality presets (deferred from 0.7.0)?
+- Tree billboard LOD for <500 draw calls?

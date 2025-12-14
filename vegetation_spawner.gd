@@ -53,9 +53,9 @@ var player: Node3D
 @export_range(0.0, 1.0) var rock_density: float = 0.30  ## Common but not overwhelming
 @export_range(0.0, 1.0) var mushroom_density: float = 0.18  ## Rare forest finds
 @export_range(0.0, 1.0) var strawberry_density: float = 0.25  ## Regular food source
-@export_range(0.0, 1.0) var grass_density: float = 0.75  ## Lush but performant
+@export_range(0.0, 1.0) var grass_density: float = 0.35  ## Reduced for performance (was 0.75)
 @export_range(0.0, 1.0) var flower_density: float = 0.20  ## Colorful accents
-@export_range(1, 5) var spawn_radius: int = 3  ## Balanced view distance
+@export_range(1, 5) var spawn_radius: int = 2  ## Reduced for performance (was 3)
 
 @export_group("Tree Size Variation")
 @export_range(2.0, 15.0) var tree_height_min: float = 4.0  ## Valheim scale
@@ -88,18 +88,18 @@ var player: Node3D
 @export_range(0.0, 1.0) var branch_asymmetry_amount: float = 0.35  
 
 @export_group("Ground Cover Settings")
-@export_range(10, 150) var ground_cover_samples_per_chunk: int = 75  ## Valheim density
-@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 18  ## More resources
+@export_range(10, 150) var ground_cover_samples_per_chunk: int = 25  ## Reduced for performance (was 75)
+@export_range(5, 50) var large_vegetation_samples_per_chunk: int = 10  ## Reduced for performance (was 18)
 
 @export_group("Forest Biome Configuration")
-@export_range(0.0, 1.0) var forest_tree_density: float = 0.75  ## Dense, dark forests
+@export_range(0.0, 1.0) var forest_tree_density: float = 0.50  ## Reduced for performance (was 0.75)
 @export_range(0.0, 1.0) var forest_mushroom_density: float = 0.55  ## Abundant mushrooms
 @export_range(0.0, 1.0) var forest_rock_density: float = 0.25  
 
 @export_group("Grassland Biome Configuration")
-@export_range(0.0, 1.0) var grassland_tree_density: float = 0.18  ## Sparse, open
+@export_range(0.0, 1.0) var grassland_tree_density: float = 0.12  ## Reduced for performance (was 0.18)
 @export_range(0.0, 1.0) var grassland_strawberry_density: float = 0.60  ## Berry fields
-@export_range(0.0, 1.0) var grassland_rock_density: float = 0.70  ## Common rocks
+@export_range(0.0, 1.0) var grassland_rock_density: float = 0.50  ## Reduced (was 0.70)
 
 @export_group("Mountain Biome Configuration")
 @export_range(0.0, 1.0) var mountain_pine_density: float = 0.20  ## Sparse treeline
@@ -118,9 +118,11 @@ var player: Node3D
 @export_range(0.0, 1.0) var beach_palm_density: float = 0.30  ## Tropical feel
 @export_range(0.0, 1.0) var beach_rock_density: float = 0.45
 
-# Track which chunks have vegetation
-var populated_chunks: Dictionary = {}
+# Track which chunks have vegetation - now stores arrays of node references for cleanup
+var populated_chunks: Dictionary = {}  # chunk_pos -> Array of vegetation nodes
 var initialized: bool = false
+var _current_chunk: Vector2i = Vector2i.ZERO  # Currently populating chunk (for node tracking)
+var _chunk_grass_positions: Array = []  # Temporary: grass positions for current chunk MultiMesh
 
 # Tree shape types for visual variety
 enum TreeShape {
@@ -170,6 +172,11 @@ func initialize(chunk_mgr: ChunkManager):
 	chunk_manager = chunk_mgr
 	noise = chunk_manager.noise
 	player = chunk_manager.player
+	
+	# Connect to chunk unload signal for vegetation cleanup
+	if not chunk_manager.chunk_unloaded.is_connected(_on_chunk_unloaded):
+		chunk_manager.chunk_unloaded.connect(_on_chunk_unloaded)
+	
 	initialized = true
 	print("VegetationSpawner initialized with player and chunk manager")
 
@@ -188,6 +195,27 @@ func _process(_delta):
 			if not populated_chunks.has(chunk_pos) and chunk_manager.chunks.has(chunk_pos):
 				populate_chunk(chunk_pos)
 
+func _on_chunk_unloaded(chunk_pos: Vector2i):
+	"""Clean up vegetation when a chunk is unloaded
+	
+	PERFORMANCE: Prevents populated_chunks from growing forever during exploration.
+	Frees all vegetation nodes associated with the unloaded chunk.
+	"""
+	if not populated_chunks.has(chunk_pos):
+		return
+	
+	var vegetation_nodes = populated_chunks[chunk_pos]
+	var freed_count = 0
+	
+	for node in vegetation_nodes:
+		if is_instance_valid(node):
+			node.queue_free()
+			freed_count += 1
+	
+	populated_chunks.erase(chunk_pos)
+	# Debug output (can be removed in production)
+	# print("Cleaned up ", freed_count, " vegetation nodes from chunk ", chunk_pos)
+
 func populate_chunk(chunk_pos: Vector2i):
 	"""Populate a chunk with vegetation using two-pass system
 	
@@ -199,15 +227,23 @@ func populate_chunk(chunk_pos: Vector2i):
 	
 	Pass 2: Ground cover (grass, flowers)
 	  - Dense samples (60 per chunk default)
-	  - Uses MultiMesh for performance (100+ grass blades per tuft)
+	  - Grass positions collected for chunk-level MultiMesh (1 draw call)
 	  - Clustered using cluster_noise for natural patches
 	
+	Pass 3: Create chunk grass MultiMesh
+	  - All grass for entire chunk in ONE MultiMeshInstance3D
+	  - Massive draw call reduction
+	
 	PERFORMANCE: This runs once per chunk, cached in populated_chunks dictionary
+	Vegetation nodes are tracked for cleanup when chunk unloads.
 	"""
 	if populated_chunks.has(chunk_pos):
 		return
 	
-	populated_chunks[chunk_pos] = true
+	# Initialize array to track vegetation nodes for this chunk
+	populated_chunks[chunk_pos] = []
+	_current_chunk = chunk_pos  # Track for node registration
+	_chunk_grass_positions = []  # Reset grass collection for this chunk
 	
 	var chunk_size = chunk_manager.chunk_size
 	var world_offset = Vector2(chunk_pos.x * chunk_size, chunk_pos.y * chunk_size)
@@ -240,7 +276,7 @@ func populate_chunk(chunk_pos: Vector2i):
 		spawn_large_vegetation_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z)
 	
 	# PASS 2: Dense ground cover (grass, flowers)
-	# PERFORMANCE: Higher sample count but lightweight meshes (no collision, MultiMesh)
+	# PERFORMANCE: Grass positions collected for chunk MultiMesh, flowers spawn individually
 	var ground_cover_samples = ground_cover_samples_per_chunk
 	
 	for i in range(ground_cover_samples):
@@ -270,6 +306,10 @@ func populate_chunk(chunk_pos: Vector2i):
 			continue
 		
 		spawn_ground_cover_for_biome(biome, Vector3(world_x, height, world_z), world_x, world_z, cluster_value)
+	
+	# PASS 3: Create chunk-level grass MultiMesh from collected positions
+	if _chunk_grass_positions.size() > 0:
+		_create_chunk_grass_multimesh(chunk_pos)
 
 func get_terrain_height_with_raycast(world_x: float, world_z: float, base_noise: float, biome: Chunk.Biome) -> float:
 	"""Get terrain height with raycast validation - uses calculated height efficiently
@@ -451,7 +491,12 @@ func spawn_large_vegetation_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _w
 			create_vegetation_mesh(cluster_type, cluster_pos)
 
 func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world_x: float, _world_z: float, cluster_value: float):
-	"""Spawn grass, flowers, and ground cover - dense and varied"""
+	"""Spawn grass, flowers, and ground cover - dense and varied
+	
+	OPTIMIZATION: Grass types (GRASS_TUFT, GRASS_PATCH) are collected into 
+	_chunk_grass_positions for chunk-level MultiMesh instead of spawning individually.
+	Other ground cover (flowers, mushrooms) still spawn as individual meshes.
+	"""
 	var veg_type: VegType
 	var rand = randf()
 	
@@ -466,14 +511,11 @@ func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world
 					veg_type = VegType.WILDFLOWER_PURPLE
 				else:
 					veg_type = VegType.WILDFLOWER_WHITE
-			# Grass (check density)
+			# Grass (check density) - COLLECT FOR MULTIMESH
 			elif rand < grass_density:
-				if cluster_value > 0.3:
-					# Dense grass in good cluster areas
-					veg_type = VegType.GRASS_PATCH
-				else:
-					# Regular grass
-					veg_type = VegType.GRASS_TUFT
+				var is_dense = cluster_value > 0.3
+				_chunk_grass_positions.append({"pos": spawn_pos, "dense": is_dense})
+				return  # Don't spawn individually
 			else:
 				return
 		
@@ -485,20 +527,19 @@ func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world
 					veg_type = VegType.MUSHROOM_BROWN
 				else:
 					veg_type = VegType.MUSHROOM_CLUSTER
-			# Grass (less dense in forest, check grass_density)
+			# Grass (less dense in forest, check grass_density) - COLLECT FOR MULTIMESH
 			elif rand < grass_density * 0.5:
-				if cluster_value > 0.2:
-					# Some grass patches in clearings
-					veg_type = VegType.GRASS_PATCH
-				else:
-					veg_type = VegType.GRASS_TUFT
+				var is_dense = cluster_value > 0.2
+				_chunk_grass_positions.append({"pos": spawn_pos, "dense": is_dense})
+				return  # Don't spawn individually
 			else:
 				return
 		
 		Chunk.Biome.BEACH:
-			# Sparse beach grass (check grass_density)
+			# Sparse beach grass (check grass_density) - COLLECT FOR MULTIMESH
 			if rand < grass_density * 0.4:
-				veg_type = VegType.GRASS_TUFT
+				_chunk_grass_positions.append({"pos": spawn_pos, "dense": false})
+				return  # Don't spawn individually
 			else:
 				return
 		
@@ -506,6 +547,178 @@ func spawn_ground_cover_for_biome(biome: Chunk.Biome, spawn_pos: Vector3, _world
 			return
 	
 	create_vegetation_mesh(veg_type, spawn_pos)
+
+func _create_chunk_grass_multimesh(chunk_pos: Vector2i):
+	"""Create a single MultiMeshInstance3D for ALL grass in this chunk
+	
+	PERFORMANCE: Instead of 100+ individual grass nodes, this creates ONE draw call
+	for all grass in the chunk. Each grass position gets multiple blade instances.
+	"""
+	var grass_count = _chunk_grass_positions.size()
+	if grass_count == 0:
+		return
+	
+	# Calculate total blade instances (each position gets 3-7 blades)
+	var blades_per_tuft_min = 3
+	var blades_per_tuft_max = 7
+	var total_blades = 0
+	var blade_counts = []
+	
+	for grass_data in _chunk_grass_positions:
+		var blade_count = blades_per_tuft_min + randi() % (blades_per_tuft_max - blades_per_tuft_min + 1)
+		if grass_data["dense"]:
+			blade_count += 2  # Dense patches get more blades
+		blade_counts.append(blade_count)
+		total_blades += blade_count
+	
+	# Create MultiMeshInstance3D first so we can position it
+	var multi_mesh_instance = MultiMeshInstance3D.new()
+	add_child(multi_mesh_instance)
+	
+	# Position the MultiMeshInstance3D at world origin - transforms will be in world space
+	multi_mesh_instance.global_position = Vector3.ZERO
+	
+	# Create MultiMesh
+	var multi_mesh = MultiMesh.new()
+	multi_mesh.transform_format = MultiMesh.TRANSFORM_3D
+	multi_mesh.use_colors = true
+	multi_mesh.instance_count = total_blades
+	multi_mesh.mesh = _get_cached_grass_blade_mesh()
+	
+	# Position each blade instance (using world coordinates since parent is at origin)
+	var instance_idx = 0
+	for i in range(grass_count):
+		var grass_data = _chunk_grass_positions[i]
+		var base_pos: Vector3 = grass_data["pos"]
+		var blade_count = blade_counts[i]
+		
+		for j in range(blade_count):
+			# Random offset within small cluster
+			var offset_angle = randf() * TAU
+			var offset_dist = randf() * 0.15
+			var blade_x = base_pos.x + cos(offset_angle) * offset_dist
+			var blade_z = base_pos.z + sin(offset_angle) * offset_dist
+			
+			# Build transform: start with identity, then apply transformations
+			var transform = Transform3D.IDENTITY
+			
+			# Random rotation around Y axis
+			var rot_y = randf() * TAU
+			transform = transform.rotated(Vector3.UP, rot_y)
+			
+			# Slight random lean for natural look
+			var lean_angle = (randf() - 0.5) * 0.25
+			var lean_dir = randf() * TAU
+			transform = transform.rotated(Vector3(cos(lean_dir), 0, sin(lean_dir)), lean_angle)
+			
+			# Random scale variation
+			var scale = 0.8 + randf() * 0.5
+			transform = transform.scaled(Vector3(scale, scale * (0.85 + randf() * 0.3), scale))
+			
+			# Set position AFTER rotation/scale (world position)
+			transform.origin = Vector3(blade_x, base_pos.y, blade_z)
+			
+			multi_mesh.set_instance_transform(instance_idx, transform)
+			
+			# Color variation
+			var color_rand = randf()
+			var grass_tint: Color
+			if color_rand > 0.7:
+				grass_tint = Color(0.95, 1.05, 0.9)  # Yellow-green
+			elif color_rand > 0.4:
+				grass_tint = Color(1.0, 1.0, 1.0)    # Standard
+			else:
+				grass_tint = Color(0.85, 0.95, 0.8)  # Darker
+			
+			multi_mesh.set_instance_color(instance_idx, grass_tint)
+			instance_idx += 1
+	
+	multi_mesh_instance.multimesh = multi_mesh
+	
+	# Material with vertex colors
+	var material = StandardMaterial3D.new()
+	material.vertex_color_use_as_albedo = true
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED
+	material.roughness = 0.8
+	multi_mesh_instance.material_override = material
+	
+	# Track for cleanup
+	if populated_chunks.has(chunk_pos):
+		populated_chunks[chunk_pos].append(multi_mesh_instance)
+
+# Cached grass blade mesh (created once, reused)
+var _cached_grass_blade_mesh: ArrayMesh = null
+
+func _get_cached_grass_blade_mesh() -> ArrayMesh:
+	"""Get or create cached grass blade mesh"""
+	if _cached_grass_blade_mesh == null:
+		_cached_grass_blade_mesh = _create_grass_blade_mesh()
+	return _cached_grass_blade_mesh
+
+func _create_grass_blade_mesh() -> ArrayMesh:
+	"""Create a single grass blade mesh for MultiMesh instances"""
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	# Blade dimensions
+	var height = 0.5
+	var width_base = 0.08
+	var width_tip = 0.02
+	var segments = 3
+	
+	# Color gradient
+	var base_color = Color(0.25, 0.45, 0.15, 1.0)
+	var tip_color = Color(0.45, 0.75, 0.35, 1.0)
+	
+	for seg in range(segments):
+		var t1 = float(seg) / segments
+		var t2 = float(seg + 1) / segments
+		
+		var y1 = t1 * height
+		var y2 = t2 * height
+		var w1 = lerp(width_base, width_tip, t1)
+		var w2 = lerp(width_base, width_tip, t2)
+		var curve1 = t1 * t1 * 0.1
+		var curve2 = t2 * t2 * 0.1
+		
+		var color1 = base_color.lerp(tip_color, t1)
+		var color2 = base_color.lerp(tip_color, t2)
+		
+		var p1_left = Vector3(-w1/2, y1, curve1)
+		var p1_right = Vector3(w1/2, y1, curve1)
+		var p2_left = Vector3(-w2/2, y2, curve2)
+		var p2_right = Vector3(w2/2, y2, curve2)
+		
+		# Front face
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_left)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_left)
+		
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_right)
+		surface_tool.add_vertex(p2_left)
+		
+		# Back face
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.add_vertex(p1_left)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_left)
+		
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_right)
+		surface_tool.set_color(color1)
+		surface_tool.add_vertex(p1_right)
+		surface_tool.set_color(color2)
+		surface_tool.add_vertex(p2_left)
+	
+	surface_tool.generate_normals()
+	return surface_tool.commit()
 
 func get_biome_at_position(world_x: float, world_z: float, base_noise: float) -> Chunk.Biome:
 	var temperature = chunk_manager.temperature_noise.get_noise_2d(world_x, world_z)
@@ -577,6 +790,52 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 	add_child(mesh_instance)
 	mesh_instance.global_position = spawn_position
 	
+	# Track this node for cleanup when chunk unloads
+	if populated_chunks.has(_current_chunk):
+		populated_chunks[_current_chunk].append(mesh_instance)
+	
+	# Set visibility range for automatic distance culling (GPU optimization)
+	# Small objects fade out sooner, large objects visible longer
+	var visibility_end: float = 80.0  # Default
+	var visibility_margin: float = 10.0
+	
+	match veg_type:
+		VegType.TREE, VegType.PINE_TREE, VegType.PALM_TREE:
+			visibility_end = 120.0  # Trees visible far
+			visibility_margin = 20.0
+		VegType.BOULDER:
+			visibility_end = 100.0
+			visibility_margin = 15.0
+		VegType.ROCK:
+			visibility_end = 60.0
+			visibility_margin = 10.0
+		VegType.SMALL_ROCK:
+			visibility_end = 40.0  # Small rocks fade first
+			visibility_margin = 8.0
+		VegType.CACTUS:
+			visibility_end = 80.0
+			visibility_margin = 10.0
+		VegType.MUSHROOM_RED, VegType.MUSHROOM_BROWN, VegType.MUSHROOM_CLUSTER:
+			visibility_end = 50.0
+			visibility_margin = 8.0
+		VegType.WILDFLOWER_YELLOW, VegType.WILDFLOWER_PURPLE, VegType.WILDFLOWER_WHITE:
+			visibility_end = 35.0  # Flowers fade early
+			visibility_margin = 5.0
+		VegType.STRAWBERRY_BUSH_SMALL:
+			visibility_end = 45.0
+			visibility_margin = 8.0
+		VegType.STRAWBERRY_BUSH_MEDIUM, VegType.STRAWBERRY_BUSH_LARGE:
+			visibility_end = 55.0
+			visibility_margin = 10.0
+		_:
+			visibility_end = 60.0
+			visibility_margin = 10.0
+	
+	# Apply visibility range (Godot auto-culls based on camera distance)
+	mesh_instance.visibility_range_end = visibility_end
+	mesh_instance.visibility_range_end_margin = visibility_margin
+	mesh_instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	
 	match veg_type:
 		VegType.TREE:
 			create_tree(mesh_instance)
@@ -592,10 +851,11 @@ func create_vegetation_mesh(veg_type: VegType, spawn_position: Vector3):
 			create_rock(mesh_instance, true)
 		VegType.CACTUS:
 			create_cactus(mesh_instance)
-		VegType.GRASS_TUFT:
-			create_grass_tuft_improved(mesh_instance)
-		VegType.GRASS_PATCH:
-			create_grass_patch(mesh_instance)
+		# GRASS_TUFT and GRASS_PATCH now handled by chunk-level MultiMesh
+		# See _create_chunk_grass_multimesh() - these cases should not be reached
+		VegType.GRASS_TUFT, VegType.GRASS_PATCH:
+			push_warning("Grass should use chunk MultiMesh, not individual spawn")
+			pass
 		VegType.MUSHROOM_RED:
 			create_harvestable_mushroom(mesh_instance, true, false)
 		VegType.MUSHROOM_BROWN:
@@ -982,6 +1242,10 @@ func create_rock(mesh_instance: MeshInstance3D, is_boulder: bool):
 	parent.add_child(resource_node)
 	resource_node.global_position = rock_position
 	
+	# Register replacement node for chunk cleanup (mesh_instance will be freed)
+	if populated_chunks.has(_current_chunk):
+		populated_chunks[_current_chunk].append(resource_node)
+	
 	mesh_instance.queue_free()
 
 func create_small_rock(mesh_instance: MeshInstance3D):
@@ -1045,6 +1309,10 @@ func create_small_rock(mesh_instance: MeshInstance3D):
 	parent.remove_child(mesh_instance)
 	parent.add_child(resource_node)
 	resource_node.global_position = rock_position
+	
+	# Register replacement node for chunk cleanup (mesh_instance will be freed)
+	if populated_chunks.has(_current_chunk):
+		populated_chunks[_current_chunk].append(resource_node)
 	
 	mesh_instance.queue_free()
 
@@ -1179,6 +1447,11 @@ func create_harvestable_mushroom(mesh_instance: MeshInstance3D, is_red: bool, is
 	parent.remove_child(mesh_instance)
 	parent.add_child(mushroom)
 	mushroom.global_position = mushroom_position
+	
+	# Register replacement node for chunk cleanup (mesh_instance will be freed)
+	if populated_chunks.has(_current_chunk):
+		populated_chunks[_current_chunk].append(mushroom)
+	
 	mesh_instance.queue_free()
 
 
@@ -1322,10 +1595,19 @@ func create_harvestable_strawberry(mesh_instance: MeshInstance3D, bush_size: Har
 	parent.remove_child(mesh_instance)
 	parent.add_child(strawberry)
 	strawberry.global_position = strawberry_position
+	
+	# Register replacement node for chunk cleanup (mesh_instance will be freed)
+	if populated_chunks.has(_current_chunk):
+		populated_chunks[_current_chunk].append(strawberry)
+	
 	mesh_instance.queue_free()
 
 func create_strawberry_bush_visual(mesh_instance: MeshInstance3D, bush_size: HarvestableStrawberry.BushSize = HarvestableStrawberry.BushSize.MEDIUM):
-	"""Create the visual appearance of a strawberry bush with pixelated textures"""
+	"""Create the visual appearance of a strawberry bush with pixelated textures
+	
+	OPTIMIZATION: All berries combined into single mesh using SurfaceTool
+	Instead of 12-26 separate MeshInstance3D, now uses 1 for all berries.
+	"""
 	# Size-dependent dimensions
 	var bush_height: float
 	var bush_radius: float
@@ -1355,44 +1637,95 @@ func create_strawberry_bush_visual(mesh_instance: MeshInstance3D, bush_size: Har
 	var leaf_material = PixelTextureGenerator.create_pixel_material(leaf_texture, Color(1.0, 1.0, 1.0))
 	bush_body.set_surface_override_material(0, leaf_material)
 	
-	# Add strawberry berries with solid color (too small for texture)
+	# Create ALL berries as single combined mesh
 	var berry_count = berry_count_base + randi() % 8
+	var berry_mesh_instance = MeshInstance3D.new()
+	mesh_instance.add_child(berry_mesh_instance)
 	
-	# Create solid berry material (no texture)
-	var berry_material = StandardMaterial3D.new()
-	berry_material.albedo_color = Color(0.85, 0.15, 0.12)  # Bright red
-	berry_material.roughness = 0.7
-	berry_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	# Build combined berry mesh using SurfaceTool
+	var surface_tool = SurfaceTool.new()
+	surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var berry_color = Color(0.85, 0.15, 0.12)  # Bright red
 	
 	for i in range(berry_count):
-		var berry = MeshInstance3D.new()
-		mesh_instance.add_child(berry)
-		
-		# Position berry around the bush
+		# Calculate berry position
 		var berry_angle = randf() * TAU
-		var berry_height_t = 0.15 + randf() * 0.7  # More vertical spread
-		var berry_height = berry_height_t * bush_height
+		var berry_height_t = 0.15 + randf() * 0.7
+		var berry_y = berry_height_t * bush_height
 		
 		var radius_mult = sin(berry_height_t * PI)
-		var berry_radius = bush_radius * (0.3 + radius_mult * 0.7)
-		var berry_offset = berry_radius * 1.05  # Slightly closer to bush
+		var berry_dist = bush_radius * (0.3 + radius_mult * 0.7) * 1.05
 		
-		var berry_x = cos(berry_angle) * berry_offset
-		var berry_z = sin(berry_angle) * berry_offset
-		berry.position = Vector3(berry_x, berry_height, berry_z)
+		var berry_x = cos(berry_angle) * berry_dist
+		var berry_z = sin(berry_angle) * berry_dist
+		var berry_pos = Vector3(berry_x, berry_y, berry_z)
 		
-		# Create smaller berry sphere mesh
-		var sphere = SphereMesh.new()
-		sphere.radius = 0.04 + randf() * 0.02  # 0.04-0.06 (smaller)
-		sphere.height = sphere.radius * 2
-		sphere.radial_segments = 6
-		sphere.rings = 4
-		berry.mesh = sphere
+		# Berry size
+		var berry_radius = 0.04 + randf() * 0.02
 		
-		# Apply solid color material
-		berry.set_surface_override_material(0, berry_material)
+		# Add low-poly sphere geometry at this position
+		_add_berry_sphere(surface_tool, berry_pos, berry_radius, berry_color)
+	
+	surface_tool.generate_normals()
+	var combined_berry_mesh = surface_tool.commit()
+	
+	# Apply material
+	var berry_material = StandardMaterial3D.new()
+	berry_material.albedo_color = berry_color
+	berry_material.roughness = 0.7
+	berry_material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	combined_berry_mesh.surface_set_material(0, berry_material)
+	
+	berry_mesh_instance.mesh = combined_berry_mesh
 	
 	mesh_instance.rotation.y = randf() * TAU
+
+func _add_berry_sphere(surface_tool: SurfaceTool, center: Vector3, radius: float, color: Color):
+	"""Add a low-poly sphere (octahedron) to the SurfaceTool at given position"""
+	# Use simple octahedron for berries (8 triangles, very low poly)
+	var top = center + Vector3(0, radius, 0)
+	var bottom = center + Vector3(0, -radius, 0)
+	var front = center + Vector3(0, 0, radius)
+	var back = center + Vector3(0, 0, -radius)
+	var left = center + Vector3(-radius, 0, 0)
+	var right = center + Vector3(radius, 0, 0)
+	
+	surface_tool.set_color(color)
+	
+	# Top 4 triangles
+	surface_tool.add_vertex(top)
+	surface_tool.add_vertex(front)
+	surface_tool.add_vertex(right)
+	
+	surface_tool.add_vertex(top)
+	surface_tool.add_vertex(right)
+	surface_tool.add_vertex(back)
+	
+	surface_tool.add_vertex(top)
+	surface_tool.add_vertex(back)
+	surface_tool.add_vertex(left)
+	
+	surface_tool.add_vertex(top)
+	surface_tool.add_vertex(left)
+	surface_tool.add_vertex(front)
+	
+	# Bottom 4 triangles
+	surface_tool.add_vertex(bottom)
+	surface_tool.add_vertex(right)
+	surface_tool.add_vertex(front)
+	
+	surface_tool.add_vertex(bottom)
+	surface_tool.add_vertex(back)
+	surface_tool.add_vertex(right)
+	
+	surface_tool.add_vertex(bottom)
+	surface_tool.add_vertex(left)
+	surface_tool.add_vertex(back)
+	
+	surface_tool.add_vertex(bottom)
+	surface_tool.add_vertex(front)
+	surface_tool.add_vertex(left)
 
 func create_bush_body_mesh(mesh_instance: MeshInstance3D, bush_height: float, bush_radius: float):
 	"""Create the main body mesh of the strawberry bush"""

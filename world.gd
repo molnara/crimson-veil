@@ -28,6 +28,13 @@ func _ready():
 	else:
 		print("ERROR: Failed to load settings_menu.tscn")
 	
+	# Add Performance HUD (toggle with F3)
+	var performance_hud_script = load("res://performance_hud.gd")
+	if performance_hud_script:
+		var performance_hud = performance_hud_script.new()
+		add_child(performance_hud)
+		print("Performance HUD loaded - Press F3 to toggle")
+	
 	# Connect the player to the chunk manager
 	chunk_manager.set_player(player)
 	
@@ -68,6 +75,7 @@ func _ready():
 	print("  Mouse - Look around")
 	print("  Esc - Toggle mouse capture")
 	print("  F1 - Settings Menu")
+	print("  F3 - Performance HUD")
 
 func apply_graphics_settings():
 	"""Apply graphics settings from SettingsManager on startup"""

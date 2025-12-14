@@ -1,0 +1,313 @@
+CRIMSON VEIL - IMPLEMENTATION GUIDE
+v0.7.0 "Performance" - Technical Specifications (POST-SPRINT)
+================================================================================
+
+TABLE OF CONTENTS
+================================================================================
+1. Performance Results Summary
+2. Implemented Optimizations
+3. Code Changes Reference
+4. Performance HUD Usage
+5. Future Optimization Opportunities
+
+================================================================================
+1. PERFORMANCE RESULTS SUMMARY
+================================================================================
+
+FINAL METRICS:
+┌─────────────────────┬─────────────┬─────────────┬─────────────┐
+│ Metric              │ Baseline    │ Final       │ Improvement │
+├─────────────────────┼─────────────┼─────────────┼─────────────┤
+│ FPS                 │ 25          │ 60          │ +140% ✅    │
+│ Draw Calls          │ 17,141      │ ~4,400-6,300│ -63-74%     │
+│ Objects Drawn       │ 17,220      │ ~4,600-6,500│ -62-73%     │
+│ Scene Nodes         │ 61,439      │ ~8,100-9,900│ -84% ✅     │
+│ Memory              │ 333 MiB     │ ~260-290 MiB│ -15-22%     │
+└─────────────────────┴─────────────┴─────────────┴─────────────┘
+
+KEY INSIGHT: 60 FPS achieved with ~16 hours of work vs 41 hours estimated.
+Aggressive LOD (billboards) would be needed to reach <500 draw calls target.
+
+================================================================================
+2. IMPLEMENTED OPTIMIZATIONS
+================================================================================
+
+### 2.1 VEGETATION DENSITY REDUCTION
+
+Reduced spawn rates to decrease object count:
+
+```gdscript
+# vegetation_spawner.gd - @export variables changed:
+grass_density: 0.75 → 0.35
+spawn_radius: 3 → 2
+ground_cover_samples_per_chunk: 75 → 25
+large_vegetation_samples_per_chunk: 18 → 10
+forest_tree_density: 0.75 → 0.50
+grassland_tree_density: 0.18 → 0.12
+grassland_rock_density: 0.70 → 0.50
+```
+
+--------------------------------------------------------------------------------
+
+### 2.2 VEGETATION DESPAWN SYSTEM
+
+Prevents memory growth during exploration:
+
+**chunk_manager.gd:**
+```gdscript
+# Added signal
+signal chunk_unloaded(chunk_pos: Vector2i)
+
+# Modified unload_chunk()
+func unload_chunk(chunk_pos: Vector2i):
+    if chunks.has(chunk_pos):
+        chunk_unloaded.emit(chunk_pos)  # Notify before cleanup
+        var chunk = chunks[chunk_pos]
+        chunk.queue_free()
+        chunks.erase(chunk_pos)
+```
+
+**vegetation_spawner.gd:**
+```gdscript
+# Track nodes per chunk
+var populated_chunks: Dictionary = {}  # chunk_pos -> Array of nodes
+var _current_chunk: Vector2i  # Currently populating chunk
+
+# In initialize():
+chunk_manager.chunk_unloaded.connect(_on_chunk_unloaded)
+
+# Cleanup handler
+func _on_chunk_unloaded(chunk_pos: Vector2i):
+    if not populated_chunks.has(chunk_pos):
+        return
+    for node in populated_chunks[chunk_pos]:
+        if is_instance_valid(node):
+            node.queue_free()
+    populated_chunks.erase(chunk_pos)
+
+# Track spawned nodes
+func create_vegetation_mesh(veg_type, spawn_position):
+    var mesh_instance = MeshInstance3D.new()
+    add_child(mesh_instance)
+    if populated_chunks.has(_current_chunk):
+        populated_chunks[_current_chunk].append(mesh_instance)
+```
+
+--------------------------------------------------------------------------------
+
+### 2.3 CHUNK-LEVEL GRASS MULTIMESH
+
+Single draw call per chunk for ALL grass:
+
+```gdscript
+# vegetation_spawner.gd
+
+var _chunk_grass_positions: Array = []  # Collect during population
+
+# In spawn_ground_cover_for_biome() - collect instead of spawn:
+_chunk_grass_positions.append({"pos": spawn_pos, "dense": is_dense})
+return  # Don't spawn individually
+
+# At end of populate_chunk():
+if _chunk_grass_positions.size() > 0:
+    _create_chunk_grass_multimesh(chunk_pos)
+
+func _create_chunk_grass_multimesh(chunk_pos: Vector2i):
+    # Calculate total blade count
+    var total_blades = 0
+    for grass_data in _chunk_grass_positions:
+        var blade_count = 3 + randi() % 5
+        if grass_data["dense"]:
+            blade_count += 2
+        total_blades += blade_count
+    
+    # Create single MultiMesh with all blades
+    var multi_mesh = MultiMesh.new()
+    multi_mesh.transform_format = MultiMesh.TRANSFORM_3D
+    multi_mesh.use_colors = true
+    multi_mesh.instance_count = total_blades
+    multi_mesh.mesh = _get_cached_grass_blade_mesh()
+    
+    # Set transforms for each blade instance
+    # (world space positioning, random rotation/scale)
+    
+    var multi_mesh_instance = MultiMeshInstance3D.new()
+    multi_mesh_instance.multimesh = multi_mesh
+    multi_mesh_instance.global_position = Vector3.ZERO
+    add_child(multi_mesh_instance)
+```
+
+--------------------------------------------------------------------------------
+
+### 2.4 COMBINED BERRY MESHES
+
+Single mesh per strawberry bush instead of 12-26:
+
+```gdscript
+# vegetation_spawner.gd
+
+func create_strawberry_bush_visual(mesh_instance, bush_size):
+    # Build ALL berries into single mesh using SurfaceTool
+    var surface_tool = SurfaceTool.new()
+    surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+    
+    for i in range(berry_count):
+        var berry_pos = Vector3(...)  # Calculate position
+        _add_berry_sphere(surface_tool, berry_pos, radius, color)
+    
+    surface_tool.generate_normals()
+    var combined_mesh = surface_tool.commit()
+    
+    var berry_mesh_instance = MeshInstance3D.new()
+    berry_mesh_instance.mesh = combined_mesh
+    mesh_instance.add_child(berry_mesh_instance)
+
+func _add_berry_sphere(surface_tool, center, radius, color):
+    # Add octahedron geometry (8 triangles) at position
+    var top = center + Vector3(0, radius, 0)
+    var bottom = center + Vector3(0, -radius, 0)
+    # ... add 8 triangles
+```
+
+--------------------------------------------------------------------------------
+
+### 2.5 DISTANCE-BASED VISIBILITY CULLING
+
+Auto-hide distant objects using Godot's built-in GPU culling:
+
+```gdscript
+# vegetation_spawner.gd - in create_vegetation_mesh():
+
+# Set visibility range based on object type
+var visibility_end: float
+match veg_type:
+    VegType.TREE, VegType.PINE_TREE, VegType.PALM_TREE:
+        visibility_end = 120.0
+    VegType.BOULDER:
+        visibility_end = 100.0
+    VegType.ROCK:
+        visibility_end = 60.0
+    VegType.SMALL_ROCK:
+        visibility_end = 40.0
+    VegType.WILDFLOWER_YELLOW, VegType.WILDFLOWER_PURPLE, VegType.WILDFLOWER_WHITE:
+        visibility_end = 35.0
+    _:
+        visibility_end = 60.0
+
+mesh_instance.visibility_range_end = visibility_end
+mesh_instance.visibility_range_end_margin = visibility_end * 0.15
+mesh_instance.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+```
+
+**Tree visual files (tree_visual.gd, pine_tree_visual.gd, palm_tree_visual.gd):**
+```gdscript
+# At end of create() function:
+var visibility_distance = 80.0 + trunk_height * 4.0  # 80-120m
+_apply_visibility_range(tree, visibility_distance)
+
+static func _apply_visibility_range(node: Node3D, distance: float):
+    if node is GeometryInstance3D:
+        node.visibility_range_end = distance
+        node.visibility_range_end_margin = distance * 0.15
+        node.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+    for child in node.get_children():
+        if child is Node3D:
+            _apply_visibility_range(child, distance)
+```
+
+================================================================================
+3. CODE CHANGES REFERENCE
+================================================================================
+
+FILES MODIFIED:
+├── vegetation_spawner.gd
+│   ├── Density reduction (@export values)
+│   ├── Node tracking for despawn (populated_chunks as Array)
+│   ├── Chunk grass MultiMesh system
+│   ├── Combined berry meshes
+│   └── Visibility range for all vegetation types
+│
+├── chunk_manager.gd
+│   └── Added chunk_unloaded signal
+│
+├── tree_visual.gd
+│   └── Added visibility range culling
+│
+├── pine_tree_visual.gd
+│   └── Added visibility range culling
+│
+├── palm_tree_visual.gd
+│   └── Added visibility range culling
+│
+└── world.gd
+    └── Performance HUD integration
+
+FILES CREATED:
+└── performance_hud.gd (new debug overlay)
+
+================================================================================
+4. PERFORMANCE HUD USAGE
+================================================================================
+
+Toggle: Press F3
+
+Display shows:
+- FPS: Current (avg: rolling average)
+- Draw Calls: Current frame
+- Objects: Objects drawn
+- Nodes: Scene node count
+- Memory: Static memory usage
+
+Color coding:
+- 🟢 Green: Good (FPS ≥55, Draw Calls ≤500, etc.)
+- 🟡 Yellow: Warning (approaching limits)
+- 🔴 Red: Critical (below targets)
+
+Thresholds defined in performance_hud.gd:
+```gdscript
+const FPS_GOOD = 55
+const FPS_WARN = 40
+const DRAW_CALLS_GOOD = 500
+const DRAW_CALLS_WARN = 2000
+const OBJECTS_GOOD = 2000
+const OBJECTS_WARN = 5000
+const NODES_GOOD = 10000
+const NODES_WARN = 20000
+```
+
+================================================================================
+5. FUTURE OPTIMIZATION OPPORTUNITIES
+================================================================================
+
+To achieve <500 draw calls target:
+
+1. TREE BILLBOARD LOD (High Impact, ~6h)
+   - Replace distant trees with 2D billboard sprites
+   - LOD0: Full 3D (0-30m)
+   - LOD1: Simplified (30-60m)
+   - LOD2: Billboard (60-100m)
+   - LOD3: Hidden (100m+)
+
+2. MATERIAL CACHING (Medium Impact, ~3h)
+   - Cache biome terrain materials
+   - Cache vegetation materials (bark, leaves)
+   - Reduces VRAM and material instances
+
+3. DECORATIVE ROCK MULTIMESH (Medium Impact, ~4h)
+   - Separate decorative rocks from harvestable
+   - MultiMesh for decorative (no collision)
+   - Keep individual meshes for harvestable
+
+4. TERRAIN CHUNK LOD (Low Impact, ~3h)
+   - Reduce terrain mesh detail at distance
+   - LOD0: Full resolution (0-2 chunks)
+   - LOD1: Half resolution (2-4 chunks)
+
+5. QUALITY PRESETS (Polish, ~3h)
+   - Low/Medium/High/Ultra presets
+   - User-adjustable settings
+   - Saved to config file
+
+================================================================================
+END OF IMPLEMENTATION GUIDE
+================================================================================

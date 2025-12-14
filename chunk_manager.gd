@@ -1,6 +1,9 @@
 extends Node3D
 class_name ChunkManager
 
+# Signals
+signal chunk_unloaded(chunk_pos: Vector2i)  ## Emitted when a chunk is unloaded, for vegetation cleanup
+
 # Chunk settings
 @export var chunk_size: int = 16  # Size of each chunk in units
 @export var chunk_height: int = 64  # Maximum height of terrain
@@ -134,6 +137,7 @@ func load_chunk(chunk_pos: Vector2i):
 
 func unload_chunk(chunk_pos: Vector2i):
 	if chunks.has(chunk_pos):
+		chunk_unloaded.emit(chunk_pos)  # Notify vegetation spawner to cleanup
 		var chunk = chunks[chunk_pos]
 		chunk.queue_free()
 		chunks.erase(chunk_pos)

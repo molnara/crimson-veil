@@ -182,4 +182,20 @@ static func create(
 	parent.remove_child(mesh_instance)
 	parent.add_child(tree)
 	tree.global_position = tree_position
+	
+	# Apply visibility range for distance-based culling (performance optimization)
+	var visibility_distance = 70.0 + trunk_height * 4.0  # 70-100m (palms slightly closer)
+	_apply_visibility_range(tree, visibility_distance)
+	
 	mesh_instance.queue_free()
+
+static func _apply_visibility_range(node: Node3D, distance: float) -> void:
+	"""Apply visibility range to all GeometryInstance3D children recursively"""
+	if node is GeometryInstance3D:
+		node.visibility_range_end = distance
+		node.visibility_range_end_margin = distance * 0.15
+		node.visibility_range_fade_mode = GeometryInstance3D.VISIBILITY_RANGE_FADE_SELF
+	
+	for child in node.get_children():
+		if child is Node3D:
+			_apply_visibility_range(child, distance)
