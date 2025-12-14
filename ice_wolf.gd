@@ -5,6 +5,10 @@ class_name IceWolf
 ## Behavior: Spawns in packs, coordinates with howl signal, surrounds player
 ## Stats: 55 HP, 14 DMG, 4.5 speed, 2.0m attack range
 
+# Ambient sound timer (performance optimization)
+var ambient_sound_timer: float = 0.0
+var next_ambient_delay: float = 0.0
+
 # Pack behavior
 @export var pack_id: int = -1  # ID of this wolf's pack (-1 = no pack)
 
@@ -79,6 +83,13 @@ func update_ai(_delta: float) -> void:
 	"""Override AI to add pack coordination"""
 	if not player or current_state == State.DEATH:
 		return
+	
+	# Ambient sounds (timer-based - every 7-12 seconds)
+	ambient_sound_timer += _delta
+	if ambient_sound_timer >= next_ambient_delay:
+		AudioManager.play_sound_3d("wolf_ambient", global_position, "sfx", false, false)
+		ambient_sound_timer = 0.0
+		next_ambient_delay = randf_range(7.0, 12.0)
 	
 	var distance = global_position.distance_to(player.global_position)
 	
@@ -172,14 +183,12 @@ func surround_player() -> void:
 
 func on_attack_telegraph() -> void:
 	"""Telegraph attack with aggressive stance"""
-	# TODO: Play growl sound
-	# AudioManager.play_sound("wolf_growl", "combat")
+	AudioManager.play_sound_3d("wolf_attack", global_position, "sfx", false, false)
 	pass
 
-func on_attack_execute() -> void:
-	"""Play bite attack sound"""
-	# TODO: AudioManager.play_sound("wolf_bite", "combat")
-	pass
+func on_hit() -> void:
+	"""Play hit sound effect"""
+	AudioManager.play_sound_3d("wolf_hit", global_position, "sfx", false, false)
 
 func on_death() -> void:
 	"""Remove self from pack and play death sound"""
@@ -188,7 +197,7 @@ func on_death() -> void:
 		if wolf and is_instance_valid(wolf):
 			wolf.pack_members.erase(self)
 	
-	# TODO: AudioManager.play_sound("wolf_death", "combat")
+	AudioManager.play_sound_3d("wolf_death", global_position, "sfx", false, false)
 	pass
 
 func take_damage(amount: int) -> void:
@@ -227,6 +236,7 @@ func create_enemy_visual() -> void:
 	# Create visual container
 	var visual_root = Node3D.new()
 	visual_root.name = "Visual"
+	visual_root.rotation_degrees.y = 180  # Fix backward movement
 	add_child(visual_root)
 	
 	var ice_white = Color(0.95, 0.95, 1.0)  # White with slight blue tint
@@ -243,6 +253,13 @@ func create_enemy_visual() -> void:
 	
 	var body_mat = StandardMaterial3D.new()
 	body_mat.albedo_color = ice_white
+	
+	# Apply ice wolf fur texture
+	var fur_texture = preload("res://textures/ice_wolf_fur.jpg")
+	body_mat.albedo_texture = fur_texture
+	body_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	body_mat.roughness = 0.9  # Fluffy, no shine
+	
 	body.material = body_mat
 	
 	# === HEAD (sphere at front) ===

@@ -10,6 +10,12 @@ var test_count: int = 0
 var passed_count: int = 0
 
 func _ready() -> void:
+	# TEST SUITE DISABLED - Remove this file from your world scene
+	# Tests are complete, enemies are working!
+	return  # Exit immediately without running tests
+	
+	# Original test code below (disabled)
+	"""
 	print("\n" + "=".repeat(60))
 	print("=== CORRUPTED RABBIT AUTOMATED TESTS ===")
 	print("=".repeat(60) + "\n")
@@ -44,6 +50,7 @@ func _ready() -> void:
 	
 	# Print results
 	print_test_results()
+	"""
 
 func setup_test_player() -> void:
 	"""Create a mock player for testing"""

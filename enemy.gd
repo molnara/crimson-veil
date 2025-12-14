@@ -15,6 +15,7 @@ enum State { IDLE, CHASE, ATTACK, DEATH }
 
 @export_group("AI Behavior")
 @export var detection_range: float = 10.0
+@export var deaggro_range: float = 20.0  ## Distance at which enemy stops chasing (0 = never stop)
 @export var attack_range: float = 2.0
 @export var attack_cooldown_duration: float = 1.5
 @export var attack_telegraph_duration: float = 0.3
@@ -51,17 +52,39 @@ func _ready() -> void:
 	if not player:
 		push_warning("Enemy: No player found in scene")
 	
-	# Setup collision shape if not already added
+	# Check if collision shape exists in scene (from .tscn file)
+	collision_shape = get_node_or_null("CollisionShape3D")
+	
+	# Setup collision shape if not already added by scene
 	if not collision_shape:
 		collision_shape = CollisionShape3D.new()
 		var shape = CapsuleShape3D.new()
-		shape.radius = 1.0  # Match larger visual (2m wide)
-		shape.height = 3.0  # Match larger visual (3m tall)
+		shape.radius = 1.0  # Default fallback size
+		shape.height = 3.0
 		collision_shape.shape = shape
 		add_child(collision_shape)
+		print("[Enemy] Warning: No CollisionShape3D in scene, using default")
 	
 	# Let subclasses create their visuals
 	create_enemy_visual()
+	
+	# DEBUG: Temporarily disabled to see CSG visuals clearly
+	# var debug_marker = MeshInstance3D.new()
+	# debug_marker.name = "DebugMarker"
+	# var sphere_mesh = SphereMesh.new()
+	# sphere_mesh.radius = 0.5
+	# sphere_mesh.height = 1.0
+	# debug_marker.mesh = sphere_mesh
+	# 
+	# var debug_mat = StandardMaterial3D.new()
+	# debug_mat.albedo_color = Color(1, 0, 1)  # Bright magenta
+	# debug_mat.emission_enabled = true
+	# debug_mat.emission = Color(1, 0, 1)
+	# debug_mat.emission_energy_multiplier = 2.0
+	# debug_marker.set_surface_override_material(0, debug_mat)
+	# 
+	# add_child(debug_marker)
+	# debug_marker.position = Vector3(0, 1, 0)  # Float above ground
 	
 	# Store original material for damage flash
 	if visual_mesh and visual_mesh.get_surface_override_material_count() > 0:
@@ -104,8 +127,12 @@ func update_ai(delta: float) -> void:
 				current_state = State.CHASE
 		
 		State.CHASE:
+			# Check if player escaped (de-aggro)
+			if deaggro_range > 0 and distance > deaggro_range:
+				current_state = State.IDLE
+				velocity = Vector3.ZERO
 			# Check if in attack range
-			if distance < attack_range:
+			elif distance < attack_range:
 				current_state = State.ATTACK
 				velocity = Vector3.ZERO  # Stop moving when attacking
 			else:
@@ -179,6 +206,7 @@ func take_damage(amount: int) -> void:
 	
 	current_health -= amount
 	flash_white()
+	on_hit()  # Call virtual function for enemy-specific hit sound
 	
 	# Interrupt idle state on damage
 	if current_state == State.IDLE:
@@ -287,6 +315,10 @@ func on_attack_telegraph() -> void:
 
 func on_attack_execute() -> void:
 	"""Override for attack execution effects (e.g., sound, particles)"""
+	pass
+
+func on_hit() -> void:
+	"""Override for hit/damage effects (e.g., hit sound)"""
 	pass
 
 func on_death() -> void:

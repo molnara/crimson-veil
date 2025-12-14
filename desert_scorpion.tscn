@@ -1,6 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://d1kc8vyx2hqo7"]
+[gd_scene load_steps=3 format=3 uid="uid://desert_scorpion_scene"]
 
-[ext_resource type="Script" path="res://desert_scorpion.gd" id="1_desert_scorpion"]
+[ext_resource type="Script" path="res://desert_scorpion.gd" id="1"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.8
+height = 1.2
 
 [node name="DesertScorpion" type="CharacterBody3D"]
-script = ExtResource("1_desert_scorpion")
+script = ExtResource("1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("CapsuleShape3D_1")

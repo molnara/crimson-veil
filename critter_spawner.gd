@@ -42,6 +42,20 @@ var day_night_cycle: DayNightCycle = null
 @export_group("Particle Critter Density")
 @export_range(0.0, 1.0) var firefly_density: float = 0.30  ## Night forest magic
 
+@export_group("Enemy Spawn Rates")
+@export_range(0.0, 1.0) var corrupted_rabbit_spawn_rate: float = 0.15  ## Forest (15%)
+@export_range(0.0, 1.0) var forest_goblin_spawn_rate: float = 0.08  ## Forest (8%)
+@export_range(0.0, 1.0) var desert_scorpion_spawn_rate: float = 0.12  ## Desert (12%)
+@export_range(0.0, 1.0) var ice_wolf_pack_spawn_rate: float = 0.10  ## Snow (10% for pack)
+@export_range(0.0, 1.0) var stone_golem_spawn_rate: float = 0.05  ## Mountain (5%)
+@export_range(0.0, 1.0) var shadow_wraith_spawn_rate: float = 0.08  ## Night only (8%)
+
+@export_group("Debug Settings")
+@export var debug_enemy_spawns: bool = false  ## Log when enemies spawn
+@export var debug_spawn_attempts: bool = false  ## Log all spawn attempts (verbose)
+@export var debug_spawn_hotkeys: bool = true  ## Enable F5-F10 hotkeys to spawn enemies
+@export_range(3.0, 20.0) var debug_spawn_distance: float = 5.0  ## Distance in front of player to spawn
+
 @export_group("Spawn Settings")
 @export_range(5, 50) var critters_per_chunk: int = 4  ## More life (was 3)
 @export_range(2, 6) var spawn_radius_chunks: int = 3  
@@ -57,7 +71,7 @@ var day_night_cycle: DayNightCycle = null
 
 # Track spawned critters
 var active_critters: Array = []
-var active_enemies: Array = []  # Track enemies separately (no meta data)
+var active_enemies: Array = []  # Track enemies separately (with metadata for cleanup)
 var populated_chunks: Dictionary = {}
 var initialized: bool = false
 var last_firefly_check_time: float = -1.0  # Track when we last checked firefly spawning
@@ -89,6 +103,94 @@ func find_day_night_cycle():
 	var cycles = get_tree().get_nodes_in_group("day_night_cycle")
 	if cycles.size() > 0:
 		day_night_cycle = cycles[0]
+
+func _input(event: InputEvent) -> void:
+	"""Debug hotkeys for spawning enemies near player (Keys 1-6)"""
+	if not debug_spawn_hotkeys or not initialized or not player:
+		return
+	
+	if event is InputEventKey and event.pressed and not event.echo:
+		var spawn_pos = get_debug_spawn_position()
+		var enemy_spawned = false
+		
+		match event.keycode:
+			KEY_1:  # Corrupted Rabbit
+				enemy_spawned = spawn_debug_enemy("corrupted_rabbit", spawn_pos)
+			KEY_2:  # Forest Goblin
+				enemy_spawned = spawn_debug_enemy("forest_goblin", spawn_pos)
+			KEY_3:  # Desert Scorpion
+				enemy_spawned = spawn_debug_enemy("desert_scorpion", spawn_pos)
+			KEY_4:  # Ice Wolf Pack
+				enemy_spawned = spawn_debug_wolf_pack(spawn_pos)
+			KEY_5:  # Stone Golem
+				enemy_spawned = spawn_debug_enemy("stone_golem", spawn_pos)
+			KEY_6:  # Shadow Wraith
+				enemy_spawned = spawn_debug_enemy("shadow_wraith", spawn_pos)
+
+func get_debug_spawn_position() -> Vector3:
+	"""Get position in front of player for debug spawning with ground detection"""
+	var forward = -player.global_transform.basis.z  # Player forward direction
+	var spawn_pos = player.global_position + forward * debug_spawn_distance
+	
+	# Raycast down to find ground level (prevent falling through terrain)
+	var space_state = get_world_3d().direct_space_state
+	var ray_start = spawn_pos + Vector3.UP * 10.0  # Start 10m above
+	var ray_end = spawn_pos + Vector3.DOWN * 20.0  # Check 20m below
+	
+	var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+	query.collision_mask = 1  # Layer 1 (terrain)
+	
+	var result = space_state.intersect_ray(query)
+	if result:
+		# Found ground, spawn 2m above it (was 1m, increased to prevent clipping)
+		spawn_pos = result.position + Vector3.UP * 2.0
+	else:
+		# No ground found, use player height + 2m
+		spawn_pos.y = player.global_position.y + 2.0
+	
+	return spawn_pos
+
+func spawn_debug_enemy(enemy_type: String, position: Vector3) -> bool:
+	"""Spawn a single enemy at position for debugging"""
+	var enemy_scene_path = "res://%s.tscn" % enemy_type
+	
+	if not ResourceLoader.exists(enemy_scene_path):
+		print("[DEBUG SPAWN] ❌ Enemy scene not found: %s" % enemy_scene_path)
+		print("[DEBUG SPAWN] 💡 Make sure you have created the .tscn scene file for this enemy!")
+		print("[DEBUG SPAWN] 💡 Scene should be in project root: %s" % enemy_scene_path)
+		return false
+	
+	var enemy_scene = load(enemy_scene_path)
+	if not enemy_scene:
+		print("[DEBUG SPAWN] ❌ Failed to load scene: %s" % enemy_scene_path)
+		return false
+		
+	var enemy = enemy_scene.instantiate()
+	
+	get_tree().root.add_child(enemy)
+	enemy.global_position = position
+	enemy.set_meta("type", enemy_type)
+	
+	active_enemies.append(enemy)
+	
+	print("[DEBUG SPAWN] ✅ Spawned %s at %s (Key hotkey)" % [enemy_type.capitalize().replace("_", " "), position])
+	return true
+
+func spawn_debug_wolf_pack(position: Vector3) -> bool:
+	"""Spawn a pack of 3 wolves at position for debugging"""
+	var pack_id = Time.get_ticks_msec()
+	var wolves_spawned = 0
+	
+	for i in range(3):
+		var angle = (i * 120.0) * PI / 180.0  # 120° apart
+		var offset = Vector3(cos(angle) * 2.0, 0, sin(angle) * 2.0)
+		var wolf_pos = position + offset
+		
+		if spawn_debug_enemy("ice_wolf", wolf_pos):
+			wolves_spawned += 1
+	
+	print("[DEBUG SPAWN] ✅ Spawned Ice Wolf Pack (%d wolves) at %s (F8)" % [wolves_spawned, position])
+	return wolves_spawned > 0
 
 func initialize(chunk_mgr: ChunkManager):
 	chunk_manager = chunk_mgr
@@ -1110,22 +1212,44 @@ func spawn_enemies_in_chunk(chunk_pos: Vector2i) -> void:
 	# Biome-specific spawning
 	match biome:
 		Chunk.Biome.FOREST:
-			if randf() < 0.15:
+			# Corrupted Rabbit (15% default)
+			if randf() < corrupted_rabbit_spawn_rate:
+				if debug_spawn_attempts:
+					print("[EnemySpawn] Attempting Corrupted Rabbit at chunk ", chunk_pos)
 				spawn_single_enemy("corrupted_rabbit", Vector3(world_x, height, world_z), chunk_pos)
-			# Forest Goblin will be added in future tasks
+			# Forest Goblin (8% default)
+			elif randf() < forest_goblin_spawn_rate:
+				if debug_spawn_attempts:
+					print("[EnemySpawn] Attempting Forest Goblin at chunk ", chunk_pos)
+				spawn_single_enemy("forest_goblin", Vector3(world_x, height, world_z), chunk_pos)
+		
 		Chunk.Biome.DESERT:
-			# Desert Scorpion will be added in future tasks
-			pass
+			# Desert Scorpion (12% default)
+			if randf() < desert_scorpion_spawn_rate:
+				if debug_spawn_attempts:
+					print("[EnemySpawn] Attempting Desert Scorpion at chunk ", chunk_pos)
+				spawn_single_enemy("desert_scorpion", Vector3(world_x, height, world_z), chunk_pos)
+		
 		Chunk.Biome.SNOW:
-			if randf() < 0.10:
+			# Ice Wolf Pack (10% default for pack spawn)
+			if randf() < ice_wolf_pack_spawn_rate:
+				if debug_spawn_attempts:
+					print("[EnemySpawn] Attempting Ice Wolf Pack at chunk ", chunk_pos)
 				spawn_wolf_pack(Vector3(world_x, height, world_z), chunk_pos)
+		
 		Chunk.Biome.MOUNTAIN:
-			if randf() < 0.05:
+			# Stone Golem (5% default)
+			if randf() < stone_golem_spawn_rate:
+				if debug_spawn_attempts:
+					print("[EnemySpawn] Attempting Stone Golem at chunk ", chunk_pos)
 				spawn_single_enemy("stone_golem", Vector3(world_x, height, world_z), chunk_pos)
 	
 	# Night-only spawning (all biomes)
 	if day_night_cycle and is_night_time():
-		if randf() < 0.08:
+		# Shadow Wraith (8% default, night only)
+		if randf() < shadow_wraith_spawn_rate:
+			if debug_spawn_attempts:
+				print("[EnemySpawn] Attempting Shadow Wraith at chunk ", chunk_pos)
 			spawn_single_enemy("shadow_wraith", Vector3(world_x, height, world_z), chunk_pos)
 
 func spawn_single_enemy(enemy_type: String, position: Vector3, chunk_pos: Vector2i) -> void:
@@ -1137,23 +1261,47 @@ func spawn_single_enemy(enemy_type: String, position: Vector3, chunk_pos: Vector
 	
 	var enemy = enemy_scene.instantiate()
 	add_child(enemy)
+	
+	# Spawn 2m above ground to prevent falling through terrain (was 1m)
+	position.y += 2.0
 	enemy.global_position = position
+	
+	# Set metadata so cleanup functions work properly
+	enemy.set_meta("type", enemy_type)
 	
 	# Track in populated_chunks
 	if not populated_chunks.has(chunk_pos):
 		populated_chunks[chunk_pos] = []
 	populated_chunks[chunk_pos].append(enemy)
 	active_enemies.append(enemy)  # Track enemies separately from critters
+	
+	# Debug logging
+	if debug_enemy_spawns:
+		print("✅ [ENEMY SPAWNED] %s at position (%.1f, %.1f, %.1f) in chunk %s" % [
+			enemy_type.capitalize().replace("_", " "),
+			position.x, position.y, position.z,
+			chunk_pos
+		])
 
 func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i) -> void:
 	"""Spawn 2-3 Ice Wolves in pack formation"""
 	var pack_size = randi_range(2, 3)
 	var pack_id = randi()
 	
+	# Debug logging for pack spawn
+	if debug_enemy_spawns:
+		print("✅ [WOLF PACK SPAWNED] %d Ice Wolves at position (%.1f, %.1f, %.1f) in chunk %s | Pack ID: %d" % [
+			pack_size,
+			center_pos.x, center_pos.y, center_pos.z,
+			chunk_pos,
+			pack_id
+		])
+	
 	for i in range(pack_size):
 		var angle = (i / float(pack_size)) * TAU
 		var offset = Vector3(cos(angle) * 2.5, 0, sin(angle) * 2.5)
 		var spawn_pos = center_pos + offset
+		spawn_pos.y += 2.0  # Spawn 2m above ground (was 1m)
 		
 		var wolf_scene = load("res://ice_wolf.tscn")
 		if not wolf_scene:
@@ -1164,6 +1312,9 @@ func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i) -> void:
 		wolf.pack_id = pack_id
 		add_child(wolf)
 		wolf.global_position = spawn_pos
+		
+		# Set metadata so cleanup functions work properly
+		wolf.set_meta("type", "ice_wolf")
 		
 		# Track in populated_chunks
 		if not populated_chunks.has(chunk_pos):

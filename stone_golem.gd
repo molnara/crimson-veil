@@ -5,6 +5,10 @@ class_name StoneGolem
 ## Behavior: Slow movement, high HP, patrols stone nodes, ground slam with telegraph
 ## Stats: 100 HP, 20 DMG, 1.5 speed, 2.5m attack range
 
+# Ambient sound timer (performance optimization)
+var ambient_sound_timer: float = 0.0
+var next_ambient_delay: float = 0.0
+
 # Ground slam attack
 const SLAM_TELEGRAPH_DURATION: float = 1.0
 const SLAM_AOE_RADIUS: float = 3.0
@@ -73,6 +77,13 @@ func update_ai(delta: float) -> void:
 	"""Override AI to add ground slam and patrol behavior"""
 	if not player or current_state == State.DEATH:
 		return
+	
+	# Ambient sounds (timer-based - every 8-15 seconds)
+	ambient_sound_timer += delta
+	if ambient_sound_timer >= next_ambient_delay:
+		AudioManager.play_sound_3d("golem_ambient", global_position, "sfx", false, false)
+		ambient_sound_timer = 0.0
+		next_ambient_delay = randf_range(8.0, 15.0)
 	
 	# Handle stagger state after ground slam
 	if stagger_timer > 0:
@@ -159,8 +170,12 @@ func on_attack_telegraph() -> void:
 		if arm_right:
 			arm_right.rotation_degrees.x = -45  # Raise right arm
 	
-	# TODO (Task 3.1): Play ground slam telegraph sound
-	# AudioManager.play_sound("golem_slam_telegraph", "enemy", false, false)
+	# Play attack telegraph sound
+	AudioManager.play_sound_3d("golem_attack", global_position, "sfx", false, false)
+
+func on_hit() -> void:
+	"""Play hit sound effect"""
+	AudioManager.play_sound_3d("golem_hit", global_position, "sfx", false, false)
 
 func on_attack_execute() -> void:
 	"""Execute ground slam - deal AoE damage"""
@@ -195,8 +210,7 @@ func on_attack_execute() -> void:
 
 func on_death() -> void:
 	"""Play death sound effect"""
-	# TODO (Task 3.1): Play golem death sound (stone breaking)
-	# AudioManager.play_sound("golem_death", "enemy", false, false)
+	AudioManager.play_sound_3d("golem_death", global_position, "sfx", false, false)
 	pass
 
 func flash_white() -> void:
@@ -225,6 +239,7 @@ func create_enemy_visual() -> void:
 	# Create visual container
 	var visual_root = Node3D.new()
 	visual_root.name = "Visual"
+	visual_root.rotation_degrees.y = 180  # Fix backward movement
 	add_child(visual_root)
 	
 	var stone_gray = Color(0.5, 0.5, 0.5)  # Gray stone
@@ -240,7 +255,18 @@ func create_enemy_visual() -> void:
 	
 	var body_mat = StandardMaterial3D.new()
 	body_mat.albedo_color = stone_gray
-	body_mat.roughness = 1.0
+	body_mat.roughness = 0.8  # Rough stone (was 1.0)
+	
+	# Apply stone golem surface texture
+	var stone_texture = preload("res://textures/stone_golem_surface.jpg")
+	body_mat.albedo_texture = stone_texture
+	body_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	
+	# Enhance glowing cracks with emission
+	body_mat.emission_enabled = true
+	body_mat.emission = Color(1.0, 0.4, 0.0)  # Orange glow for magma cracks
+	body_mat.emission_energy_multiplier = 0.8
+	
 	body.material = body_mat
 	
 	# === HEAD (smaller box on top) ===
@@ -252,7 +278,12 @@ func create_enemy_visual() -> void:
 	
 	var head_mat = StandardMaterial3D.new()
 	head_mat.albedo_color = stone_gray
-	head_mat.roughness = 1.0
+	head_mat.roughness = 0.8
+	head_mat.albedo_texture = stone_texture
+	head_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	head_mat.emission_enabled = true
+	head_mat.emission = Color(1.0, 0.4, 0.0)
+	head_mat.emission_energy_multiplier = 0.8
 	head.material = head_mat
 	
 	# === ARMS (2x thick boxes) ===

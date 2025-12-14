@@ -13,6 +13,11 @@ extends Node
 # VOLUME SETTINGS
 # ============================================================================
 
+# Combat sound volume multiplier (adjustable in Inspector)
+@export_group("Combat Audio Volume")
+@export_range(0.0, 1.0, 0.05) var combat_sound_volume: float = 0.3  ## Combat/enemy sounds volume (0.3 = 30%)
+@export_range(0.0, 100.0, 5.0) var sound_3d_max_distance: float = 30.0  ## Max distance for 3D sounds (meters)
+
 # Volume levels (0.0 - 1.0)
 var master_volume: float = 1.0
 var sfx_volume: float = 0.75      # 75% - Punchy actions (harvesting, building)
@@ -91,6 +96,47 @@ var sound_variations: Dictionary = {
 	"frogs_night": "none",
 	"leaves_rustle": "none",
 	"thunder_distant": "none",
+	
+	# ========== COMBAT - Player sounds (moderate variation for impact) ==========
+	"swing_light": "moderate",
+	"swing_medium": "moderate",
+	"swing_heavy": "moderate",
+	"hit_flesh": "moderate",
+	"hit_stone": "moderate",
+	"player_grunt_1": "subtle",
+	"player_grunt_2": "subtle",
+	"player_death": "none",
+	
+	# ========== COMBAT - Enemy sounds (subtle variation for consistency) ==========
+	"rabbit_ambient": "subtle",
+	"rabbit_attack": "subtle",
+	"rabbit_hit": "subtle",
+	"rabbit_death": "none",
+	
+	"goblin_ambient": "subtle",
+	"goblin_attack": "subtle",
+	"goblin_hit": "subtle",
+	"goblin_death": "none",
+	
+	"scorpion_ambient": "subtle",
+	"scorpion_attack": "subtle",
+	"scorpion_hit": "subtle",
+	"scorpion_death": "none",
+	
+	"wolf_ambient": "subtle",
+	"wolf_attack": "subtle",
+	"wolf_hit": "subtle",
+	"wolf_death": "none",
+	
+	"golem_ambient": "subtle",
+	"golem_attack": "subtle",
+	"golem_hit": "subtle",
+	"golem_death": "none",
+	
+	"wraith_ambient": "subtle",
+	"wraith_attack": "subtle",
+	"wraith_hit": "subtle",
+	"wraith_death": "none",
 }
 
 # Default variation preset for sounds not in the dictionary
@@ -248,6 +294,55 @@ func _load_sound_library():
 	sounds["leaves_rustle"] = preload("res://audio/sfx/ambient/leaves_rustle.wav")
 	sounds["thunder_distant"] = preload("res://audio/sfx/ambient/thunder_distant.wav")
 	
+	# ========== COMBAT SOUNDS - PLAYER ==========
+	# Swings and hits (res://audio/sfx/combat/)
+	sounds["swing_light"] = preload("res://audio/sfx/combat/swing_light.wav")
+	sounds["swing_medium"] = preload("res://audio/sfx/combat/swing_medium.wav")
+	sounds["swing_heavy"] = preload("res://audio/sfx/combat/swing_heavy.wav")
+	sounds["hit_flesh"] = preload("res://audio/sfx/combat/hit_flesh.wav")
+	sounds["hit_stone"] = preload("res://audio/sfx/combat/hit_stone.wav")
+	
+	# Player damage/death sounds (res://audio/sfx/player/)
+	sounds["player_grunt_1"] = preload("res://audio/sfx/player/player_grunt_1.wav")
+	sounds["player_grunt_2"] = preload("res://audio/sfx/player/player_grunt_2.wav")
+	sounds["player_death"] = preload("res://audio/sfx/player/player_death.wav")
+	
+	# ========== COMBAT SOUNDS - CORRUPTED RABBIT ==========
+	sounds["rabbit_ambient"] = preload("res://audio/sfx/enemies/rabbit_ambient.wav")
+	sounds["rabbit_attack"] = preload("res://audio/sfx/enemies/rabbit_attack.wav")
+	sounds["rabbit_hit"] = preload("res://audio/sfx/enemies/rabbit_hit.wav")
+	sounds["rabbit_death"] = preload("res://audio/sfx/enemies/rabbit_death.wav")
+	
+	# ========== COMBAT SOUNDS - FOREST GOBLIN ==========
+	sounds["goblin_ambient"] = preload("res://audio/sfx/enemies/goblin_ambient.wav")
+	sounds["goblin_attack"] = preload("res://audio/sfx/enemies/goblin_attack.wav")
+	sounds["goblin_hit"] = preload("res://audio/sfx/enemies/goblin_hit.wav")
+	sounds["goblin_death"] = preload("res://audio/sfx/enemies/goblin_death.wav")
+	
+	# ========== COMBAT SOUNDS - DESERT SCORPION ==========
+	sounds["scorpion_ambient"] = preload("res://audio/sfx/enemies/scorpion_ambient.wav")
+	sounds["scorpion_attack"] = preload("res://audio/sfx/enemies/scorpion_attack.wav")
+	sounds["scorpion_hit"] = preload("res://audio/sfx/enemies/scorpion_hit.wav")
+	sounds["scorpion_death"] = preload("res://audio/sfx/enemies/scorpion_death.wav")
+	
+	# ========== COMBAT SOUNDS - ICE WOLF ==========
+	sounds["wolf_ambient"] = preload("res://audio/sfx/enemies/wolf_ambient.wav")
+	sounds["wolf_attack"] = preload("res://audio/sfx/enemies/wolf_attack.wav")
+	sounds["wolf_hit"] = preload("res://audio/sfx/enemies/wolf_hit.wav")
+	sounds["wolf_death"] = preload("res://audio/sfx/enemies/wolf_death.wav")
+	
+	# ========== COMBAT SOUNDS - STONE GOLEM ==========
+	sounds["golem_ambient"] = preload("res://audio/sfx/enemies/golem_ambient.wav")
+	sounds["golem_attack"] = preload("res://audio/sfx/enemies/golem_attack.wav")
+	sounds["golem_hit"] = preload("res://audio/sfx/enemies/golem_hit.wav")
+	sounds["golem_death"] = preload("res://audio/sfx/enemies/golem_death.wav")
+	
+	# ========== COMBAT SOUNDS - SHADOW WRAITH ==========
+	sounds["wraith_ambient"] = preload("res://audio/sfx/enemies/wraith_ambient.wav")
+	sounds["wraith_attack"] = preload("res://audio/sfx/enemies/wraith_attack.wav")
+	sounds["wraith_hit"] = preload("res://audio/sfx/enemies/wraith_hit.wav")
+	sounds["wraith_death"] = preload("res://audio/sfx/enemies/wraith_death.wav")
+	
 	# ========== MUSIC TRACKS ==========
 	# Day ambient tracks
 	sounds["ambient_day_1"] = preload("res://audio/music/ambient_day_1.wav")
@@ -306,6 +401,14 @@ func play_sound(sound_name: String, category: String = "sfx", pitch_vary: bool =
 	
 	# Apply volume (Master × Category × Variation)
 	var final_volume = master_volume * _get_category_volume(category)
+	
+	# Reduce combat/enemy sounds by 70% (they're too loud!)
+	if sound_name.begins_with("swing_") or sound_name.begins_with("hit_") or \
+	   sound_name.begins_with("player_grunt") or sound_name.begins_with("player_death") or \
+	   sound_name.ends_with("_ambient") or sound_name.ends_with("_attack") or \
+	   sound_name.ends_with("_hit") or sound_name.ends_with("_death"):
+		final_volume *= combat_sound_volume  # Adjustable in Inspector (was too loud at 50%)
+	
 	if volume_vary:
 		var vol_range = variation["volume"]
 		final_volume *= randf_range(vol_range[0], vol_range[1])
@@ -323,6 +426,74 @@ func play_sound(sound_name: String, category: String = "sfx", pitch_vary: bool =
 	
 	# Track as active
 	active_sounds.append(player)
+
+func play_sound_3d(sound_name: String, position: Vector3, category: String = "sfx", 
+                   pitch_vary: bool = true, volume_vary: bool = true, 
+                   max_distance: float = -1.0) -> void:
+	"""
+	Play a 3D positional sound that gets quieter with distance
+	
+	Args:
+		sound_name: Name of sound in library
+		position: World position to play sound from
+		category: Volume category ("sfx", "ui", "ambient")
+		pitch_vary: Apply pitch variation
+		volume_vary: Apply volume variation
+		max_distance: Distance at which sound is inaudible (default uses sound_3d_max_distance from Inspector)
+	"""
+	
+	# Use Inspector value if not specified
+	if max_distance < 0:
+		max_distance = sound_3d_max_distance
+	
+	# Check if sound exists
+	if not sounds.has(sound_name):
+		push_warning("[AudioManager] Sound not found: %s" % sound_name)
+		return
+	
+	# Create 3D audio player
+	var player_3d = AudioStreamPlayer3D.new()
+	get_tree().root.add_child(player_3d)
+	player_3d.global_position = position
+	
+	# Configure stream
+	player_3d.stream = sounds[sound_name]
+	
+	# Get variation settings
+	var variation = _get_variation_settings(sound_name)
+	
+	# Apply volume (Master × Category × Variation)
+	var final_volume = master_volume * _get_category_volume(category)
+	
+	# Reduce combat/enemy sounds by 70%
+	if sound_name.begins_with("swing_") or sound_name.begins_with("hit_") or \
+	   sound_name.begins_with("player_grunt") or sound_name.begins_with("player_death") or \
+	   sound_name.ends_with("_ambient") or sound_name.ends_with("_attack") or \
+	   sound_name.ends_with("_hit") or sound_name.ends_with("_death"):
+		final_volume *= combat_sound_volume  # Adjustable in Inspector
+	
+	if volume_vary:
+		var vol_range = variation["volume"]
+		final_volume *= randf_range(vol_range[0], vol_range[1])
+	player_3d.unit_size = 1.0  # Base unit size
+	player_3d.max_db = linear_to_db(final_volume)  # Max volume when close
+	
+	# Configure 3D attenuation
+	player_3d.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
+	player_3d.max_distance = max_distance  # Inaudible beyond this distance
+	
+	# Apply pitch variation
+	if pitch_vary:
+		var pitch_range = variation["pitch"]
+		player_3d.pitch_scale = randf_range(pitch_range[0], pitch_range[1])
+	else:
+		player_3d.pitch_scale = 1.0
+	
+	# Play sound
+	player_3d.play()
+	
+	# Auto-cleanup when finished
+	player_3d.finished.connect(func(): player_3d.queue_free())
 
 func play_sound_variant(base_name: String, variant_count: int, category: String = "sfx",
                         pitch_vary: bool = true, volume_vary: bool = true) -> void:

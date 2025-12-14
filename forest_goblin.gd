@@ -22,6 +22,10 @@ const FLEE_SPEED_MULTIPLIER: float = 1.3  # 30% faster when fleeing
 const PREFERRED_DISTANCE: float = 3.0  # Try to stay 3m away
 const BACKPEDAL_SPEED_MULTIPLIER: float = 0.7  # Slower when backing up
 
+# Ambient sound timer (performance optimization)
+var ambient_sound_timer: float = 0.0
+var next_ambient_delay: float = 0.0
+
 func _ready() -> void:
 	# Set goblin stats from balance table
 	max_health = 50
@@ -63,6 +67,7 @@ func create_enemy_visual() -> void:
 	# Create visual container
 	var visual_root = Node3D.new()
 	visual_root.name = "Visual"
+	visual_root.rotation_degrees.y = 180  # Fix backward movement
 	add_child(visual_root)
 	
 	# === BODY (Green capsule) ===
@@ -75,7 +80,14 @@ func create_enemy_visual() -> void:
 	visual_root.add_child(body)
 	
 	var body_mat = StandardMaterial3D.new()
-	body_mat.albedo_color = Color(0.2, 0.5, 0.2)  # Dark green
+	body_mat.albedo_color = Color(0.8, 1.2, 0.8)  # Bright green base for texture visibility
+	
+	# Apply goblin skin texture
+	var skin_texture = preload("res://textures/forest_goblin_skin.jpg")
+	body_mat.albedo_texture = skin_texture
+	body_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST  # Pixel art style
+	body_mat.roughness = 0.85  # Rough, leathery skin
+	
 	body.material = body_mat
 	
 	# === HEAD (Green sphere on top of body) ===
@@ -86,7 +98,12 @@ func create_enemy_visual() -> void:
 	visual_root.add_child(head)
 	
 	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = Color(0.25, 0.55, 0.25)  # Slightly lighter green
+	head_mat.albedo_color = Color(0.8, 1.2, 0.8)  # Bright green base (match body)
+	head_mat.albedo_texture = skin_texture  # Same skin texture
+	head_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	head_mat.roughness = 0.85
+	head_mat.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED  # Force opaque
+	head_mat.cull_mode = BaseMaterial3D.CULL_BACK  # Don't render inside of sphere
 	head.material = head_mat
 	
 	# === EYES (2x CSGSphere, yellow, beady) ===
@@ -98,6 +115,9 @@ func create_enemy_visual() -> void:
 	
 	var eye_mat = StandardMaterial3D.new()
 	eye_mat.albedo_color = Color(1.0, 1.0, 0.3)  # Yellow
+	eye_mat.emission_enabled = true  # Make eyes glow slightly
+	eye_mat.emission = Color(0.8, 0.8, 0.2)  # Dim yellow glow
+	eye_mat.emission_energy_multiplier = 0.5  # Subtle glow
 	eye_left.material = eye_mat
 	
 	var eye_right = CSGSphere3D.new()
@@ -109,8 +129,8 @@ func create_enemy_visual() -> void:
 	
 	# === PUPILS (Tiny black spheres) ===
 	var pupil_left = CSGSphere3D.new()
-	pupil_left.radius = 0.03
-	pupil_left.position = Vector3(-0.15, 1.25, 0.35)
+	pupil_left.radius = 0.02
+	pupil_left.position = Vector3(-0.15, 1.25, 0.30)  # Same Z as eyes
 	pupil_left.name = "PupilLeft"
 	visual_root.add_child(pupil_left)
 	
@@ -119,16 +139,16 @@ func create_enemy_visual() -> void:
 	pupil_left.material = pupil_mat
 	
 	var pupil_right = CSGSphere3D.new()
-	pupil_right.radius = 0.03
-	pupil_right.position = Vector3(0.15, 1.25, 0.35)
+	pupil_right.radius = 0.02
+	pupil_right.position = Vector3(0.15, 1.25, 0.30)  # Same Z as eyes
 	pupil_right.name = "PupilRight"
 	visual_root.add_child(pupil_right)
 	pupil_right.material = pupil_mat
 	
 	# === ARMS (2x CSGBox, thin, brown) ===
 	var arm_left = CSGBox3D.new()
-	arm_left.size = Vector3(0.12, 0.6, 0.12)
-	arm_left.position = Vector3(-0.45, 0.7, 0)
+	arm_left.size = Vector3(0.18, 0.7, 0.18)  # Thicker: was 0.12x0.6x0.12
+	arm_left.position = Vector3(-0.5, 0.65, 0)  # Moved out slightly
 	arm_left.rotation_degrees = Vector3(0, 0, 15)
 	arm_left.name = "ArmLeft"
 	visual_root.add_child(arm_left)
@@ -138,8 +158,8 @@ func create_enemy_visual() -> void:
 	arm_left.material = arm_mat
 	
 	var arm_right = CSGBox3D.new()
-	arm_right.size = Vector3(0.12, 0.6, 0.12)
-	arm_right.position = Vector3(0.45, 0.7, 0)
+	arm_right.size = Vector3(0.18, 0.7, 0.18)  # Thicker: was 0.12x0.6x0.12
+	arm_right.position = Vector3(0.5, 0.65, 0)  # Moved out slightly
 	arm_right.rotation_degrees = Vector3(0, 0, -15)
 	arm_right.name = "ArmRight"
 	visual_root.add_child(arm_right)
@@ -159,30 +179,20 @@ func create_enemy_visual() -> void:
 	
 	# === LEGS (2x CSGBox, short stubby legs) ===
 	var leg_left = CSGBox3D.new()
-	leg_left.size = Vector3(0.15, 0.4, 0.15)
-	leg_left.position = Vector3(-0.15, 0.2, 0)
+	leg_left.size = Vector3(0.25, 0.6, 0.25)  # Wider and taller
+	leg_left.position = Vector3(-0.25, 0.3, 0)  # Further out to the side, higher center
 	leg_left.name = "LegLeft"
 	visual_root.add_child(leg_left)
 	leg_left.material = arm_mat
 	
 	var leg_right = CSGBox3D.new()
-	leg_right.size = Vector3(0.15, 0.4, 0.15)
-	leg_right.position = Vector3(0.15, 0.2, 0)
+	leg_right.size = Vector3(0.25, 0.6, 0.25)  # Wider and taller
+	leg_right.position = Vector3(0.25, 0.3, 0)  # Further out to the side, higher center
 	leg_right.name = "LegRight"
 	visual_root.add_child(leg_right)
 	leg_right.material = arm_mat
 	
-	# Store body as visual_mesh for damage flash system
-	visual_mesh = MeshInstance3D.new()
-	var mesh = CapsuleMesh.new()
-	mesh.radius = 0.4
-	mesh.height = 1.0
-	visual_mesh.mesh = mesh
-	visual_mesh.position = Vector3(0, 0.5, 0)
-	visual_mesh.set_surface_override_material(0, body_mat)
-	visual_mesh.visible = false  # Hidden, CSG is visible
-	add_child(visual_mesh)
-	
+	# Store original material for damage flash (use body CSG material)
 	original_material = body_mat
 	
 	# Adjust collision shape for goblin size
@@ -197,6 +207,13 @@ func update_ai(delta: float) -> void:
 	"""Override AI for patrol, flee, and coward behaviors"""
 	if not player or current_state == State.DEATH:
 		return
+	
+	# Ambient sounds (timer-based - every 6-10 seconds)
+	ambient_sound_timer += delta
+	if ambient_sound_timer >= next_ambient_delay:
+		AudioManager.play_sound_3d("goblin_ambient", global_position, "sfx", false, false)
+		ambient_sound_timer = 0.0
+		next_ambient_delay = randf_range(6.0, 10.0)
 	
 	var distance = global_position.distance_to(player.global_position)
 	
@@ -225,6 +242,10 @@ func update_ai(delta: float) -> void:
 				if distance < attack_range:
 					current_state = State.ATTACK
 					velocity = Vector3.ZERO
+				# Dead zone: stand still if at preferred distance (±0.5m)
+				elif distance >= (PREFERRED_DISTANCE - 0.5) and distance <= (PREFERRED_DISTANCE + 0.5):
+					velocity = Vector3.ZERO
+					look_at_player()  # Still face player
 				# Coward behavior: backpedal if too close
 				elif distance < PREFERRED_DISTANCE:
 					backpedal_from_player()
@@ -237,6 +258,9 @@ func update_ai(delta: float) -> void:
 				# Stop attacking when fleeing
 				current_state = State.CHASE
 				return
+			
+			# Always face the player during attack
+			look_at_player()
 			
 			# Return to chase if player escapes
 			if distance > attack_range * 1.5:
@@ -325,18 +349,25 @@ func take_damage(amount: int) -> void:
 
 func on_attack_telegraph() -> void:
 	"""Visual feedback during attack telegraph"""
-	# TODO (Task 3.1): Play goblin growl sound
-	# AudioManager.play_sound("goblin_growl", "enemy", false, false)
+	AudioManager.play_sound_3d("goblin_attack", global_position, "sfx", false, false)
 	pass
 
-func on_attack_execute() -> void:
-	"""Play attack sound effect"""
-	# TODO (Task 3.1): Play stick poke sound
-	# AudioManager.play_sound("goblin_attack", "enemy", false, false)
-	pass
+func on_hit() -> void:
+	"""Play hit sound effect"""
+	AudioManager.play_sound_3d("goblin_hit", global_position, "sfx", false, false)
 
 func on_death() -> void:
 	"""Play death sound effect"""
-	# TODO (Task 3.1): Play goblin death sound
-	# AudioManager.play_sound("goblin_death", "enemy", false, false)
+	AudioManager.play_sound_3d("goblin_death", global_position, "sfx", false, false)
+
+func look_at_player() -> void:
+	"""Face the player without moving"""
+	if not player:
+		return
+	var to_player = player.global_position - global_position
+	to_player.y = 0
+	if to_player.length() > 0.01:
+		var target_rotation = atan2(to_player.x, to_player.z)
+		rotation.y = target_rotation + PI  # Add 180° to compensate for visual rotation
+
 	pass

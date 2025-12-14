@@ -1,14 +1,13 @@
-[gd_scene load_steps=10 format=3 uid="uid://bc354ntptv04q"]
+[gd_scene load_steps=9 format=3 uid="uid://bc354ntptv04q"]
 
 [ext_resource type="Script" uid="uid://ckhk1lvasit4r" path="res://chunk_manager.gd" id="1_fj7yv"]
 [ext_resource type="Script" uid="uid://rkidwtfo0gfw" path="res://world.gd" id="1_tlwt5"]
-[ext_resource type="PackedScene" path="res://player.tscn" id="2_player"]
+[ext_resource type="PackedScene" uid="uid://7txokxk5534x" path="res://player.tscn" id="2_player"]
 [ext_resource type="Script" uid="uid://c2gqjpxjajo8c" path="res://day_night_cycle.gd" id="4_aqk2v"]
 [ext_resource type="Script" uid="uid://5k6aextniq48" path="res://vegetation_spawner.gd" id="5_036b0"]
 [ext_resource type="Script" uid="uid://c33xs1ujes8lw" path="res://water_plane.gd" id="6_dwbse"]
 [ext_resource type="Script" uid="uid://wn1w2h0qttrp" path="res://critter_spawner.gd" id="7_critter"]
-[ext_resource type="PackedScene" path="res://simple_test_enemy.tscn" id="8_test_enemy"]
-[ext_resource type="Script" path="res://enemy_test_script.gd" id="9_test_script"]
+[ext_resource type="Script" uid="uid://c6y6rkdqob7hv" path="res://audio_settings.gd" id="8_audio_settings"]
 
 [node name="World" type="Node3D"]
 script = ExtResource("1_tlwt5")
@@ -35,12 +34,10 @@ script = ExtResource("5_036b0")
 
 [node name="CritterSpawner" type="Node3D" parent="."]
 script = ExtResource("7_critter")
+debug_spawn_distance = 20.0
+
+[node name="AudioSettings" type="Node" parent="."]
+script = ExtResource("8_audio_settings")
 
 [node name="WaterPlane" type="MeshInstance3D" parent="."]
 script = ExtResource("6_dwbse")
-
-[node name="TestEnemy" parent="." instance=ExtResource("8_test_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 5, 5)
-
-[node name="EnemyTestRunner" type="Node" parent="."]
-script = ExtResource("9_test_script")

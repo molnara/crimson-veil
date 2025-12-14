@@ -14,6 +14,10 @@ var zigzag_timer: float = 0.0
 const ZIGZAG_INTERVAL: float = 0.4  # Change direction every 0.4s
 var zigzag_direction: int = 1  # 1 = right, -1 = left
 
+# Ambient sound timer (performance optimization)
+var ambient_sound_timer: float = 0.0
+var next_ambient_delay: float = 0.0
+
 func _ready() -> void:
 	# Set rabbit stats from balance table
 	max_health = 30
@@ -38,33 +42,47 @@ func create_enemy_visual() -> void:
 	# Create visual container
 	var visual_root = Node3D.new()
 	visual_root.name = "Visual"
+	visual_root.rotation_degrees.y = 180  # Fix backward movement
 	add_child(visual_root)
 	
 	# === BODY (Brown sphere) ===
 	var body = CSGSphere3D.new()
 	body.radius = 0.3
+	body.position = Vector3(0, 0.4, 0)  # Raised to match collision shape center
 	body.name = "Body"
 	visual_root.add_child(body)
 	
 	var body_mat = StandardMaterial3D.new()
-	body_mat.albedo_color = Color(0.4, 0.25, 0.15)  # Dark brown
+	body_mat.albedo_color = Color(1.2, 1.0, 0.9)  # Bright base for texture visibility
+	
+	# Apply corrupted fur texture
+	var fur_texture = preload("res://textures/corrupted_rabbit_fur.jpg")
+	body_mat.albedo_texture = fur_texture
+	body_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST  # Pixel art style
+	body_mat.roughness = 0.9  # Matted, no shine
+	
+	print("[CorruptedRabbit] ✅ Texture loaded: corrupted_rabbit_fur.jpg")
+	
 	body.material = body_mat
 	
 	# === HEAD (Smaller sphere, offset forward) ===
 	var head = CSGSphere3D.new()
 	head.radius = 0.2
-	head.position = Vector3(0, 0.1, 0.25)
+	head.position = Vector3(0, 0.5, 0.25)  # Raised 0.4m (was 0.1, now 0.5)
 	head.name = "Head"
 	visual_root.add_child(head)
 	
 	var head_mat = StandardMaterial3D.new()
-	head_mat.albedo_color = Color(0.4, 0.25, 0.15)  # Dark brown
+	head_mat.albedo_color = Color(1.2, 1.0, 0.9)  # Bright base for texture visibility
+	head_mat.albedo_texture = fur_texture  # Same fur texture
+	head_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	head_mat.roughness = 0.9
 	head.material = head_mat
 	
 	# === EARS (2x CSGBox, pointed up, pink inside) ===
 	var ear_left = CSGBox3D.new()
 	ear_left.size = Vector3(0.08, 0.25, 0.05)
-	ear_left.position = Vector3(-0.12, 0.35, 0.25)
+	ear_left.position = Vector3(-0.12, 0.75, 0.25)  # Raised 0.4m (was 0.35, now 0.75)
 	ear_left.rotation_degrees = Vector3(0, 0, -15)
 	ear_left.name = "EarLeft"
 	visual_root.add_child(ear_left)
@@ -75,7 +93,7 @@ func create_enemy_visual() -> void:
 	
 	var ear_right = CSGBox3D.new()
 	ear_right.size = Vector3(0.08, 0.25, 0.05)
-	ear_right.position = Vector3(0.12, 0.35, 0.25)
+	ear_right.position = Vector3(0.12, 0.75, 0.25)  # Raised 0.4m (was 0.35, now 0.75)
 	ear_right.rotation_degrees = Vector3(0, 0, 15)
 	ear_right.name = "EarRight"
 	visual_root.add_child(ear_right)
@@ -87,7 +105,7 @@ func create_enemy_visual() -> void:
 	# === EYES (2x CSGSphere, glowing red, emissive) ===
 	var eye_left = CSGSphere3D.new()
 	eye_left.radius = 0.05
-	eye_left.position = Vector3(-0.08, 0.15, 0.38)
+	eye_left.position = Vector3(-0.08, 0.55, 0.38)  # Raised 0.4m
 	eye_left.name = "EyeLeft"
 	visual_root.add_child(eye_left)
 	
@@ -100,7 +118,7 @@ func create_enemy_visual() -> void:
 	
 	var eye_right = CSGSphere3D.new()
 	eye_right.radius = 0.05
-	eye_right.position = Vector3(0.08, 0.15, 0.38)
+	eye_right.position = Vector3(0.08, 0.55, 0.38)  # Raised 0.4m
 	eye_right.name = "EyeRight"
 	visual_root.add_child(eye_right)
 	
@@ -114,12 +132,15 @@ func create_enemy_visual() -> void:
 	# === TAIL (Small fluffy sphere at back) ===
 	var tail = CSGSphere3D.new()
 	tail.radius = 0.12
-	tail.position = Vector3(0, 0.05, -0.35)
+	tail.position = Vector3(0, 0.45, -0.35)  # Raised 0.4m
 	tail.name = "Tail"
 	visual_root.add_child(tail)
 	
 	var tail_mat = StandardMaterial3D.new()
-	tail_mat.albedo_color = Color(0.5, 0.3, 0.2)  # Lighter brown, fluffy
+	tail_mat.albedo_color = Color(1.2, 1.0, 0.9)  # Bright base for texture visibility
+	tail_mat.albedo_texture = fur_texture  # Same fur texture
+	tail_mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	tail_mat.roughness = 0.9
 	tail.material = tail_mat
 	
 	# Store body as visual_mesh for damage flash system
@@ -146,6 +167,13 @@ func update_ai(delta: float) -> void:
 	if not player or current_state == State.DEATH:
 		return
 	
+	# Ambient sounds (timer-based - every 4-7 seconds, not every frame!)
+	ambient_sound_timer += delta
+	if ambient_sound_timer >= next_ambient_delay:
+		AudioManager.play_sound_3d("rabbit_ambient", global_position, "sfx", false, false)
+		ambient_sound_timer = 0.0
+		next_ambient_delay = randf_range(4.0, 7.0)  # Random interval
+	
 	var distance = global_position.distance_to(player.global_position)
 	
 	match current_state:
@@ -164,6 +192,7 @@ func update_ai(delta: float) -> void:
 			elif distance > TERRITORIAL_RANGE * 1.5:
 				current_state = State.IDLE
 				is_territorial_aggro = false
+				velocity = Vector3.ZERO  # STOP MOVING when losing aggro
 			else:
 				# Zigzag chase pattern
 				chase_zigzag(delta)
@@ -207,18 +236,10 @@ func chase_zigzag(delta: float) -> void:
 
 func on_attack_telegraph() -> void:
 	"""Visual feedback during attack telegraph"""
-	# TODO (Task 3.1): Play rabbit attack hiss sound
-	# AudioManager.play_sound("rabbit_attack", "enemy", false, false)
-	pass
-
-func on_attack_execute() -> void:
-	"""Play attack sound effect"""
-	# TODO (Task 3.1): Play rabbit attack strike sound
-	# AudioManager.play_sound("rabbit_strike", "enemy", false, false)
+	AudioManager.play_sound_3d("rabbit_attack", global_position, "sfx", false, false)
 	pass
 
 func on_death() -> void:
 	"""Play death sound effect"""
-	# TODO (Task 3.1): Play rabbit death squeal
-	# AudioManager.play_sound("rabbit_death", "enemy", false, false)
+	AudioManager.play_sound_3d("rabbit_death", global_position, "sfx", false, false)
 	pass

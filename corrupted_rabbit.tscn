@@ -1,13 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://corrupted_rabbit_001"]
+[gd_scene load_steps=3 format=3 uid="uid://corrupted_rabbit_scene"]
 
 [ext_resource type="Script" path="res://corrupted_rabbit.gd" id="1"]
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 0.8
+
 [node name="CorruptedRabbit" type="CharacterBody3D"]
 script = ExtResource("1")
-max_health = 30
-damage = 8
-move_speed = 4.5
-detection_range = 5.0
-attack_range = 1.5
-attack_cooldown_duration = 1.0
-attack_telegraph_duration = 0.3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("CapsuleShape3D_1")
