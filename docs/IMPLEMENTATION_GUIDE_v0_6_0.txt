@@ -34,95 +34,96 @@ PHASE 1: COMBAT FOUNDATION ✅ COMPLETE
     ✅ Crafting recipes in Weapon class
     ✅ Weapon stats: damage, range, cooldown
 
-PHASE 2: ENEMIES (Week 2)
---------------------------
-Day 5-6: Enemy Base Class
-[ ] Create res://enemy.gd (extends CharacterBody3D)
-[ ] State machine (Idle/Chase/Attack/Death)
-[ ] Health system
-[ ] Drop table system
-[ ] Flash effects on damage
-[ ] take_damage(amount) method (simplified - no is_heavy)
+PHASE 2: ENEMIES ✅ COMPLETE
+----------------------------
+[✅] Day 5-6: Enemy Base Class
+    ✅ Created res://enemy.gd (extends CharacterBody3D)
+    ✅ State machine (Idle/Chase/Attack/Death)
+    ✅ Health system with drop tables
+    ✅ Flash effects on damage (white flash 0.1s)
+    ✅ take_damage(amount) method (simplified - no is_heavy)
 
-Day 7-9: Enemy Types (2 per day)
-[ ] Corrupted Rabbit (territorial, fast, 30 HP)
-[ ] Forest Goblin (patrol, flee at 20% HP, 50 HP)
-[ ] Desert Scorpion (ambush, burrow, 60 HP)
-[ ] Ice Wolf (pack AI, spawns in groups, 55 HP)
-[ ] Stone Golem (tank, ground slam, 100 HP)
-[ ] Shadow Wraith (night-only, floats, 40 HP)
+[✅] Day 7-9: Enemy Types (all 6 complete)
+    ✅ Corrupted Rabbit (territorial, fast, 30 HP) - 8/8 tests passing
+    ✅ Forest Goblin (patrol, flee at 20% HP, 50 HP) - 9/9 tests passing
+    ✅ Desert Scorpion (simplified ground enemy, 60 HP) - 9/9 tests passing
+    ✅ Ice Wolf (pack AI, spawns in groups, 55 HP) - 8/8 tests passing
+    ✅ Stone Golem (tank, ground slam, 100 HP) - 8/8 tests passing
+    ✅ Shadow Wraith (night-only, floats, 40 HP) - 9/9 tests passing
 
-Day 10: Spawning Integration
-[ ] Extend critter_spawner.gd with enemy spawning
-[ ] Biome-specific spawn logic
-[ ] Pack spawning for Ice Wolves
-[ ] Night-only logic for Shadow Wraith
-[ ] Configure spawn rates (5-15% per chunk)
+[✅] Day 10: Spawning Integration
+    ✅ Extended critter_spawner.gd with enemy spawning
+    ✅ Biome-specific spawn logic (Forest, Snow, Mountain, Night)
+    ✅ Pack spawning for Ice Wolves (2-3 per spawn with pack_id)
+    ✅ Night-only logic for Shadow Wraith (10 PM - 6 AM)
+    ✅ Configured spawn rates (5-15% per biome)
 
-PHASE 3: AUDIO & VISUAL (Days 11-12)
--------------------------------------
-Day 11: Audio Generation
-[ ] Generate 8 player sounds via SFX Engine:
-    - swing_light.wav
-    - swing_medium.wav  
-    - swing_heavy.wav
-    - hit_flesh.wav
-    - hit_stone.wav
-    - player_grunt_1.wav
-    - player_grunt_2.wav
-    - player_death.wav
-[ ] Generate 24 enemy sounds (4 per enemy × 6 enemies)
-[ ] Import to res://audio/combat/
-[ ] Configure AudioManager entries
-[ ] Test all sound triggers
+PHASE 3: AUDIO & VISUAL ✅ COMPLETE
+------------------------------------
+[✅] Day 11: Audio Generation
+    ✅ Generated 8 player sounds via SFX Engine
+    ✅ Generated 24 enemy sounds (6 enemies × 4 sounds each)
+    ✅ All sounds integrated with AudioManager
+    ✅ Timer-based ambient sounds for performance
 
-Day 12: Textures & Effects
-[ ] Generate 5 textures via Leonardo.ai
-[ ] Apply to enemy materials
-[ ] Create hit particle effects
-[ ] Polish visual feedback
-[ ] Finalize rumble presets
+[✅] Day 12: Textures & Effects
+    ✅ Generated 6 textures via Leonardo.ai (all enemies)
+    ✅ Applied to enemy materials with pixel art filtering
+    ✅ Fixed all visual bugs (Rabbit, Goblin, Scorpion, Wraith)
+    ✅ Crosshair feedback working
+    ✅ Death fade animation working
+    ✅ Camera shake presets finalized
 
-PHASE 4: INTEGRATION & POLISH (Day 13)
----------------------------------------
-Day 13: Final Integration
-[ ] Death system (detection, UI, respawn)
-[ ] Balance pass (damage, HP, cooldowns)
-[ ] Testing checklist
-[ ] Bug fixes
+PHASE 4: INTEGRATION & POLISH ⏳ IN PROGRESS
+--------------------------------------------
+[✅] Day 13: Death & Respawn System
+    ✅ Created death_screen.gd and death_screen.tscn
+    ✅ Death detection (health <= 0 with has_died flag)
+    ✅ Death screen UI with RED death counter ("Deaths: X")
+    ✅ Fade-to-black animation (0.5s overlay, 0.8s panel)
+    ✅ 2-second respawn delay with countdown
+    ✅ Respawn on ground (waits for player landing)
+    ✅ Full health/hunger restoration
+    ✅ Keep all items (forgiving mechanics)
+    ✅ M+KB + Controller support
+    ✅ Modified health_hunger_system.gd (added player_died signal)
+    ✅ Modified player.gd (death/respawn logic)
+
+[⏳] Day 14: Final Polish & Balance
+    [ ] Final damage/HP balance tuning
+    [ ] Comprehensive gameplay testing
+    [ ] Performance optimization check
+    [ ] Button hints UI (optional)
+    [ ] Final bug fixes
 
 FILE STRUCTURE
 ==============
 
-✅ Created Files:
------------------
+✅ Created Files (Phase 1-4):
+-----------------------------
 res://combat_system.gd              # Main combat logic (~300 lines)
 res://weapon.gd                      # Weapon resource class
 res://combat_ui.gd                   # Simple crosshair UI
 res://combat_ui.tscn                 # UI scene (crosshair only)
+res://enemy.gd                       # Base enemy class (~270 lines)
+res://corrupted_rabbit.gd + .tscn   # Territorial zigzag chaser
+res://forest_goblin.gd + .tscn      # Patrol/flee/coward AI
+res://desert_scorpion.gd + .tscn    # Simplified ground enemy
+res://ice_wolf.gd + .tscn           # Pack hunter with coordination
+res://stone_golem.gd + .tscn        # Tank with ground slam AoE
+res://shadow_wraith.gd + .tscn      # Night-only ethereal enemy
+res://death_screen.gd + .tscn       # Death UI with counter & respawn
+res://test_ice_wolf.gd + .tscn      # Automated test suite (8 tests)
+res://test_stone_golem.gd + .tscn   # Automated test suite (8 tests)
 
-Files to Create:
-----------------
-res://enemy.gd                       # Base enemy class
-res://enemies/
-    ├── corrupted_rabbit.gd + .tscn
-    ├── forest_goblin.gd + .tscn
-    ├── desert_scorpion.gd + .tscn
-    ├── ice_wolf.gd + .tscn
-    ├── stone_golem.gd + .tscn
-    └── shadow_wraith.gd + .tscn
-res://ui/death_screen.tscn + .gd    # Death/respawn UI
-res://audio/combat/                 # 32 combat sounds (8 player + 24 enemy)
-res://textures/enemies/             # 5 AI-generated textures
-
-✅ Modified Files:
-------------------
-res://player.gd                     # Combat input integration
-res://critter_spawner.gd            # Enemy spawning
-res://health_hunger_system.gd       # Death detection
-res://rumble_manager.gd             # Combat rumble presets
-res://audio_manager.gd              # Combat sound entries
-project.godot                       # combat_attack input mapping
+✅ Modified Files (Phase 1-4):
+------------------------------
+res://player.gd                      # Combat input + death/respawn logic
+res://health_hunger_system.gd        # Added player_died signal + has_died flag
+res://critter_spawner.gd             # Enemy spawning integration
+res://audio_manager.gd               # 32 combat sound entries (8 player + 24 enemy)
+res://rumble_manager.gd              # Combat rumble presets
+project.godot                        # combat_attack input mapping
 
 CRITICAL CODE SNIPPETS
 ======================
@@ -530,6 +531,97 @@ BENEFITS:
 + Fewer bugs to fix
 + Faster iteration on balance
 + Can always add complexity later if needed
+
+TASK 4.1 COMPLETION NOTES (Dec 14, 2024)
+=========================================
+
+✅ DEATH & RESPAWN SYSTEM IMPLEMENTED
+
+Files Created:
+--------------
+1. death_screen.gd (~100 lines)
+   - Death UI controller with fade-to-black animation
+   - 2-second respawn delay with countdown timer
+   - RED death counter (session-only): "Deaths: X"
+   - M+KB + Controller support (Enter/A button)
+   - Auto-focus respawn button for controller
+
+2. death_screen.tscn
+   - Full-screen black overlay (85% alpha)
+   - Centered panel with "YOU DIED" title (RED, 48px)
+   - Death counter label (RED, 24px)
+   - Respawn button (200x50px, green hover)
+
+Files Modified:
+---------------
+1. health_hunger_system.gd
+   - Added signal: player_died()
+   - Added variable: has_died (prevents duplicate death signals)
+   - Modified take_damage() to emit death signal when health <= 0
+   - Reset has_died flag on respawn
+
+2. player.gd (~90 lines added)
+   - Added variables: death_screen, is_dead, death_count, spawn_position
+   - Added setup_spawn_position() - waits for player to land, then stores ground position
+   - Added _on_player_died() - shows death screen, increments counter
+   - Added _on_respawn_requested() - restores health/hunger, teleports to spawn
+   - Added take_damage(amount) - receives damage from enemies
+   - Modified _physics_process() - disables movement when dead
+
+Bugs Fixed:
+-----------
+1. Death signal not emitting
+   - CAUSE: Race condition in is_alive() check (checked AFTER health modified)
+   - FIX: Added has_died flag, check "not has_died" instead of "is_alive()"
+
+2. Spawn height too high (Y=25.0 instead of ground)
+   - CAUSE: Raycast ran before terrain chunks generated
+   - FIX V1: Raycast in _ready() (FAILED - no terrain yet)
+   - FIX V2: Wait for player to land naturally (SUCCESS)
+   - Solution: while not is_on_floor() loop, store position after landing
+
+Features:
+---------
+✅ Death screen appears with fade-to-black (0.5s overlay, 0.8s panel)
+✅ "YOU DIED" in RED (48px bold)
+✅ Death counter in RED: "Deaths: 1", "Deaths: 2", etc.
+✅ 2-second respawn delay with countdown
+✅ Button disabled during countdown, enabled after 2s
+✅ Respawn on ground level (not floating in air)
+✅ Full health/hunger restore (100/100)
+✅ Keep all items (forgiving for v0.6.0)
+✅ Death sound plays on death
+✅ Respawn sound plays on respawn
+✅ Movement locked during death screen
+✅ Mouse released for UI, recaptured after respawn
+✅ M+KB support (Enter key)
+✅ Controller support (A button)
+✅ Multiple deaths work (counter increments correctly)
+
+Testing Checklist Completed:
+-----------------------------
+✅ Player dies when health reaches 0
+✅ Death screen appears immediately
+✅ Death counter shows correct number
+✅ 2-second delay works
+✅ Click respawn works
+✅ Enter key respawn works
+✅ Controller A button respawn works
+✅ Player spawns on ground (not in air)
+✅ Health restored to 100
+✅ Hunger restored to 100
+✅ Can die multiple times in succession
+✅ Items kept after death
+✅ No crashes or soft-locks
+
+Time Invested:
+--------------
+Initial implementation: ~1.5 hours
+Bug fix #1 (death signal): ~15 minutes
+Bug fix #2 (spawn height): ~20 minutes
+Total: ~2 hours (matches estimate)
+
+Status: PRODUCTION READY ✅
 
 SUPPORT RESOURCES
 =================

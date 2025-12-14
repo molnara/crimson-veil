@@ -11,6 +11,7 @@ signal hunger_changed(new_hunger: float, max_hunger: float)
 signal hunger_low()  # Emitted when hunger drops below 30
 signal hunger_critical()  # Emitted when hunger reaches 0
 signal well_fed_status_changed(is_well_fed: bool)
+signal player_died()  # Emitted when health reaches 0
 
 # Stats
 @export var max_health: float = 100.0
@@ -28,6 +29,7 @@ var current_hunger: float = 100.0
 # Status tracking
 var is_well_fed: bool = true
 var was_hunger_low: bool = false
+var has_died: bool = false  # Track if death signal already emitted
 
 func _ready():
 	current_health = max_health
@@ -85,6 +87,12 @@ func eat_food(hunger_restore: float) -> bool:
 # Take damage (for future combat system)
 func take_damage(amount: float):
 	modify_health(-amount)
+	
+	# Check for death (only emit once)
+	if current_health <= 0 and not has_died:
+		has_died = true
+		player_died.emit()
+		print("[HealthHungerSystem] Player died! Health: %.1f" % current_health)
 
 # Heal (for future healing items)
 func heal(amount: float):

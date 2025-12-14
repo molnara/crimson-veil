@@ -32,6 +32,12 @@ var ui_state_before_container = {
 	"crafting_was_visible": false
 }
 
+# Death/Respawn system
+var death_screen: Control  # Death screen UI
+var is_dead: bool = false
+var death_count: int = 0  # Track deaths this session
+var spawn_position: Vector3  # Respawn location
+
 # Camera
 @onready var camera: Camera3D = $SpringArm3D/Camera3D
 @onready var spring_arm: SpringArm3D = $SpringArm3D
@@ -91,6 +97,15 @@ func _ready():
 		add_child(health_hunger_system)
 	else:
 		print("HealthHungerSystem found in scene!")
+	
+	# Connect to death signal
+	if health_hunger_system:
+		health_hunger_system.player_died.connect(_on_player_died)
+		print("[Player] Connected to death signal")
+	
+	# Store initial spawn position (deferred until world loads)
+	# Raycast needs terrain to exist first!
+	call_deferred("setup_spawn_position")
 	
 	# Initialize tool system
 	tool_system = ToolSystem.new()
@@ -430,6 +445,17 @@ func setup_ui():
 		print("Combat UI loaded successfully (crosshair + charge vignette)")
 	else:
 		print("Warning: Could not load combat_ui.tscn")
+	
+	# Load death screen UI (NEW: Task 4.1)
+	print("Loading death screen UI...")
+	var death_screen_scene = load("res://death_screen.tscn")
+	if death_screen_scene:
+		death_screen = death_screen_scene.instantiate()
+		get_tree().root.add_child(death_screen)
+		death_screen.respawn_requested.connect(_on_respawn_requested)
+		print("Death screen loaded successfully")
+	else:
+		print("Warning: Could not load death_screen.tscn")
 
 func _get_terrain_surface() -> String:
 	"""Detect surface type under player for footstep sounds"""
@@ -593,6 +619,11 @@ func apply_deadzone(value: float, deadzone: float) -> float:
 	return (abs(value) - deadzone) / (1.0 - deadzone) * sign(value)
 
 func _physics_process(delta):
+	# Don't process movement if dead
+	if is_dead:
+		velocity = Vector3.ZERO
+		return
+	
 	# Update placement cooldown timer
 	if placement_cooldown_timer > 0:
 		placement_cooldown_timer -= delta
@@ -741,3 +772,127 @@ func _physics_process(delta):
 	if direction.length() > 0 and velocity.length() < 0.5 and is_on_floor():
 		# We're trying to move but barely moving - might be stuck
 		velocity += direction * current_speed * 0.5
+
+# === DEATH & RESPAWN SYSTEM (Task 4.1) ===
+
+func _on_player_died() -> void:
+	"""Called when health reaches 0"""
+	if is_dead:
+		return  # Already dead, ignore
+	
+	is_dead = true
+	death_count += 1
+	print("[Player] Death #%d detected!" % death_count)
+	
+	# Stop all movement
+	velocity = Vector3.ZERO
+	
+	# Release mouse for UI interaction
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	
+	# Hide all gameplay UIs
+	if inventory_ui:
+		inventory_ui.visible = false
+	if crafting_ui:
+		crafting_ui.visible = false
+	if harvest_ui:
+		harvest_ui.visible = false
+	if container_ui:
+		container_ui.visible = false
+	
+	# Show death screen with death counter
+	if death_screen:
+		death_screen.show_death_screen(death_count)
+	else:
+		print("[Player] ERROR: Death screen not found!")
+	
+	print("[Player] Death screen shown, waiting for respawn...")
+
+func _on_respawn_requested() -> void:
+	"""Called when player clicks respawn button"""
+	print("[Player] Respawn requested!")
+	
+	# Reset health and hunger to full
+	if health_hunger_system:
+		health_hunger_system.current_health = health_hunger_system.max_health
+		health_hunger_system.current_hunger = health_hunger_system.max_hunger
+		health_hunger_system.has_died = false  # Reset death flag for next death
+		
+		# Emit signals to update UI
+		health_hunger_system.health_changed.emit(
+			health_hunger_system.current_health,
+			health_hunger_system.max_health
+		)
+		health_hunger_system.hunger_changed.emit(
+			health_hunger_system.current_hunger,
+			health_hunger_system.max_hunger
+		)
+		
+		print("[Player] Health and hunger restored to full")
+	
+	# Teleport to spawn point
+	global_position = spawn_position
+	velocity = Vector3.ZERO
+	
+	# Reset death state
+	is_dead = false
+	
+	# Re-capture mouse for gameplay
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	
+	# Restore essential UI visibility
+	if health_ui:
+		health_ui.visible = true
+	if harvest_ui:
+		harvest_ui.visible = true
+	
+	print("[Player] Respawned at spawn point: %s" % spawn_position)
+
+func take_damage(amount: int) -> void:
+	"""Called by enemies to damage player"""
+	if is_dead:
+		return  # Don't take damage while dead
+	
+	if health_hunger_system:
+		health_hunger_system.take_damage(float(amount))
+		print("[Player] Took %d damage (Health: %.1f)" % [
+			amount,
+			health_hunger_system.current_health
+		])
+
+func find_ground_position(start_pos: Vector3) -> Vector3:
+	"""Find ground level below a given position using raycast"""
+	var space_state = get_world_3d().direct_space_state
+	
+	# Raycast straight down from start position
+	var query = PhysicsRayQueryParameters3D.create(
+		start_pos,
+		start_pos + Vector3(0, -100, 0)  # Cast 100m down
+	)
+	query.collision_mask = 1  # Only hit terrain (Layer 1)
+	
+	var result = space_state.intersect_ray(query)
+	
+	if result:
+		# Found ground - spawn slightly above it (player height)
+		var ground_y = result.position.y
+		return Vector3(start_pos.x, ground_y + 1.0, start_pos.z)
+	else:
+		# No ground found - use original position (fallback)
+		print("[Player] WARNING: No ground found below spawn position!")
+		return start_pos
+
+func setup_spawn_position() -> void:
+	"""Setup spawn position after player has landed on ground"""
+	# Wait for player to fall and land on ground naturally
+	# This is more reliable than raycasting before terrain loads
+	while not is_on_floor():
+		await get_tree().process_frame
+	
+	# Wait one more frame to ensure position is stable
+	await get_tree().process_frame
+	
+	# Now store the ground position
+	spawn_position = global_position
+	print("[Player] Spawn position set to: %s (after landing on ground)" % spawn_position)
+
