@@ -31,6 +31,7 @@ First-person survival game with:
 - Procedural terrain generation (chunk-based)
 - Biome system (7 biomes)
 - Day/night cycle
+- Dynamic weather system (rain, storm, snow, blizzard, fog, sandstorm)
 - Resource harvesting and crafting
 - Combat with enemies
 - Inventory and tools
@@ -50,6 +51,11 @@ World (Node3D)
 │   ├── Sun (DirectionalLight3D)
 │   ├── Moon (DirectionalLight3D)
 │   └── WorldEnvironment
+├── WeatherParticles (Node3D)          # NEW - Must be manually added
+│   ├── Rain (GPUParticles3D)
+│   ├── Storm (GPUParticles3D)
+│   ├── Snow (GPUParticles3D)
+│   └── Blizzard (GPUParticles3D)
 ├── Player (CharacterBody3D)
 │   ├── SpringArm3D
 │   │   └── Camera3D
@@ -67,8 +73,11 @@ World (Node3D)
 ### Autoload Singletons
 ```
 AudioManager     → res://audio_manager.gd
+MusicManager     → res://music_manager.gd
+AmbientManager   → res://ambient_manager.gd
 RumbleManager    → res://rumble_manager.gd
 SettingsManager  → res://settings_manager.gd
+WeatherManager   → res://weather_manager.gd    # NEW
 ```
 
 ### Class Definitions (class_name)
@@ -130,7 +139,57 @@ func update_view_distance(new_distance: int)
 
 ---
 
-### 3.2 Vegetation System (v0.7.1 Modular Refactor)
+### 3.2 Weather System (v0.8.0)
+
+**WeatherManager** (`weather_manager.gd`) - Autoload Singleton
+- Manages weather state machine with 9 weather types
+- Biome-specific weather probabilities
+- Controls particle visibility (does NOT create particles)
+- Smooth transitions between weather states
+
+```gdscript
+# Weather states
+enum Weather {
+    CLEAR, CLOUDY, RAIN, STORM, FOG, SNOW, BLIZZARD, SANDSTORM
+}
+
+# Key signals
+signal weather_changed(old_weather, new_weather)
+signal weather_transition_started(from, to, duration)
+
+# Key methods
+func set_rain_particles(particles: GPUParticles3D)
+func set_storm_particles(particles: GPUParticles3D)
+func set_snow_particles(particles: GPUParticles3D)
+func set_blizzard_particles(particles: GPUParticles3D)
+```
+
+**WeatherParticles** (`weather_particles.gd`) - Scene Node
+- **CRITICAL:** Must be manually added as Node3D in World scene (NOT .tscn)
+- Creates and manages GPUParticles3D for rain, storm, snow, blizzard
+- Registers particles with WeatherManager via set_*_particles()
+- Minecraft-style: stays in area, repositions on teleport (>200 units)
+
+```gdscript
+# Particle configuration
+| Weather  | Amount  | Size        | Gravity         | Coverage |
+|----------|---------|-------------|-----------------|----------|
+| Rain     | 12,000  | 0.06 x 1.8  | -25 (down)      | 200x200  |
+| Storm    | 20,000  | 0.08 x 2.5  | -40 + angle     | 240x240  |
+| Snow     | 8,000   | 0.2 x 0.2   | -3 + drift      | 200x200  |
+| Blizzard | 18,000  | 0.25 x 0.25 | -8 + horiz wind | 240x240  |
+```
+
+**IMPORTANT - GPUParticles3D Gotcha:**
+- Particles MUST be created as children of manually-added Node3D
+- Instantiated .tscn scenes cause particles to freeze
+- Never change `amount` at runtime (breaks simulation)
+- Only toggle `visible`, never toggle `emitting`
+- Set large `visibility_aabb` to prevent culling
+
+---
+
+### 3.3 Vegetation System (v0.7.1 Modular Refactor)
 
 **VegetationSpawner** (`vegetation/vegetation_spawner.gd`)
 - Populates chunks with vegetation as player explores
@@ -210,7 +269,7 @@ enum VegType {
 
 ---
 
-### 3.3 Critter & Enemy Spawner
+### 3.4 Critter & Enemy Spawner
 
 **CritterSpawner** (`critter_spawner.gd`)
 - Spawns both passive critters AND hostile enemies
@@ -255,366 +314,6 @@ func is_night_time() -> bool
 - `ice_wolf.tscn` - Pack hunter (Snow)
 - `stone_golem.tscn` - Slow tank (Mountain)
 - `shadow_wraith.tscn` - Night-only ghost (All biomes)
-
----
-
-### 3.4 Player Systems
-
-**Player** (`player.gd`)
-- CharacterBody3D with first-person camera
-- Manages all player subsystems
-- Handles input routing (movement, UI, interaction)
-- Death/respawn system
-
-```gdscript
-# Key systems (created at runtime)
-var inventory: Inventory
-var health_hunger_system: HealthHungerSystem
-var harvesting_system: HarvestingSystem
-var building_system: BuildingSystem
-var crafting_system: CraftingSystem
-var tool_system: ToolSystem
-var combat_system: CombatSystem
-
-# Key methods
-func take_damage(amount: int)
-func _on_player_died()
-func _on_respawn_requested()
-```
-
-**HealthHungerSystem** (`health_hunger_system.gd`)
-- Tracks health and hunger
-- Hunger drains over time, causes damage at 0
-- Emits signals for UI updates
-
-```gdscript
-signal health_changed(current, max_val)
-signal hunger_changed(current, max_val)
-signal player_died
-
-func take_damage(amount: float)
-func heal(amount: float)
-func eat_food(hunger_amount: int) -> bool
-func get_movement_speed_multiplier() -> float
-```
-
-**Inventory** (`inventory.gd`)
-- Dictionary-based item storage
-- Stack limits per item type
-- Signals for UI updates
-
-```gdscript
-signal inventory_changed
-signal inventory_full(item_name: String)
-
-func add_item(item_name: String, amount: int) -> bool
-func remove_item(item_name: String, amount: int) -> bool
-func has_item(item_name: String, amount: int) -> bool
-func get_item_count(item_name: String) -> int
-```
-
----
-
-### 3.4 Tool & Weapon System
-
-**ToolSystem** (`tool_system.gd`)
-- Unified tool/weapon management
-- Tools serve both harvesting AND combat purposes
-- Cycle with RB/LB buttons
-
-```gdscript
-enum Tool {
-    STONE_AXE,      # Chops wood, 18 dmg
-    STONE_PICKAXE,  # Mines stone, 12 dmg
-    WOODEN_CLUB,    # Combat only, 15 dmg
-    STONE_SPEAR,    # Combat, 20 dmg, 3.5m reach
-    BONE_SWORD      # Best combat, 25 dmg
-}
-
-# Key methods
-func cycle_tool()
-func get_combat_damage() -> int
-func get_combat_range() -> float
-func can_harvest(resource_type: String) -> bool
-```
-
----
-
-### 3.5 Harvesting System
-
-**HarvestingSystem** (`harvesting_system.gd`)
-- Raycast-based target detection
-- Tool requirement checking
-- Visual highlighting (shader-based outline)
-- Progress bar for harvest duration
-
-```gdscript
-signal harvest_completed(resource: HarvestableResource, drops: Dictionary)
-signal harvest_started(resource: HarvestableResource)
-signal harvest_cancelled
-
-# Key methods
-func start_harvest()
-func cancel_harvest()
-func is_looking_at_resource() -> bool
-```
-
-**HarvestableResource** (base class in `resource_node.gd`)
-- Extended by: HarvestableTree, HarvestableMushroom, HarvestableStrawberry
-- Collision layer 2 for raycast detection
-- Emits `harvested` signal with drops
-
----
-
-### 3.6 Combat System
-
-**CombatSystem** (`combat_system.gd` - node on Player)
-- Raycast-based enemy targeting
-- Uses ToolSystem for damage/range
-- Camera shake on hit
-- Attack cooldown
-
-```gdscript
-func initialize(player, camera, health_system)
-func attack()  # RT trigger
-func shake_camera(intensity, duration)
-```
-
-**Enemy** (`enemy.gd`)
-- Base class for all enemies
-- State machine: IDLE → CHASE → ATTACK → DEATH
-- Detection/deaggro ranges
-- Loot drop table
-- Virtual methods for customization:
-
-```gdscript
-# Override in subclasses
-func create_enemy_visual()
-func on_attack_telegraph()
-func on_attack_execute()
-func on_hit()
-func on_death()
-```
-
----
-
-### 3.7 Crafting System
-
-**CraftingSystem** (`crafting_system.gd`)
-- Recipe-based crafting
-- Checks inventory for ingredients
-- Consumes inputs, produces outputs
-
-```gdscript
-# Recipe format
-var recipes = {
-    "stone_pickaxe": {
-        "inputs": {"wood": 3, "stone": 5},
-        "output_count": 1
-    }
-}
-
-func can_craft(recipe_name: String) -> bool
-func craft(recipe_name: String) -> bool
-func get_missing_ingredients(recipe_name: String) -> Dictionary
-```
-
----
-
-### 3.8 Audio System
-
-**AudioManager** (autoload singleton)
-- Bus-based volume control (Master, SFX, Music, Ambient, UI)
-- Sound variants support (footstep_grass_1, footstep_grass_2, etc.)
-- Crossfade for music transitions
-- Ambient loop management
-
-```gdscript
-func play_sound(name, bus, spatial, random_pitch)
-func play_sound_variant(base_name, count, bus, spatial, random_pitch)
-func play_music(track_name, fade_duration)
-func play_ambient_loop(name, volume)
-func stop_ambient_loop(name, fade_duration)
-```
-
-**MusicManager** (`music_manager.gd`)
-- Day/night music rotation
-- Crossfade transitions at dawn/dusk
-- Track variety (avoids repeats)
-
-**AmbientManager** (`ambient_manager.gd`)
-- Biome-aware ambient sounds
-- Time-of-day specific (birds day, crickets night)
-- Frequency-based playback (not constant)
-
----
-
-### 3.9 Settings System
-
-**SettingsManager** (autoload singleton)
-- Persists to user://settings.cfg
-- Categories: display, graphics, performance, audio
-- Quality presets (Low/Medium/High/Ultra)
-
-**SettingsMenu** (`settings_menu.gd`)
-- Tabbed UI (Display, Graphics, Performance, Audio)
-- Apply/Cancel/Reset workflow
-- Runtime setting application
-
----
-
-## 4. SIGNAL FLOW
-
-### Resource Harvesting Flow
-```
-Player Input (A/LMB)
-    ↓
-HarvestingSystem.start_harvest()
-    ↓
-HarvestableResource.start_harvest()
-    ↓
-[Progress over time]
-    ↓
-HarvestableResource.complete_harvest()
-    ↓
-HarvestableResource.harvested.emit(drops)
-    ↓
-Inventory.add_item()
-    ↓
-Inventory.inventory_changed.emit()
-    ↓
-InventoryUI.refresh_grid()
-```
-
-### Combat Flow
-```
-Player Input (RT)
-    ↓
-CombatSystem.attack()
-    ↓
-Raycast for enemies
-    ↓
-Enemy.take_damage(amount)
-    ↓
-Enemy.flash_white()
-    ↓
-[If health <= 0]
-    ↓
-Enemy.die()
-    ↓
-Enemy.drop_loot()
-    ↓
-Enemy.fade_out()
-    ↓
-Enemy.queue_free()
-```
-
-### Chunk Lifecycle Flow
-```
-Player moves
-    ↓
-ChunkManager.update_chunks()
-    ↓
-[New chunk needed]
-    ↓
-ChunkManager.load_chunk()
-    ↓
-Chunk.generate_mesh()
-    ↓
-VegetationSpawner.populate_chunk()
-    ↓
-[Player moves away]
-    ↓
-ChunkManager.unload_chunk()
-    ↓
-ChunkManager.chunk_unloaded.emit()
-    ↓
-VegetationSpawner._on_chunk_unloaded()
-    ↓
-[Cleanup vegetation nodes]
-```
-
----
-
-## 5. FILE ORGANIZATION
-
-```
-res://
-├── project.godot
-├── world.tscn / world.gd          # Main scene
-├── player.tscn / player.gd        # Player scene
-│
-├── # CORE SYSTEMS
-├── chunk_manager.gd               # Terrain management
-├── chunk.gd                       # Individual chunk
-├── critter_spawner.gd             # Critters AND enemies
-│
-├── # VEGETATION SYSTEM (v0.7.1 Modular)
-├── vegetation/
-│   ├── vegetation_spawner.gd      # Main spawner + harvestable creation
-│   ├── vegetation_types.gd        # VegType enum
-│   ├── biome_spawn_rules.gd       # Biome configurations
-│   └── meshes/
-│       ├── forest_meshes.gd       # Mushroom visuals
-│       ├── plant_meshes.gd        # Strawberry visuals
-│       ├── rock_meshes.gd         # Decorative rocks
-│       ├── tree_meshes.gd
-│       ├── ground_cover_meshes.gd
-│       ├── desert_meshes.gd
-│       └── snow_meshes.gd
-│
-├── # PLAYER SYSTEMS
-├── health_hunger_system.gd
-├── inventory.gd
-├── harvesting_system.gd
-├── crafting_system.gd
-├── tool_system.gd
-├── combat_system.gd
-├── building_system.gd
-│
-├── # RESOURCES
-├── resource_node.gd               # Base harvestable
-├── harvestable_tree.gd
-├── harvestable_mushroom.gd
-├── harvestable_strawberry.gd
-│
-├── # ENEMIES
-├── enemy.gd                       # Base enemy class
-├── corrupted_rabbit.tscn / .gd    # Forest enemy
-├── forest_goblin.tscn / .gd       # Forest enemy
-├── desert_scorpion.tscn / .gd     # Desert enemy
-├── ice_wolf.tscn / .gd            # Snow enemy (pack)
-├── stone_golem.tscn / .gd         # Mountain enemy
-├── shadow_wraith.tscn / .gd       # Night enemy (all biomes)
-│
-├── # AUDIO
-├── audio_manager.gd               # Autoload
-├── music_manager.gd
-├── ambient_manager.gd
-├── rumble_manager.gd              # Controller haptics
-│
-├── # UI
-├── inventory_ui.tscn / .gd
-├── crafting_ui.tscn / .gd
-├── harvest_ui.tscn / .gd
-├── health_ui.tscn / .gd
-├── settings_menu.tscn / .gd
-├── performance_hud.gd
-│
-├── # VISUALS
-├── pixel_texture_generator.gd     # Procedural textures
-├── vegetation/
-│   └── visuals/
-│       ├── tree_visual.gd
-│       ├── pine_tree_visual.gd
-│       └── palm_tree_visual.gd
-│
-├── # ASSETS
-├── music/                         # .ogg/.mp3 files
-├── sfx/                           # .wav files
-└── shaders/
-    └── resource_outline.gdshader
-```
 
 ---
 
@@ -673,19 +372,30 @@ func check_for_target() -> Node:
     return null
 ```
 
-### 6.5 Procedural Mesh Pattern
+### 6.5 GPUParticles3D Pattern (Weather)
 ```gdscript
-func create_mesh() -> Mesh:
-    var surface_tool = SurfaceTool.new()
-    surface_tool.begin(Mesh.PRIMITIVE_TRIANGLES)
+# CRITICAL: Particles must be children of manually-added Node3D
+# DO NOT instantiate from .tscn - causes particles to freeze
+
+func _create_rain():
+    rain_particles = GPUParticles3D.new()
+    rain_particles.name = "Rain"
+    add_child(rain_particles)
     
-    # Add vertices
-    surface_tool.set_uv(Vector2(0, 0))
-    surface_tool.add_vertex(Vector3(0, 0, 0))
-    # ... more vertices
+    # Set properties BEFORE first frame
+    rain_particles.amount = 12000
+    rain_particles.lifetime = 3.5
+    rain_particles.emitting = true
+    rain_particles.visible = false  # WeatherManager controls this
+    rain_particles.visibility_aabb = AABB(Vector3(-150, -80, -150), Vector3(300, 160, 300))
     
-    surface_tool.generate_normals()
-    return surface_tool.commit()
+    var mat = ParticleProcessMaterial.new()
+    mat.emission_shape = ParticleProcessMaterial.EMISSION_SHAPE_BOX
+    mat.emission_box_extents = Vector3(100, 0.1, 100)
+    mat.gravity = Vector3(0, -25, 0)
+    rain_particles.process_material = mat
+    
+    # Mesh setup...
 ```
 
 ### 6.6 Visibility Culling Pattern
@@ -720,6 +430,14 @@ func _process(delta):
 4. Add terrain material in `PixelTextureGenerator.get_biome_terrain_material()`
 5. Add vegetation rules in `vegetation_spawner.gd` spawn functions
 6. Add ambient sounds in `ambient_manager.gd` BIOME_AMBIENTS
+7. Add weather probabilities in `weather_manager.gd` BIOME_WEATHER_WEIGHTS
+
+### Adding a New Weather Type
+1. Add to `Weather` enum in `weather_manager.gd`
+2. Add to `BIOME_WEATHER_WEIGHTS` dictionary
+3. Create particle system in `weather_particles.gd`
+4. Add set_*_particles() method in WeatherManager
+5. Update `_update_particle_systems()` to show/hide new particles
 
 ### Adding a New Resource Type
 1. Create new class extending `HarvestableResource`
@@ -756,7 +474,7 @@ var recipes = {
 
 ## 8. PERFORMANCE CONSIDERATIONS
 
-### Current Targets (v0.7.0 achieved)
+### Current Targets (v0.8.0)
 | Metric | Target | Current |
 |--------|--------|---------|
 | FPS | 60 | ✅ 60 |
@@ -779,6 +497,11 @@ var recipes = {
 - Chunks emit `chunk_unloaded` signal
 - VegetationSpawner tracks nodes per chunk
 - Nodes freed when chunk unloads
+
+**Weather Particles**
+- Use GPUParticles3D (GPU-accelerated)
+- Large visibility_aabb prevents culling issues
+- Only toggle visible, never amount or emitting
 
 **Density Controls**
 - All vegetation densities are `@export` vars
@@ -820,6 +543,9 @@ var recipes = {
 | Crafting | C |
 | Settings | F1 |
 | Perf HUD | F3 |
+| Weather Status | F4 |
+| Cycle Weather | F5 |
+| Random Weather | F6 |
 | Cancel/Back | ESC |
 
 ### Xbox Controller
@@ -838,5 +564,5 @@ var recipes = {
 
 ---
 
-*Document Version: 0.8.0*
-*Last Updated: Vegetation System Fix*
+*Document Version: 0.8.1*
+*Last Updated: Weather Particle System Implementation*

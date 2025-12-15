@@ -11,6 +11,11 @@ var settings_manager: Node
 var settings_menu: Control
 
 func _ready():
+	# Add to groups for easy discovery by other systems
+	add_to_group("world")
+	if chunk_manager:
+		chunk_manager.add_to_group("chunk_manager")
+	
 	# Get settings manager singleton
 	var managers = get_tree().get_nodes_in_group("settings_manager")
 	if managers.size() > 0:
@@ -83,6 +88,9 @@ func _ready():
 	print("  Esc - Toggle mouse capture")
 	print("  F1 - Settings Menu")
 	print("  F3 - Performance HUD")
+	print("  F4 - Weather Status")
+	print("  F5 - Cycle Weather (transition)")
+	print("  F6 - Random Weather (instant)")
 	print("  Alt+1-7 - Teleport (1=Grass, 2=Forest, 3=Desert, 4=Snow, 5=Beach, 6=Mountain, 7=Ocean)")
 	print("  Alt+0 - Teleport to spawn")
 
@@ -124,9 +132,10 @@ func apply_graphics_settings():
 		print("Applied shadow quality: ", shadow_quality)
 
 func _input(event):
-	"""Handle settings menu toggle"""
+	"""Handle settings menu toggle and weather debug"""
 	# Use F1 key directly instead of relying on input action
 	if event is InputEventKey and event.pressed and not event.echo:
+		
 		if event.keycode == KEY_F1:
 			print("F1 pressed - toggling settings menu")
 			if settings_menu:
@@ -143,8 +152,67 @@ func _input(event):
 			else:
 				print("ERROR: Settings menu is null!")
 		
+		# F4 - Weather debug status
+		if event.keycode == KEY_F4:
+			if WeatherManager:
+				WeatherManager.print_status()
+			get_viewport().set_input_as_handled()
+		
+		# F5 - Cycle to next weather (for testing)
+		if event.keycode == KEY_F5:
+			if WeatherManager:
+				_cycle_weather()
+			get_viewport().set_input_as_handled()
+		
+		# F6 - Force instant weather change (no transition)
+		if event.keycode == KEY_F6:
+			if WeatherManager:
+				_force_random_weather()
+			get_viewport().set_input_as_handled()
+		
 		# Also support ESC to close settings when it's open
 		if event.keycode == KEY_ESCAPE and settings_menu and settings_menu.visible:
 			settings_menu.hide()
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 			get_viewport().set_input_as_handled()
+
+
+func _cycle_weather():
+	"""Cycle through weather types valid for current biome"""
+	var current = WeatherManager.get_current_weather()
+	var weather_order = [
+		WeatherManager.Weather.CLEAR,
+		WeatherManager.Weather.CLOUDY,
+		WeatherManager.Weather.RAIN,
+		WeatherManager.Weather.STORM,
+		WeatherManager.Weather.FOG,
+		WeatherManager.Weather.SNOW,
+		WeatherManager.Weather.BLIZZARD,
+		WeatherManager.Weather.SANDSTORM
+	]
+	
+	# Find next valid weather for this biome
+	var current_idx = weather_order.find(current)
+	for i in range(1, weather_order.size() + 1):
+		var next_idx = (current_idx + i) % weather_order.size()
+		var next_weather = weather_order[next_idx]
+		if WeatherManager._is_weather_valid_for_biome(next_weather, WeatherManager.current_biome):
+			WeatherManager.force_weather_transition(next_weather)
+			print("[Weather Debug] Cycling to: %s" % WeatherManager.get_weather_name(next_weather))
+			return
+	
+	print("[Weather Debug] No other valid weather for biome: %s" % WeatherManager.current_biome)
+
+
+func _force_random_weather():
+	"""Force random weather valid for current biome (instant)"""
+	var biome = WeatherManager.current_biome
+	var valid_weathers = []
+	
+	for weather in WeatherManager.BIOME_WEATHER.get(biome, {}).keys():
+		valid_weathers.append(weather)
+	
+	if valid_weathers.size() > 0:
+		var random_weather = valid_weathers[randi() % valid_weathers.size()]
+		WeatherManager.force_weather(random_weather)
+		print("[Weather Debug] Forced random: %s" % WeatherManager.get_weather_name(random_weather))

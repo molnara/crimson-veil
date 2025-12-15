@@ -59,7 +59,7 @@ The goal is a **highly configurable survival framework** that can be reskinned f
 
 | Game | What We Take | Implementation Status |
 |------|--------------|----------------------|
-| **Minecraft** | Chunk-based world, block building, simple crafting | ✅ Chunks, ⚠️ Building (basic), ✅ Crafting |
+| **Minecraft** | Chunk-based world, block building, simple crafting, static weather zones | ✅ Chunks, ⚠️ Building (basic), ✅ Crafting, ✅ Weather |
 | **Valheim** | Stamina combat, biome progression, visual style | ⏳ Stamina, ✅ Biomes, ✅ Pixel art style |
 | **Dark Souls** | Weighty combat, death penalty, challenge | ⚠️ Combat feel, ✅ Death/respawn, ⏳ Difficulty |
 | **New World** | Gathering/crafting depth, world feel | ✅ Harvesting, ⚠️ Crafting depth |
@@ -70,6 +70,7 @@ The goal is a **highly configurable survival framework** that can be reskinned f
 - World should feel infinite and explorable
 - Crafting should be intuitive (combine materials → get tools)
 - Players create their own goals
+- Weather stays in place - you walk through rain/snow zones
 
 **From Valheim:**
 - Biomes gate progression naturally (you CAN go to mountains early, but you'll die)
@@ -171,25 +172,41 @@ Build/Expand Base → Prepare for Night/Events
 
 **[Future]:** Night should be meaningfully more dangerous (more spawns, stronger enemies, visibility reduction).
 
-### 4.4 Weather System
+### 4.4 Weather System ✅ IMPLEMENTED
 
-**Status:** 🟡 v0.8.0 Implementation
+**Status:** ✅ v0.8.0 Complete
 
 The weather system provides dynamic environmental conditions that vary by biome and affect atmosphere, visibility, and (future) gameplay.
 
-#### Weather States
+#### Weather States (8 total)
 
 | State | Visual Effect | Audio | Biomes |
 |-------|---------------|-------|--------|
 | **Clear** | Blue sky, no particles | Ambient only | All |
 | **Cloudy** | Gray sky, light fog | Wind | All |
-| **Rain** | Rain particles, puddles | Rain loop | Grassland, Forest, Beach, Mountain |
-| **Heavy Rain** | Dense rain, reduced visibility | Heavy rain | Grassland, Forest, Beach |
-| **Storm** | Rain + lightning flashes | Thunder, heavy rain | Grassland, Forest, Beach, Mountain |
+| **Rain** | Rain particles (12k), blue streaks | Rain loop | Grassland, Forest, Beach, Mountain |
+| **Storm** | Heavy rain (20k), angled, darker | Heavy rain, thunder | Grassland, Forest, Beach, Mountain |
 | **Fog** | Dense fog, low visibility | Muffled sounds | Forest, Mountain, Beach |
-| **Snow** | Snow particles, white fog | Light wind | Mountain, Snow |
-| **Blizzard** | Heavy snow, very low visibility | Strong wind | Snow |
+| **Snow** | Snow particles (8k), white flakes | Light wind | Mountain, Snow |
+| **Blizzard** | Heavy snow (18k), horizontal wind | Strong wind | Snow |
 | **Sandstorm** | Sand particles, orange tint | Wind howl | Desert only |
+
+#### Weather Particle Details
+
+| Weather  | Particles | Size        | Fall Speed | Effect |
+|----------|-----------|-------------|------------|--------|
+| Rain     | 12,000    | 0.06 x 1.8  | Fast (-25) | Vertical streaks |
+| Storm    | 20,000    | 0.08 x 2.5  | Very fast (-40) | Angled, wind-blown |
+| Snow     | 8,000     | 0.2 x 0.2   | Slow (-3)  | Gentle drift |
+| Blizzard | 18,000    | 0.25 x 0.25 | Medium (-8) | Strong horizontal wind |
+
+#### Minecraft-Style Weather Behavior
+
+Weather particles use a **Minecraft-style** approach:
+- Particles spawn at player's starting position
+- Weather **stays in place** as player walks through it
+- If player teleports >200 units away, weather repositions
+- Creates natural "weather zones" in the world
 
 #### Weather Probability per Biome
 
@@ -208,10 +225,15 @@ The weather system provides dynamic environmental conditions that vary by biome 
 @export var weather_change_interval_min: float = 300.0  # 5 minutes
 @export var weather_change_interval_max: float = 900.0  # 15 minutes
 @export var transition_duration: float = 30.0           # 30 second fade
-@export var rain_particle_count: int = 2000
-@export var snow_particle_count: int = 1000
-@export var fog_density_heavy: float = 0.05
 ```
+
+#### Weather Debug Controls
+
+| Key | Action |
+|-----|--------|
+| F4 | Show weather status |
+| F5 | Cycle weather (with transition) |
+| F6 | Random weather (instant) |
 
 #### Future Weather Gameplay Effects (v0.9.0+)
 
@@ -225,7 +247,7 @@ The weather system provides dynamic environmental conditions that vary by biome 
 
 ### 4.5 Wind System
 
-**Status:** 🟡 v0.8.0 Implementation
+**Status:** 🟡 v0.8.0 Planned
 
 Wind affects vegetation sway, weather particles, and atmosphere.
 
@@ -245,397 +267,9 @@ Wind affects vegetation sway, weather particles, and atmosphere.
 | Blizzard | 0.6 - 1.0 |
 | Sandstorm | 0.7 - 1.0 |
 
-### 4.6 Biome Ground Cover
-
-**Status:** 🟡 v0.8.0 Implementation
-
-Each biome has specific allowed ground cover types:
-
-| Biome | Allowed | Not Allowed |
-|-------|---------|-------------|
-| **Grassland** | Grass, flowers, clover | - |
-| **Forest** | Dark grass, ferns, moss, fallen logs | Flowers |
-| **Desert** | Dead shrubs, dry grass, bones, rocks | Green grass, flowers |
-| **Snow** | Snow mounds, ice crystals, frozen shrubs | Grass, flowers |
-| **Beach** | Shells, seaweed, driftwood, pebbles | Grass |
-| **Mountain** | Alpine grass (sparse), rocks, lichen | Dense grass, flowers |
-
-**Vegetation Color Tinting:**
-| Biome | Grass Tint |
-|-------|------------|
-| Grassland | Bright green (0.4, 0.7, 0.3) |
-| Forest | Dark green (0.2, 0.5, 0.2) |
-| Mountain | Gray-green (0.5, 0.6, 0.4) |
-| Snow | Frosted (0.7, 0.8, 0.7) |
-
-### 4.7 Harvestable Resources System
-
-**Status:** ✅ v0.7.1 - Modular Refactor Complete
-
-The vegetation system uses a modular architecture for easier maintenance:
-
-**File Structure:**
-```
-vegetation/
-├── vegetation_spawner.gd      # Main spawner + harvestable creation
-├── vegetation_types.gd        # VegType enum, visibility settings
-├── biome_spawn_rules.gd       # Biome-specific configurations
-└── meshes/
-    ├── forest_meshes.gd       # Mushroom visuals
-    ├── plant_meshes.gd        # Strawberry visuals
-    ├── rock_meshes.gd         # Decorative rocks
-    └── ...                    # Other mesh creators
-```
-
-**Survival-Balanced Spawning:**
-
-Resources are intentionally rare to encourage exploration:
-
-| Resource | Base Density | Rarity | Rationale |
-|----------|--------------|--------|-----------|
-| Mushrooms | 0.04 | Rarest | Forest delicacy, valuable food |
-| Strawberries | 0.06 | Rare | Food source, requires searching |
-| Rocks | 0.08 | Uncommon | Building material |
-
-**Biome Multipliers:**
-| Biome | Mushrooms | Strawberries | Rocks |
-|-------|-----------|--------------|-------|
-| Forest | 0.10 | - | 0.08 |
-| Grassland | - | 0.12 | 0.10 |
-| Mountain | - | - | 0.15 |
-| Snow | - | - | 0.10 |
-| Desert | - | - | 0.12 |
-
-**Strawberry Bush Design:**
-- Bush body: Rounded dome (7 layers, 10 segments)
-- Berries: Icosphere geometry (20 triangles each)
-- Distribution: Golden angle (~137.5°) for uniform spread
-- Sizes: Small (1-2 drops), Medium (2-4 drops), Large (4-7 drops)
-
-**Mushroom Design:**
-- Stem: 8-sided cylinder, white color
-- Cap: 5-segment dome, red or brown
-- Clusters: 3-6 small mushrooms with random offsets
-
 ---
 
-## 5. PLAYER SYSTEMS
-
-### 5.1 Health System
-
-| Parameter | Default | Configurable | Notes |
-|-----------|---------|--------------|-------|
-| `max_health` | 100 | ✅ @export | Player maximum HP |
-| `health_regen_rate` | 0 | ✅ @export | HP/second (0 = no regen) |
-| `damage_flash_duration` | 0.1 | Hardcoded | Visual feedback |
-
-**Design Intent:** Health is precious. No passive regeneration forces players to use food/healing items.
-
-### 5.2 Hunger System
-
-| Parameter | Default | Configurable | Notes |
-|-----------|---------|--------------|-------|
-| `max_hunger` | 100 | ✅ @export | Maximum hunger |
-| `hunger_drain_rate` | ~0.5/min | ✅ @export | Passive drain |
-| `starvation_damage` | 1/tick | ✅ @export | Damage at 0 hunger |
-| `low_hunger_threshold` | 20 | ✅ @export | Speed penalty trigger |
-
-**Food Values:**
-| Item | Hunger Restored |
-|------|-----------------|
-| Small Strawberry | 10 |
-| Medium Strawberry | 20 |
-| Large Strawberry | 35 |
-| Small Mushroom | 15 |
-| Medium Mushroom | 25 |
-| Large Mushroom | 40 |
-
-**Design Intent:** Hunger creates exploration pressure - you can't sit in base forever.
-
-### 5.3 Inventory System
-
-| Parameter | Default | Configurable | Notes |
-|-----------|---------|--------------|-------|
-| `max_slots` | 32 | Hardcoded | UI grid slots |
-| `stack_limits` | varies | Per-item | Wood: 99, Tools: 1 |
-
-**Stack Limits by Category:**
-| Category | Limit | Examples |
-|----------|-------|----------|
-| Raw Materials | 99 | Wood, Stone |
-| Food | 50 | Berries, Mushrooms |
-| Tools | 1 | Axes, Pickaxes |
-| Weapons | 1 | Clubs, Swords |
-| Buildables | 20 | Walls, Campfires |
-
-### 5.4 Movement System
-
-| Parameter | Default | Configurable | Notes |
-|-----------|---------|--------------|-------|
-| `move_speed` | 5.0 | ✅ @export | Walk speed (m/s) |
-| `sprint_speed` | 10.0 | ✅ @export | Sprint speed (m/s) |
-| `jump_velocity` | 4.5 | ✅ @export | Jump force |
-| `mouse_sensitivity` | 0.002 | ✅ @export | Look sensitivity |
-| `controller_look_sensitivity` | 3.0 | ✅ @export | Stick sensitivity |
-
-**[Future] Stamina Integration:**
-- Sprinting drains stamina
-- Jumping drains stamina
-- Attacking drains stamina
-- Stamina regenerates when not sprinting
-
-### 5.5 Death & Respawn
-
-**Current Implementation:**
-- Death triggers on 0 health
-- Death screen shows death count
-- Respawn at spawn point with full health/hunger
-- No item loss (currently)
-
-**[Future] Death Penalty Options (Configurable):**
-| Mode | Item Loss | XP Loss | Corpse Run |
-|------|-----------|---------|------------|
-| Casual | None | None | No |
-| Normal | Inventory | None | Yes |
-| Hardcore | Inventory | 50% | Yes |
-| Permadeath | Everything | 100% | No (new game) |
-
----
-
-## 6. COMBAT SYSTEMS
-
-### 6.1 Design Philosophy
-
-**Souls-like Principles:**
-- Every attack is a commitment
-- Stamina limits spam
-- Positioning matters
-- Enemies telegraph attacks
-- Death is a teacher, not a punishment
-
-**Current State vs Target:**
-| Aspect | Current | Target |
-|--------|---------|--------|
-| Attack commitment | ⚠️ Can spam | Locked animation + stamina |
-| Enemy telegraph | ✅ Basic | Clear wind-up animations |
-| Hit feedback | ⚠️ Basic flash | Screen shake, hitstop, sound |
-| Stamina | ❌ Not implemented | Core combat resource |
-| Blocking | ❌ Not implemented | Shields, timed blocks |
-| Dodging | ❌ Not implemented | I-frames, stamina cost |
-
-### 6.2 Weapon System
-
-**Current Weapons:**
-
-| Weapon | Damage | Range | Cooldown | Harvest Types |
-|--------|--------|-------|----------|---------------|
-| Stone Axe | 18 | 2.5m | 1.0s | Wood |
-| Stone Pickaxe | 12 | 2.5m | 1.2s | Stone, Ore |
-| Wooden Club | 15 | 2.5m | 1.0s | None |
-| Stone Spear | 20 | 3.5m | 1.2s | None |
-| Bone Sword | 25 | 3.0m | 1.0s | None |
-
-**[Future] Weapon Tiers:**
-```
-Wood Tier → Stone Tier → Bone Tier → Iron Tier → ?
-   ↓            ↓            ↓           ↓
- Basic       +50%         +100%       +150%
-```
-
-### 6.3 Combat Feel Improvements (Priority)
-
-**Hit Feedback Checklist:**
-- [ ] Camera shake on hit (intensity by damage)
-- [ ] Hitstop (brief pause on contact) - 50-100ms
-- [ ] Hit sound variation (3+ sounds per weapon)
-- [ ] Enemy knockback/stagger
-- [ ] Damage numbers (optional, configurable)
-- [ ] Blood/particle effects (configurable)
-
-**Player Feedback Checklist:**
-- [ ] Screen flash on damage
-- [ ] Controller rumble (✅ implemented)
-- [ ] Directional damage indicator
-- [ ] Health bar flash
-- [ ] Pain sound
-
-### 6.4 [Future] Stamina System
-
-| Action | Stamina Cost | Notes |
-|--------|--------------|-------|
-| Light Attack | 15 | Quick, low commitment |
-| Heavy Attack | 30 | Slow, high damage |
-| Block | 5/hit | Drain on block |
-| Dodge/Roll | 25 | I-frames during roll |
-| Sprint | 10/sec | Continuous drain |
-| Jump | 10 | Per jump |
-
-| Parameter | Default | Notes |
-|-----------|---------|-------|
-| `max_stamina` | 100 | Maximum stamina |
-| `stamina_regen` | 20/sec | Regen when not sprinting |
-| `regen_delay` | 1.0s | Delay after action |
-
----
-
-## 7. PROGRESSION SYSTEMS
-
-### 7.1 Crafting System
-
-**Current Recipes:**
-| Item | Ingredients | Category |
-|------|-------------|----------|
-| Stone Axe | 3 Wood, 5 Stone | Tools |
-| Stone Pickaxe | 3 Wood, 5 Stone | Tools |
-| Campfire | 10 Wood, 5 Stone | Building |
-| Torch | 2 Wood | Building |
-| Wood Wall | 4 Wood | Building |
-
-**[Future] Recipe Unlocks:**
-- Recipes locked until player finds/harvests required materials
-- "Unknown Recipe" shows in crafting menu with ??? ingredients
-- Discovering new materials unlocks related recipes
-
-### 7.2 Tool Progression
-
-**Harvest Requirements:**
-| Resource | Required Tool | Without Tool |
-|----------|---------------|--------------|
-| Trees | Axe | Cannot harvest |
-| Rocks | Pickaxe | Cannot harvest |
-| Mushrooms | Any/Hand | Normal harvest |
-| Berries | Any/Hand | Normal harvest |
-
-**[Future] Tool Durability (Optional):**
-| Tool | Durability | Repair Cost |
-|------|------------|-------------|
-| Stone Axe | 100 uses | 2 Stone |
-| Stone Pickaxe | 100 uses | 2 Stone |
-
-### 7.3 [Future] Skill System
-
-**Option A: Passive Unlocks**
-- Use axe → Get better at chopping → Faster harvest
-- Kill enemies → Get better at combat → More damage
-
-**Option B: Skill Points**
-- Gain XP from actions
-- Spend points in skill trees
-- Trees: Combat, Survival, Crafting, Building
-
-**Option C: No Skills**
-- All progression is gear-based
-- Simpler, more Minecraft-like
-
----
-
-## 8. ENEMY & CRITTER SYSTEMS
-
-### 8.1 CritterSpawner Overview
-
-The **CritterSpawner** (`critter_spawner.gd`) handles ALL creature spawning - both passive ambient critters and hostile enemies. It uses a chunk-based approach similar to VegetationSpawner.
-
-**Key Features:**
-- ✅ Biome-specific spawning
-- ✅ Day/night time awareness
-- ✅ Pack spawning (wolf packs)
-- ✅ All spawn rates configurable via @export
-- ✅ Debug hotkeys (1-6) for testing
-- ✅ Chunk-based tracking with cleanup
-- ✅ Minimum spawn distance from player (15m)
-
-### 8.2 Ambient Critters (Passive)
-
-| Critter | Type | Biomes | Density | Behavior |
-|---------|------|--------|---------|----------|
-| **Rabbit** | Ground | Grassland, Forest | 15% | Hops, flees player |
-| **Fox** | Ground | Forest | 10% | Wanders, hunts rabbits? |
-| **Arctic Fox** | Ground | Snow | 12% | Snow variant |
-| **Crab** | Ground | Beach | 18% | Sideways scuttle |
-| **Lizard** | Ground | Desert | 14% | Skitters, sun-basks |
-| **Butterfly** | Flying | Grassland, Forest | 25% | Daytime only |
-| **Eagle** | Flying | Mountain, All | 4% | High altitude soaring |
-| **Firefly** | Particle | Forest | 30% | Nighttime only |
-
-**Critter Configuration:**
-```gdscript
-@export var rabbit_density: float = 0.15
-@export var butterfly_density: float = 0.25
-@export var firefly_density: float = 0.30
-@export var critters_per_chunk: int = 4
-@export var spawn_radius_chunks: int = 3
-```
-
-### 8.3 Enemy Types (Hostile)
-
-| Enemy | Scene File | Biome | Spawn Rate | Behavior |
-|-------|------------|-------|------------|----------|
-| **Corrupted Rabbit** | `corrupted_rabbit.tscn` | Forest | 15% | Fast, aggressive rabbit |
-| **Forest Goblin** | `forest_goblin.tscn` | Forest | 8% | Melee ambusher |
-| **Desert Scorpion** | `desert_scorpion.tscn` | Desert | 12% | Poison attacks? |
-| **Ice Wolf** | `ice_wolf.tscn` | Snow | 10% (pack) | Pack hunter, 2-3 per pack |
-| **Stone Golem** | `stone_golem.tscn` | Mountain | 5% | Slow, heavy hits |
-| **Shadow Wraith** | `shadow_wraith.tscn` | All (night) | 8% | Night-only spawns |
-
-**Enemy Spawn Configuration:**
-```gdscript
-@export var corrupted_rabbit_spawn_rate: float = 0.15
-@export var forest_goblin_spawn_rate: float = 0.08
-@export var desert_scorpion_spawn_rate: float = 0.12
-@export var ice_wolf_pack_spawn_rate: float = 0.10
-@export var stone_golem_spawn_rate: float = 0.05
-@export var shadow_wraith_spawn_rate: float = 0.08
-```
-
-### 8.4 Enemy Base Class Design
-
-**State Machine:**
-```
-IDLE → [Player in detection_range] → CHASE → [Player in attack_range] → ATTACK
-  ↑                                    ↓                                   ↓
-  └──── [Player beyond deaggro_range] ─┘                                   │
-                                                                           ↓
-                                                                         DEATH
-```
-
-**Base Parameters (Enemy class, all @export):**
-| Parameter | Default | Purpose |
-|-----------|---------|---------|
-| `max_health` | 50 | Enemy HP |
-| `damage` | 10 | Damage per hit |
-| `move_speed` | 3.0 | Chase speed (m/s) |
-| `detection_range` | 10.0 | Aggro trigger distance |
-| `deaggro_range` | 20.0 | Stop chasing distance (0 = never) |
-| `attack_range` | 2.0 | Melee attack distance |
-| `attack_cooldown_duration` | 1.5s | Time between attacks |
-| `attack_telegraph_duration` | 0.3s | Wind-up before damage |
-| `drop_table` | [] | Loot on death |
-
-**Virtual Methods (override in subclasses):**
-```gdscript
-func create_enemy_visual()    # Build the enemy mesh/model
-func on_attack_telegraph()    # Wind-up effects
-func on_attack_execute()      # Attack effects/sounds
-func on_hit()                 # Damage received effects
-func on_death()               # Death effects/sounds
-```
-
-### 8.5 Pack Behavior (Ice Wolves)
-
-Wolves spawn in packs of 2-3 with shared `pack_id`:
-- Spawn in triangle formation (2.5m apart)
-- [Future] Alert packmates when one detects player
-- [Future] Flanking behavior
-
-```gdscript
-func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i):
-    var pack_size = randi_range(2, 3)
-    var pack_id = randi()
-    for i in range(pack_size):
-        var angle = (i / float(pack_size)) * TAU
-        var offset = Vector3(cos(angle) * 2.5, 0, sin(angle) * 2.5)
-        # ... spawn wolf with pack_id
-```
+## 8. ENEMY SYSTEMS
 
 ### 8.6 Debug Spawning
 
@@ -684,6 +318,7 @@ func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i):
 5. **Enemies** - Stats, AI ranges, spawn rates
 6. **Audio** - Volumes, frequencies
 7. **Graphics** - Quality presets, view distances
+8. **Weather** - Particle counts, timing, biome probabilities
 
 ### 9.2 Reskinning Guide
 
@@ -714,6 +349,11 @@ func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i):
    - Add/remove tool tiers
    - Tune resource spawn rates
 
+6. **Customize Weather:**
+   - Adjust BIOME_WEATHER_WEIGHTS in weather_manager.gd
+   - Modify particle colors/sizes in weather_particles.gd
+   - Add new weather types if needed
+
 ### 9.3 Export Variable Checklist
 
 **ChunkManager:**
@@ -736,6 +376,13 @@ func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i):
 - [x] spawn_radius
 - [x] All biome-specific densities
 - [x] Tree size/shape parameters
+
+**WeatherManager:**
+- [x] weather_change_interval_min
+- [x] weather_change_interval_max
+- [x] transition_duration
+- [x] fog_density settings
+- [x] debug_logging
 
 **Player:**
 - [x] move_speed
@@ -777,7 +424,7 @@ func spawn_wolf_pack(center_pos: Vector3, chunk_pos: Vector2i):
 | 🟡 Medium | Save/Load System | Not started | ~16h |
 | 🟡 Medium | Blocking/Parrying | Not started | ~8h |
 | 🟢 Low | Dodge Rolling | Not started | ~6h |
-| 🟢 Low | Weather System | Not started | ~12h |
+| ✅ Done | Weather System | Complete | ~12h |
 | 🟢 Low | Temperature/Cold | Not started | ~8h |
 | 🟢 Low | Skill System | Not started | ~20h |
 
@@ -800,6 +447,11 @@ Save/Load
 ├── Player Progress (position, inventory, stats)
 ├── World State (placed buildings, opened chests)
 └── Settings (already saved separately)
+
+Weather System ✅
+    ↓
+├── Temperature System (weather affects temperature)
+└── Gameplay Effects (rain extinguishes fire, etc.)
 ```
 
 ### 10.3 Optional Systems (Nice to Have)
@@ -839,6 +491,9 @@ Save/Load
 | Inventory | I | Y |
 | Crafting | C | X |
 | Tool Cycle | - | RB/LB |
+| Weather Status | F4 | - |
+| Cycle Weather | F5 | - |
+| Random Weather | F6 | - |
 
 ### Audio Buses
 | Bus | Purpose | Default Volume |
@@ -865,6 +520,9 @@ Save/Load
 | Rare harvestables | Survival feel | Resources feel valuable, encourage exploration | v0.7.1 |
 | Icosphere berries | Visual quality | Rounder berries (20 tri) look better than octahedra (8 tri) | v0.7.1 |
 | Golden angle distribution | Even spread | Prevents berry clumping on bushes | v0.7.1 |
+| Minecraft-style weather | Immersion | Weather feels like world feature, not player attachment | v0.8.0 |
+| Manual Node3D for particles | Bug workaround | .tscn instantiation breaks GPUParticles3D | v0.8.0 |
+| Separate storm/blizzard | Variety | Different intensity levels feel distinct | v0.8.0 |
 
 ---
 
@@ -878,9 +536,11 @@ Save/Load
 | Enemy spawner missing | High | Enemies need spawn system |
 | No save system | High | Progress lost on exit |
 | Combat feels floaty | Medium | Needs hitstop, stamina, weight |
+| GPUParticles3D .tscn bug | Medium | Must use manual Node3D, documented |
+| Fog/Sandstorm particles missing | Low | Weather states exist but no particles yet |
 
 ---
 
-*Document Version: 0.8.0*
+*Document Version: 0.8.1*
 *Framework Version: 1.0*
-*Last Updated: Vegetation System Fix*
+*Last Updated: Weather Particle System Implementation*

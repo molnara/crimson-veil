@@ -88,6 +88,9 @@ func _ready():
 	inventory = Inventory.new()
 	add_child(inventory)
 	
+	# Create weather particles immediately (must be in player, not autoload)
+	_create_weather_particles()
+	
 	# Get health/hunger system from scene (created in player.tscn)
 	health_hunger_system = $HealthHungerSystem if has_node("HealthHungerSystem") else null
 	if not health_hunger_system:
@@ -901,4 +904,18 @@ func setup_spawn_position() -> void:
 	# Now store the ground position
 	spawn_position = global_position
 	print("[Player] Spawn position set to: %s (after landing on ground)" % spawn_position)
+
+# =============================================================================
+# WEATHER PARTICLE SYSTEM (Task 2.2-2.3)
+# Particles are now created by weather_particles.tscn added to World scene
+# =============================================================================
+
+# These are kept for reference but particles are created elsewhere
+var rain_particles: GPUParticles3D = null
+var snow_particles: GPUParticles3D = null
+
+func _create_weather_particles():
+	# Particles are now created by weather_particles.tscn in the World scene
+	# This function is kept for backwards compatibility but does nothing
+	print("[Player] Weather particles handled by WeatherParticles scene")
 
